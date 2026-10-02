@@ -1,8 +1,8 @@
 package com.hardwarestore.mapper;
 
+import com.hardwarestore.domain.entity.Category;
 import com.hardwarestore.dto.request.CategoryRequest;
 import com.hardwarestore.dto.response.CategoryResponse;
-import com.hardwarestore.entity.Category;
 import org.springframework.stereotype.Component;
 
 @Component
