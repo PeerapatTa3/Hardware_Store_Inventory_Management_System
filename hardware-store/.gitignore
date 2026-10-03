@@ -1,0 +1,27 @@
+cat > .gitignore << 'EOF'
+# Java / Maven
+target/
+*.class
+*.log
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+
+# Node / React
+node_modules/
+dist/
+build/
+
+# Env / OS
+.env
+.DS_Store
+Thumbs.db
+EOF
+
+git add .gitignore
+git commit -m "chore: add gitignore for java, maven, node and ide files"
