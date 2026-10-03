@@ -1,9 +1,7 @@
 package com.hardwarestore.exception;
 
 import com.hardwarestore.dto.response.ErrorResponse;
-import jakarta.validation.ConstraintViolationException;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -26,37 +24,6 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleDuplicateSku(
             DuplicateSkuException ex, HttpServletRequest request) {
         return build(HttpStatus.CONFLICT, "DUPLICATE_SKU", ex.getMessage(), request);
-    }
-
-    @ExceptionHandler(DuplicateResourceException.class)
-    public ResponseEntity<ErrorResponse> handleDuplicateResource(
-            DuplicateResourceException ex, HttpServletRequest request) {
-        return build(HttpStatus.CONFLICT, "DUPLICATE_RESOURCE", ex.getMessage(), request);
-    }
-
-    @ExceptionHandler(InsufficientStockException.class)
-    public ResponseEntity<ErrorResponse> handleInsufficientStock(
-            InsufficientStockException ex, HttpServletRequest request) {
-        return build(HttpStatus.CONFLICT, "INSUFFICIENT_STOCK", ex.getMessage(), request);
-    }
-
-    @ExceptionHandler(InvalidStockMovementException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidStockMovement(
-            InvalidStockMovementException ex, HttpServletRequest request) {
-        return build(HttpStatus.BAD_REQUEST, "INVALID_STOCK_MOVEMENT", ex.getMessage(), request);
-    }
-
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ErrorResponse> handleConstraintViolation(
-            ConstraintViolationException ex, HttpServletRequest request) {
-        return build(HttpStatus.BAD_REQUEST, "VALIDATION_FAILED", ex.getMessage(), request);
-    }
-
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(
-            DataIntegrityViolationException ex, HttpServletRequest request) {
-        return build(HttpStatus.CONFLICT, "DATA_INTEGRITY_VIOLATION",
-                "The request conflicts with existing data", request);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

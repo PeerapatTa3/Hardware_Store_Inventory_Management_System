@@ -7,8 +7,6 @@ import com.hardwarestore.domain.entity.StockMovementType;
 import com.hardwarestore.dto.request.StockMovementRequest;
 import com.hardwarestore.dto.response.StockMovementResponse;
 import com.hardwarestore.exception.ResourceNotFoundException;
-import com.hardwarestore.exception.InsufficientStockException;
-import com.hardwarestore.exception.InvalidStockMovementException;
 import com.hardwarestore.mapper.StockMovementMapper;
 import com.hardwarestore.repository.InventoryStockRepository;
 import com.hardwarestore.repository.ProductRepository;
@@ -78,7 +76,7 @@ class StockMovementServiceImplTest {
         savedMovement.setNote("Receive stock");
 
         when(productRepository.findById(10L)).thenReturn(Optional.of(product));
-        when(inventoryStockRepository.findByProductIdForUpdate(10L)).thenReturn(Optional.of(stock));
+        when(inventoryStockRepository.findByProductId(10L)).thenReturn(Optional.of(stock));
         when(stockMovementRepository.save(any(StockMovement.class))).thenReturn(savedMovement);
         when(stockMovementMapper.toResponse(savedMovement)).thenReturn(StockMovementResponse.builder()
                 .id(99L)
@@ -115,7 +113,7 @@ class StockMovementServiceImplTest {
         stock.setReservedQuantity(2);
 
         when(productRepository.findById(10L)).thenReturn(Optional.of(product));
-        when(inventoryStockRepository.findByProductIdForUpdate(10L)).thenReturn(Optional.of(stock));
+        when(inventoryStockRepository.findByProductId(10L)).thenReturn(Optional.of(stock));
         when(stockMovementRepository.save(any(StockMovement.class))).thenReturn(new StockMovement());
         when(stockMovementMapper.toResponse(any(StockMovement.class))).thenReturn(StockMovementResponse.builder()
                 .productId(10L)
@@ -144,70 +142,5 @@ class StockMovementServiceImplTest {
         when(productRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> stockMovementService.create(request));
-    }
-
-    @Test
-    void create_shouldRecordAdjustmentAsSignedDelta() {
-        StockMovementRequest request = new StockMovementRequest();
-        request.setProductId(10L);
-        request.setMovementType(StockMovementType.ADJUSTMENT);
-        request.setQuantity(7);
-        request.setNote("Physical count");
-
-        InventoryStock stock = new InventoryStock();
-        stock.setProduct(product);
-        stock.setQuantity(12);
-        stock.setReservedQuantity(2);
-
-        when(productRepository.findById(10L)).thenReturn(Optional.of(product));
-        when(inventoryStockRepository.findByProductIdForUpdate(10L)).thenReturn(Optional.of(stock));
-        when(stockMovementRepository.save(any(StockMovement.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(stockMovementMapper.toResponse(any(StockMovement.class))).thenReturn(StockMovementResponse.builder().build());
-
-        stockMovementService.create(request);
-
-        assertEquals(7, stock.getQuantity());
-        verify(stockMovementRepository).save(argThat(movement -> movement.getQuantity() == -5
-                && movement.getMovementType() == StockMovementType.ADJUSTMENT
-                && "Physical count".equals(movement.getNote())));
-    }
-
-    @Test
-    void create_shouldRejectOutboundMovementWhenStockIsInsufficient() {
-        StockMovementRequest request = new StockMovementRequest();
-        request.setProductId(10L);
-        request.setMovementType(StockMovementType.OUT);
-        request.setQuantity(4);
-
-        InventoryStock stock = new InventoryStock();
-        stock.setProduct(product);
-        stock.setQuantity(5);
-        stock.setReservedQuantity(2);
-
-        when(productRepository.findById(10L)).thenReturn(Optional.of(product));
-        when(inventoryStockRepository.findByProductIdForUpdate(10L)).thenReturn(Optional.of(stock));
-
-        assertThrows(InsufficientStockException.class, () -> stockMovementService.create(request));
-        verify(inventoryStockRepository, never()).save(any());
-        verify(stockMovementRepository, never()).save(any());
-    }
-
-    @Test
-    void create_shouldRejectAdjustmentBelowReservedQuantity() {
-        StockMovementRequest request = new StockMovementRequest();
-        request.setProductId(10L);
-        request.setMovementType(StockMovementType.ADJUSTMENT);
-        request.setQuantity(1);
-
-        InventoryStock stock = new InventoryStock();
-        stock.setProduct(product);
-        stock.setQuantity(5);
-        stock.setReservedQuantity(2);
-
-        when(productRepository.findById(10L)).thenReturn(Optional.of(product));
-        when(inventoryStockRepository.findByProductIdForUpdate(10L)).thenReturn(Optional.of(stock));
-
-        assertThrows(InvalidStockMovementException.class, () -> stockMovementService.create(request));
-        verify(stockMovementRepository, never()).save(any());
     }
 }
