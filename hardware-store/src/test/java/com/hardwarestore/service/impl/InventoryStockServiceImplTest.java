@@ -2,12 +2,15 @@ package com.hardwarestore.service.impl;
 
 import com.hardwarestore.domain.entity.InventoryStock;
 import com.hardwarestore.domain.entity.Product;
+import com.hardwarestore.domain.entity.StockMovement;
+import com.hardwarestore.domain.entity.StockMovementType;
 import com.hardwarestore.dto.request.InventoryStockRequest;
 import com.hardwarestore.dto.response.InventoryStockResponse;
 import com.hardwarestore.exception.ResourceNotFoundException;
 import com.hardwarestore.mapper.InventoryStockMapper;
 import com.hardwarestore.repository.InventoryStockRepository;
 import com.hardwarestore.repository.ProductRepository;
+import com.hardwarestore.repository.StockMovementRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -30,6 +33,9 @@ class InventoryStockServiceImplTest {
 
     @Mock
     private InventoryStockMapper inventoryStockMapper;
+
+    @Mock
+    private StockMovementRepository stockMovementRepository;
 
     @InjectMocks
     private InventoryStockServiceImpl inventoryStockService;
@@ -92,7 +98,7 @@ class InventoryStockServiceImplTest {
                 .build();
 
         when(productRepository.findById(5L)).thenReturn(Optional.of(product));
-        when(inventoryStockRepository.findByProductId(5L)).thenReturn(Optional.of(inventory));
+        when(inventoryStockRepository.findByProductIdForUpdate(5L)).thenReturn(Optional.of(inventory));
         when(inventoryStockRepository.save(inventory)).thenReturn(inventory);
         when(inventoryStockMapper.toResponse(inventory)).thenReturn(response);
 
@@ -101,6 +107,11 @@ class InventoryStockServiceImplTest {
         assertNotNull(result);
         assertEquals(15, result.getQuantity());
         verify(inventoryStockRepository).save(inventory);
+        org.mockito.ArgumentCaptor<StockMovement> movementCaptor = org.mockito.ArgumentCaptor.forClass(StockMovement.class);
+        verify(stockMovementRepository).save(movementCaptor.capture());
+        assertEquals(5, movementCaptor.getValue().getQuantity());
+        assertEquals(StockMovementType.ADJUSTMENT, movementCaptor.getValue().getMovementType());
+        assertEquals("manual adjustment", movementCaptor.getValue().getNote());
     }
 
     @Test

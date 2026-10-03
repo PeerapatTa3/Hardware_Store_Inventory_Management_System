@@ -3,7 +3,7 @@ package com.hardwarestore.service.impl;
 import com.hardwarestore.domain.entity.Supplier;
 import com.hardwarestore.dto.request.SupplierRequest;
 import com.hardwarestore.dto.response.SupplierResponse;
-import com.hardwarestore.exception.DuplicateSkuException;
+import com.hardwarestore.exception.DuplicateResourceException;
 import com.hardwarestore.exception.ResourceNotFoundException;
 import com.hardwarestore.mapper.SupplierMapper;
 import com.hardwarestore.repository.SupplierRepository;
@@ -23,15 +23,15 @@ public class SupplierServiceImpl implements SupplierService {
     @Override
     public SupplierResponse create(SupplierRequest request) {
         if (request.getName() != null && supplierRepository.existsByNameIgnoreCase(request.getName())) {
-            throw new DuplicateSkuException(request.getName());
+            throw new DuplicateResourceException("Supplier", "name", request.getName());
         }
 
         if (request.getEmail() != null && supplierRepository.existsByEmailIgnoreCase(request.getEmail())) {
-            throw new DuplicateSkuException(request.getEmail());
+            throw new DuplicateResourceException("Supplier", "email", request.getEmail());
         }
 
         if (request.getPhone() != null && supplierRepository.existsByPhone(request.getPhone())) {
-            throw new DuplicateSkuException(request.getPhone());
+            throw new DuplicateResourceException("Supplier", "phone", request.getPhone());
         }
 
         Supplier saved = supplierRepository.save(supplierMapper.toEntity(request));
@@ -53,6 +53,15 @@ public class SupplierServiceImpl implements SupplierService {
     @Override
     public SupplierResponse update(Long id, SupplierRequest request) {
         Supplier supplier = getSupplierOrThrow(id);
+        if (request.getName() != null && supplierRepository.existsByNameIgnoreCaseAndIdNot(request.getName(), id)) {
+            throw new DuplicateResourceException("Supplier", "name", request.getName());
+        }
+        if (request.getEmail() != null && supplierRepository.existsByEmailIgnoreCaseAndIdNot(request.getEmail(), id)) {
+            throw new DuplicateResourceException("Supplier", "email", request.getEmail());
+        }
+        if (request.getPhone() != null && supplierRepository.existsByPhoneAndIdNot(request.getPhone(), id)) {
+            throw new DuplicateResourceException("Supplier", "phone", request.getPhone());
+        }
         supplier.setName(request.getName());
         supplier.setPhone(request.getPhone());
         supplier.setEmail(request.getEmail());

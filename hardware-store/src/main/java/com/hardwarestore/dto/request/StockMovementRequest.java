@@ -2,7 +2,7 @@ package com.hardwarestore.dto.request;
 
 import com.hardwarestore.domain.entity.StockMovementType;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,7 +17,7 @@ public class StockMovementRequest {
     private StockMovementType movementType;
 
     @NotNull(message = "quantity is required")
-    @Positive(message = "quantity must be positive")
+    @PositiveOrZero(message = "quantity must be zero or greater")
     private Integer quantity;
 
     private String referenceNo;
