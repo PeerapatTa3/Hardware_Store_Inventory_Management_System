@@ -6,8 +6,8 @@
 
 - [x] มี `InventoryStock`, `StockMovement` และ API สำหรับอ่าน/ปรับสต็อกและบันทึก stock movement แล้ว; การปรับยอดสร้าง `ADJUSTMENT` movement ใน transaction เดียวกัน
 - [x] มี unit tests ของ `InventoryStockService` และ `StockMovementService`; ตรวจและต่อยอด ไม่สร้างโมดูลซ้ำ
-- [ ] ยังไม่พบ `PurchaseOrder` / `PurchaseItem` หรือ Purchase API ใน backend
-- [ ] งานรับสินค้าเข้า (Purchase Receive) ที่เชื่อม Purchase, Inventory และ StockMovement ยังต้องทำ
+- [x] มี `PurchaseOrder` / `PurchaseItem` และ Purchase API ใน backend
+- [x] งานรับสินค้าเข้า (Purchase Receive) เชื่อม Purchase, Inventory และ StockMovement แล้ว
 - [x] ทุกการเปลี่ยนจำนวน stock ผ่าน API ปัจจุบันของ Inventory หรือ StockMovement บันทึก StockMovement ควบคู่กันใน transaction เดียว
 - [ ] เน้นพัฒนา Backend ก่อน; หลัง Backend เสร็จสมบูรณ์จึงพิจารณาขอบเขตและแนวทาง Frontend ร่วมกับทีม
 
@@ -27,7 +27,7 @@
 - [ ] ทบทวน `InventoryStock` ว่าความสัมพันธ์กับ `Product` เป็นหนึ่งต่อหนึ่ง และรองรับ quantity/reserved quantity ตามแบบข้อมูล
 - [x] ยืนยันกติกาจำนวนคงเหลือ: ห้ามติดลบ, `OUT` ต้องไม่เกิน available quantity และ `ADJUSTMENT.quantity` คือยอดคงเหลือใหม่ โดยยอดใหม่ต้องไม่น้อยกว่า reserved quantity
 - [x] ปรับ Inventory adjustment ให้สร้าง `ADJUSTMENT` movement ควบคู่กับการแก้ quantity
-- [ ] เมื่อทำ Purchase Receive ให้เรียก flow รับสินค้าเพียงครั้งเดียว เพื่อไม่ให้ Inventory และ StockMovement ถูกปรับ/บันทึกซ้ำ
+- [x] Purchase Receive เรียก flow รับสินค้าเพียงครั้งเดียว เพื่อไม่ให้ Inventory และ StockMovement ถูกปรับ/บันทึกซ้ำ
 - [x] คงการเปลี่ยน Inventory และการบันทึก StockMovement ให้อยู่ใน transaction เดียวกัน
 - [ ] ตรวจ API อ่าน stock และรายการ movement รวมถึงกรณีไม่พบ Product/Inventory และรูปแบบ error response
 - [x] เพิ่มหรือปรับ service tests ให้ครอบคลุมการปรับยอด, การบันทึก `ADJUSTMENT` movement และการปฏิเสธยอดต่ำกว่า reserved quantity
@@ -38,7 +38,7 @@
 - [x] กำหนดสถานะและ lifecycle ของ Purchase: สร้างเป็น `PENDING` และเปลี่ยนเป็น `COMPLETED` หลังรับสินค้า (แก้ไขได้เฉพาะ `PENDING`)
 - [x] เพิ่ม repository, request/response DTO, mapper และ service ตามรูปแบบ layered architecture ที่มีอยู่
 - [x] ตรวจสอบ Supplier และ Product ที่อ้างถึงว่ามีอยู่จริง; validate จำนวนและ unit cost; คำนวณ subtotal/total จากรายการ ไม่รับยอดรวมจาก client
-- [ ] รองรับ endpoint ตามแผน: `GET /api/v1/purchases`, `GET /api/v1/purchases/{id}`, `POST /api/v1/purchases`, `PUT /api/v1/purchases/{id}` และ `POST /api/v1/purchases/{id}/receive`
+- [x] รองรับ endpoint ตามแผน: `GET /api/v1/purchases`, `GET /api/v1/purchases/{id}`, `POST /api/v1/purchases`, `PUT /api/v1/purchases/{id}` และ `POST /api/v1/purchases/{id}/receive`
 - [x] กำหนดกติกาแก้ไข Purchase ให้แก้ได้เฉพาะ `PENDING`; สถานะอื่นตอบกลับ HTTP 409
 - [x] ทำ Receive แบบ transaction เดียว: เพิ่ม stock ตามทุกรายการ, สร้าง StockMovement ชนิด `IN` ที่อ้างอิง Purchase และเปลี่ยนสถานะ Purchase; หากขั้นตอนใดล้มเหลวต้อง rollback ทั้งหมด
 - [x] ใช้ validation และ exception handler กลางของโปรเจค; ไม่เพิ่ม error handling ที่คืนผลสำเร็จเมื่อเกิดข้อผิดพลาด
@@ -47,9 +47,9 @@
 
 - [x] Unit tests: สร้าง Purchase รายการเดียว/หลายรายการ, คำนวณยอด, Product/Supplier ไม่มี, ข้อมูลผิดรูปแบบ และแก้ Purchase ตามสถานะ
 - [x] Receive tests: stock เพิ่มตามจำนวน, สร้าง movement `IN`, เปลี่ยนสถานะ, ปฏิเสธรับซ้ำ และไม่มีข้อมูลบางส่วนเมื่อเกิด failure/rollback
-- [ ] Controller tests: HTTP method/status, request validation, response และ error cases ของ Purchase API
-- [ ] ทดสอบร่วมกับ Inventory/StockMovement เดิมและรัน `mvnw.cmd test` ทั้งชุดก่อนเปิด PR
-- [ ] ตรวจ Swagger/API documentation และอัปเดตเอกสารที่เกี่ยวข้องให้ตรงกับ API และ business rules จริง
+- [x] Controller tests: HTTP method/status, request validation, response และ error cases ของ Purchase API
+- [x] ทดสอบ receive ร่วมกับ Inventory/StockMovement และรัน `mvnw.cmd test` ทั้งชุดก่อนเปิด PR
+- [x] ตรวจ API documentation และอัปเดต endpoints, validation, status codes และ business rules ให้ตรงกับ implementation
 - [ ] หลัง Backend เสร็จสมบูรณ์ ให้ทีมพิจารณาว่าจะทำ Frontend หรือไม่; หากตกลงทำ ให้กำหนดขอบเขตและแนวทางก่อนพัฒนาหน้า Inventory/Purchase และทดสอบ flow เรียก API จริง
 - [ ] เปิด Pull Request จาก branch Member 2 เข้า `develop`, สรุปสิ่งที่ทำ/ผลทดสอบ และขอ reviewer อย่างน้อย 1 คน
 
@@ -65,7 +65,7 @@
 | [x] | 4 | ทำ create/list/get Purchase พร้อม service tests | `feat: add purchase creation and lookup` |
 | [x] | 5 | ทำการแก้ Purchase และกติกาการเปลี่ยนสถานะก่อนรับสินค้า | `feat: manage pending purchase orders` |
 | [x] | 6 | ทำ Receive แบบ transaction เชื่อม Inventory/StockMovement พร้อม tests สำหรับ receive/rollback | `feat: receive purchase into inventory` |
-| [ ] | 7 | เพิ่ม Purchase REST endpoints/controller tests และรัน regression tests | `test: verify purchase api and backend regression` |
+| [x] | 7 | เพิ่ม Purchase REST endpoints/controller tests และรัน regression tests | `test: verify purchase api and backend regression` |
 | [ ] | 8 | อัปเดตเอกสาร API/ผลทดสอบ และตรวจความพร้อมก่อนเปิด PR | `docs: document inventory and purchase workflow` |
 
 หลัง Backend เสร็จสมบูรณ์ ให้ทีมพิจารณา Frontend แยกต่างหาก หากตกลงทำ ให้จัด commit ตามขอบเขตงานจริง โดยไม่จำเป็นต้องนับรวมใน checkpoints ของ Backend ข้างต้น
@@ -74,6 +74,6 @@
 
 - [x] Inventory, StockMovement และ Purchase ทำงานร่วมกันโดยไม่ทำให้ quantity กับ movement history คลาดเคลื่อนใน service flow
 - [x] การรับ Purchase อัปเดต stock, movement และสถานะครบใน transaction เดียว ป้องกันการรับซ้ำ และทดสอบ rollback
-- [ ] Validation, business rules, error responses และ REST API ตรงกับเอกสาร (Purchase REST controller ยังไม่ทำ)
+- [x] Validation, business rules, error responses และ Purchase REST API ตรงกับเอกสาร
 - [x] Unit/persistence tests ที่เกี่ยวข้องผ่าน และ `mvnw.cmd test` ผ่านทั้งชุด
 - [ ] Pull Request เข้า `develop` ผ่าน review; ไม่มีการ push ตรงเข้า `main`

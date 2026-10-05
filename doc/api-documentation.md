@@ -43,19 +43,35 @@
 ส่วน `OUT` จะถูกปฏิเสธเมื่อจำนวนที่ขอเกิน available quantity.
 
 ## Purchase API
-Endpoints ที่วางแผนไว้สำหรับ Purchase module:
+### Endpoints
 - GET /api/v1/purchases
 - GET /api/v1/purchases/{id}
 - POST /api/v1/purchases
 - PUT /api/v1/purchases/{id}
 - POST /api/v1/purchases/{id}/receive
 
-หมายเหตุ: Purchase REST controller ยังไม่ถูกเพิ่ม; endpoints เหล่านี้ยังเรียกใช้งานไม่ได้จนกว่าจะเสร็จในงาน API/controller
-แก้ไข Purchase ได้เฉพาะสถานะ `PENDING`; สถานะอื่นจะถูกปฏิเสธด้วย HTTP 409
-การแก้ไขแทนที่ Supplier และรายการสินค้าทั้งหมด พร้อมคำนวณ subtotal/total ใหม่จากรายการ
-สถานะและยอดรวมไม่ได้รับจาก request เพื่อไม่ให้ client เปลี่ยน lifecycle หรือกำหนดยอดเอง
+`POST` สำหรับสร้าง Purchase ตอบกลับ HTTP 201; `GET`, `PUT` และ `POST .../receive` ตอบกลับ HTTP 200 เมื่อสำเร็จ
 
-เมื่อเรียก receive ผ่าน service: ระบบเพิ่ม stock และบันทึก Stock Movement ประเภท `IN`
+ตัวอย่าง request สำหรับสร้างหรือแก้ไข:
+```json
+{
+  "supplierId": 3,
+  "items": [
+    {
+      "productId": 4,
+      "quantity": 2,
+      "unitCost": 12.50
+    }
+  ]
+}
+```
+
+- `supplierId`, `productId`, `quantity` และ `unitCost` ต้องเป็นค่าบวก; `items` ต้องมีอย่างน้อยหนึ่งรายการ
+- ระบบคำนวณ subtotal และ total จากรายการ; `status` และยอดรวมไม่ได้รับจาก request
+- `PUT` แทนที่ Supplier และรายการสินค้าทั้งหมด และอนุญาตเฉพาะ Purchase สถานะ `PENDING`; สถานะอื่นตอบ HTTP 409
+- ID ที่ไม่พบตอบ HTTP 404; request ที่ไม่ผ่าน validation ตอบ HTTP 400 ผ่าน `GlobalExceptionHandler`
+
+`POST /api/v1/purchases/{id}/receive` รับสินค้าเข้า stock และบันทึก Stock Movement ประเภท `IN`
 สำหรับทุกรายการ แล้วเปลี่ยนสถานะ Purchase เป็น `COMPLETED` ภายใน transaction เดียว
 หากรายการใดล้มเหลว การเปลี่ยน stock, movement และสถานะจะ rollback ทั้งหมด
 Purchase ที่ไม่ใช่ `PENDING` จะรับซ้ำไม่ได้; การรับสำเร็จอ้างอิง movement ด้วย purchase number
