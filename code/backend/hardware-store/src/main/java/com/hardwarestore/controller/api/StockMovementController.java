@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/stock-movements")
 @RequiredArgsConstructor
@@ -19,5 +21,15 @@ public class StockMovementController {
     @ResponseStatus(HttpStatus.CREATED)
     public StockMovementResponse create(@Valid @RequestBody StockMovementRequest request) {
         return stockMovementService.create(request);
+    }
+
+    @GetMapping
+    public List<StockMovementResponse> findAll() {
+        return stockMovementService.findAll();
+    }
+
+    @GetMapping("/products/{productId}")
+    public List<StockMovementResponse> findByProductId(@PathVariable Long productId) {
+        return stockMovementService.findByProductId(productId);
     }
 }

@@ -4,8 +4,8 @@
 
 ## ภาพรวม
 
-- มี test case ใหม่ **33 รายการ** และปรับ test เดิม **1 รายการ** ในชุดงาน Member 2
-- Regression test ล่าสุดหลังเพิ่ม Purchase Controller ผ่าน **48 tests, 0 failures, 0 errors**
+- มี test case ใหม่ **48 รายการ** และปรับ test เดิม **1 รายการ** ในชุดงาน Member 2
+- Regression test ล่าสุดหลังเพิ่ม Stock Movement read API และ controller/integration tests ผ่าน **63 tests, 0 failures, 0 errors**
 - ตารางด้านล่างแสดง commit, test file, test method และสิ่งที่ทดสอบ
 
 ## รายการ Test Cases
@@ -47,6 +47,28 @@
 | `aadd658` — `test:เพิ่ม Purchase REST endpoints/controller tests และรัน regression tests` | `PurchaseOrderControllerTest.invalidRequestShouldReturnValidationError` | POST/PUT ที่ request ไม่ผ่าน validation ตอบ HTTP 400 พร้อม `VALIDATION_FAILED` และ path ถูกต้อง โดยไม่เรียก service |
 | `aadd658` — `test:เพิ่ม Purchase REST endpoints/controller tests และรัน regression tests` | `PurchaseOrderControllerTest.serviceErrorsShouldUseStandardNotFoundAndConflictResponses` | ตรวจ exception จาก service ถูกแปลงเป็น HTTP 404 `RESOURCE_NOT_FOUND` และ HTTP 409 `INVALID_PURCHASE_STATE` |
 
+## งานที่เพิ่มหลัง `aadd658` — ยังไม่ commit
+
+ข้อความ commit ที่เสนอ: `feat: add stock movement read APIs and inventory workflow tests`
+
+| สถานะ | Test file / method | สิ่งที่ทดสอบ |
+|---|---|---|
+| เพิ่ม | `InventoryStockServiceImplTest.getStockByProductIdShouldThrowIfInventoryMissing` | Product มีอยู่แต่ไม่มี Inventory ต้องตอบด้วย `ResourceNotFoundException` |
+| เพิ่ม | `StockMovementServiceImplTest.findAllShouldMapMovementsInDescendingMovementTimeOrder` | คืน movement ทั้งหมดที่ map แล้ว และส่ง sort ล่าสุดไปเก่าสุดให้ repository |
+| เพิ่ม | `StockMovementServiceImplTest.findByProductIdShouldMapMovementsInDescendingMovementTimeOrder` | ตรวจ Product ก่อนค้น movement ตาม Product ID และเรียงจากล่าสุดไปเก่าสุด |
+| เพิ่ม | `StockMovementServiceImplTest.findByProductIdShouldThrowWhenProductDoesNotExist` | Product ID ที่ไม่มีอยู่ต้อง throw `ResourceNotFoundException` และไม่ query/map movement |
+| เพิ่ม | `StockMovementServiceImplTest.findByProductIdShouldReturnEmptyListWhenProductHasNoMovements` | Product ที่มีอยู่แต่ยังไม่มี movement คืนรายการว่าง |
+| เพิ่ม | `InventoryControllerTest.getStockShouldReturnInventoryResponse` | GET stock ตอบ HTTP 200 พร้อม quantity, reserved และ available quantity |
+| เพิ่ม | `InventoryControllerTest.adjustStockShouldReturnUpdatedInventoryResponse` | PUT ปรับยอดที่ valid ตอบ HTTP 200 พร้อม stock response ใหม่และเรียก service |
+| เพิ่ม | `InventoryControllerTest.invalidAdjustmentShouldReturnValidationErrorWithoutCallingService` | PUT ที่ขาด quantity ตอบ HTTP 400 `VALIDATION_FAILED` และไม่เรียก service |
+| เพิ่ม | `InventoryControllerTest.missingProductOrInventoryShouldReturnNotFound` | Inventory service not-found ถูกแปลงเป็น HTTP 404 `RESOURCE_NOT_FOUND` |
+| เพิ่ม | `StockMovementControllerTest.findAllShouldReturnMovementList` | GET movement ทั้งหมดตอบ HTTP 200 เป็น list พร้อมข้อมูล movement |
+| เพิ่ม | `StockMovementControllerTest.findByProductIdShouldReturnMovementList` | GET movement ตาม Product ID ตอบ HTTP 200 เป็น list ที่สัมพันธ์กับ Product |
+| เพิ่ม | `StockMovementControllerTest.findByProductIdShouldReturnNotFoundForUnknownProduct` | Product ที่ไม่มีอยู่ใน GET ตาม Product ID ตอบ HTTP 404 |
+| เพิ่ม | `StockMovementControllerTest.createShouldReturnCreatedMovement` | POST สร้าง movement ตอบ HTTP 201 พร้อม response ของ movement |
+| เพิ่ม | `StockMovementControllerTest.invalidMovementShouldReturnValidationErrorWithoutCallingService` | POST ที่ quantity ผิด validation ตอบ HTTP 400 และไม่เรียก service |
+| เพิ่ม | `InventoryPurchaseApiIntegrationTest.purchaseReceiveApiShouldPersistOrderStockAndInboundMovement` | ผ่าน HTTP สร้าง Purchase และ receive จริง ตรวจสถานะใน DB, stock เพิ่ม และ movement ปรากฏทั้ง GET by product และ GET all |
+
 ## ไฟล์ Test ที่เกี่ยวข้อง
 
 - [InventoryStockServiceImplTest](../../code/backend/hardware-store/src/test/java/com/hardwarestore/service/impl/InventoryStockServiceImplTest.java)
@@ -57,6 +79,9 @@
 - [PurchaseOrderServiceImplTest](../../code/backend/hardware-store/src/test/java/com/hardwarestore/service/impl/PurchaseOrderServiceImplTest.java)
 - [GlobalExceptionHandlerTest](../../code/backend/hardware-store/src/test/java/com/hardwarestore/exception/GlobalExceptionHandlerTest.java)
 - [PurchaseOrderControllerTest](../../code/backend/hardware-store/src/test/java/com/hardwarestore/controller/api/PurchaseOrderControllerTest.java)
+- [InventoryControllerTest](../../code/backend/hardware-store/src/test/java/com/hardwarestore/controller/api/InventoryControllerTest.java)
+- [StockMovementControllerTest](../../code/backend/hardware-store/src/test/java/com/hardwarestore/controller/api/StockMovementControllerTest.java)
+- [InventoryPurchaseApiIntegrationTest](../../code/backend/hardware-store/src/test/java/com/hardwarestore/integration/InventoryPurchaseApiIntegrationTest.java)
 
 ## รัน Regression Tests
 
@@ -66,7 +91,7 @@
 .\mvnw.cmd test
 ```
 
-ผลล่าสุดที่บันทึกหลัง commit `aadd658`: **48 tests, 0 failures, 0 errors**.
+ผล regression ล่าสุดใน working tree: **63 tests, 0 failures, 0 errors**. ผลในอดีตหลัง commit `aadd658` ยังคงเป็น 48 tests.
 
 ## ขอบเขต
 

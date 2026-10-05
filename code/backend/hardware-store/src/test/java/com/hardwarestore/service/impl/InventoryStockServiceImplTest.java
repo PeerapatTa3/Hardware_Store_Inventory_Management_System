@@ -121,4 +121,14 @@ class InventoryStockServiceImplTest {
 
         assertThrows(ResourceNotFoundException.class, () -> inventoryStockService.getStockByProductId(99L));
     }
+
+    @Test
+    void getStockByProductIdShouldThrowIfInventoryMissing() {
+        Product product = new Product();
+        product.setId(99L);
+        when(productRepository.findById(99L)).thenReturn(Optional.of(product));
+        when(inventoryStockRepository.findByProductId(99L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> inventoryStockService.getStockByProductId(99L));
+    }
 }

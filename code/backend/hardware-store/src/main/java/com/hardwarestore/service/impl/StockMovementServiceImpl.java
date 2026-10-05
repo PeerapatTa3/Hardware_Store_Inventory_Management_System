@@ -13,8 +13,11 @@ import com.hardwarestore.repository.ProductRepository;
 import com.hardwarestore.repository.StockMovementRepository;
 import com.hardwarestore.service.StockMovementService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -77,5 +80,24 @@ public class StockMovementServiceImpl implements StockMovementService {
         StockMovement saved = stockMovementRepository.save(movement);
 
         return stockMovementMapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<StockMovementResponse> findAll() {
+        return stockMovementRepository.findAll(Sort.by(Sort.Direction.DESC, "movementAt")).stream()
+                .map(stockMovementMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<StockMovementResponse> findByProductId(Long productId) {
+        productRepository.findById(productId)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + productId));
+        return stockMovementRepository.findByProductId(
+                        productId, Sort.by(Sort.Direction.DESC, "movementAt")).stream()
+                .map(stockMovementMapper::toResponse)
+                .toList();
     }
 }

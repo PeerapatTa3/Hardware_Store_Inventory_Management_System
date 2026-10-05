@@ -14,11 +14,13 @@ import com.hardwarestore.repository.StockMovementRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.data.domain.Sort;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -203,5 +205,62 @@ class StockMovementServiceImplTest {
         when(productRepository.findById(99L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> stockMovementService.create(request));
+    }
+
+    @Test
+    void findAllShouldMapMovementsInDescendingMovementTimeOrder() {
+        StockMovement movement = new StockMovement();
+        StockMovementResponse response = StockMovementResponse.builder()
+                .id(5L)
+                .productId(10L)
+                .movementType(StockMovementType.IN)
+                .quantity(4)
+                .build();
+        Sort sort = Sort.by(Sort.Direction.DESC, "movementAt");
+        when(stockMovementRepository.findAll(sort)).thenReturn(List.of(movement));
+        when(stockMovementMapper.toResponse(movement)).thenReturn(response);
+
+        List<StockMovementResponse> result = stockMovementService.findAll();
+
+        assertEquals(List.of(response), result);
+        verify(stockMovementRepository).findAll(sort);
+    }
+
+    @Test
+    void findByProductIdShouldMapMovementsInDescendingMovementTimeOrder() {
+        StockMovement movement = new StockMovement();
+        StockMovementResponse response = StockMovementResponse.builder()
+                .id(5L)
+                .productId(10L)
+                .movementType(StockMovementType.IN)
+                .quantity(4)
+                .build();
+        Sort sort = Sort.by(Sort.Direction.DESC, "movementAt");
+        when(productRepository.findById(10L)).thenReturn(Optional.of(product));
+        when(stockMovementRepository.findByProductId(10L, sort)).thenReturn(List.of(movement));
+        when(stockMovementMapper.toResponse(movement)).thenReturn(response);
+
+        List<StockMovementResponse> result = stockMovementService.findByProductId(10L);
+
+        assertEquals(List.of(response), result);
+        verify(stockMovementRepository).findByProductId(10L, sort);
+    }
+
+    @Test
+    void findByProductIdShouldThrowWhenProductDoesNotExist() {
+        when(productRepository.findById(404L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> stockMovementService.findByProductId(404L));
+
+        verifyNoInteractions(stockMovementRepository, stockMovementMapper);
+    }
+
+    @Test
+    void findByProductIdShouldReturnEmptyListWhenProductHasNoMovements() {
+        when(productRepository.findById(10L)).thenReturn(Optional.of(product));
+        when(stockMovementRepository.findByProductId(
+                eq(10L), any(Sort.class))).thenReturn(List.of());
+
+        assertTrue(stockMovementService.findByProductId(10L).isEmpty());
     }
 }

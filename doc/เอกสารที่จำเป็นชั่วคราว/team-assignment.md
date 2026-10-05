@@ -17,7 +17,7 @@
 - Database: H2 สำหรับ development
 - API: RESTful API + Swagger/OpenAPI
 - Testing: JUnit 5 + Mockito
-- ผลการตรวจสอบล่าสุด (2026-10-06): `.\mvnw.cmd test` ผ่าน 48 tests, 0 failures, 0 errors
+- ผลการตรวจสอบล่าสุด (2026-10-06): `.\mvnw.cmd test` ผ่าน 63 tests, 0 failures, 0 errors; งาน Stock Movement GET และ tests ล่าสุดยังอยู่ใน working tree และยังไม่ commit
 
 ## 3. งานที่ Member 1 ทำเสร็จแล้ว
 
@@ -61,12 +61,12 @@ Member 1 อยู่ในสถานะที่ “ทำงานหลั�
 - Service สำหรับระบบเคลื่อนไหวสต็อก
 - PurchaseOrder / PurchaseItem persistence, DTO, validation, mapper และ service
 - Purchase REST API สำหรับ create/list/get/update/receive; receive ปรับ Inventory, บันทึก `IN` movement และเปลี่ยนสถานะใน transaction เดียว
-- Unit, persistence, validation, mapper, exception handler และ Purchase Controller tests
+- Stock Movement API สำหรับอ่าน movement ทั้งหมดและกรองตาม Product ID; Product ที่ไม่มีอยู่ตอบ 404 และ Product ที่ไม่มี movement คืนรายการว่าง
+- Unit, persistence, validation, mapper, exception handler และ Controller tests สำหรับ Inventory/Stock Movement/Purchase รวมถึง Purchase receive API integration test
 
 ### 4.3 สิ่งที่ยังต้องทำต่อ
-- เพิ่ม `GET /api/v1/stock-movements` และ `GET /api/v1/stock-movements/products/{productId}` ซึ่งระบุไว้ใน PROJECT_PLAN แต่ยังไม่มีใน backend
-- เพิ่ม Controller tests สำหรับ Inventory/Stock Movement และพิจารณา HTTP-to-database integration tests สำหรับ Purchase
-- ทบทวน business rules/API ของ Inventory และ Stock Movement ให้ครบตาม PROJECT_PLAN ก่อนสรุป Backend ของ Member 2
+- ประสานยืนยัน DTO, exception, URL และ stock rules กับผู้ดูแลโมดูลเดิม หากยังไม่ได้ทำร่วมกัน
+- สร้าง Pull Request จาก branch Member 2 เข้า `develop` และขอ reviewer
 - พิจารณาขอบเขต Frontend ร่วมกับทีมหลัง Backend เสร็จสมบูรณ์
 
 ## 5. งานที่ Member 3 ควรทำต่อ

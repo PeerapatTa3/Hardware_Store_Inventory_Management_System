@@ -38,13 +38,14 @@
 
 ## Stock Movement API
 - POST /api/v1/stock-movements
+- GET /api/v1/stock-movements
+- GET /api/v1/stock-movements/products/{productId}
 
 การสร้าง movement ประเภท `IN` หรือ `OUT` จะปรับ Inventory ใน transaction เดียวกัน
 ส่วน `OUT` จะถูกปฏิเสธเมื่อจำนวนที่ขอเกิน available quantity.
 
-หมายเหตุ: `PROJECT_PLAN.md` ระบุ `GET /api/v1/stock-movements` และ
-`GET /api/v1/stock-movements/products/{productId}` สำหรับอ่านประวัติ movement;
-ยังไม่มี implementation ของ GET endpoints เหล่านี้ใน backend ปัจจุบัน.
+- GET endpoints คืนรายการเรียงจาก movement ล่าสุดไปเก่าสุด
+- การค้นหาด้วย Product ID ที่ไม่มีอยู่ตอบ HTTP 404; Product ที่มีอยู่แต่ไม่มี movement คืนรายการว่าง
 
 ## Purchase API
 ### Endpoints

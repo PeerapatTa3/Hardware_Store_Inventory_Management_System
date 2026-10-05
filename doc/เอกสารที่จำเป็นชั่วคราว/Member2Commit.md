@@ -187,8 +187,20 @@
 
 **ผลทดสอบหลังงานนี้:** `.\mvnw.cmd test` ผ่าน 48 tests, 0 failures, 0 errors
 
-## ขอบเขตที่ยังไม่รวมใน commits เหล่านี้
+## งานต่อยอดหลัง commit `aadd658` (ยังไม่ commit)
+
+ข้อความ commit ที่เสนอ: `feat: add stock movement read APIs and inventory workflow tests`
+
+- เพิ่ม `GET /api/v1/stock-movements` และ `GET /api/v1/stock-movements/products/{productId}`; เรียงตามเวลาล่าสุดก่อน, Product ที่ไม่มีอยู่ตอบ 404 และ Product ที่ไม่มี movement คืน list ว่าง
+- เพิ่ม Controller tests สำหรับ Inventory และ Stock Movement รวม validation, response และ not-found behavior
+- เพิ่ม `InventoryPurchaseApiIntegrationTest` ทดสอบผ่าน HTTP ตั้งแต่สร้าง Purchase ถึง receive พร้อมยืนยัน stock, Purchase status และ movements ในฐานข้อมูล/GET endpoints
+- อัปเดต API docs, checklist, progress และ test summaries ให้ตรง implementation
+- Regression ล่าสุดใน working tree ผ่าน 63 tests, 0 failures, 0 errors
+
+> การเปลี่ยนแปลงส่วนนี้ยังอยู่ใน working tree และยังไม่มี commit hash; จะไม่สร้าง commit โดยไม่ได้รับอนุญาต
+
+## ขอบเขตที่ยังไม่รวมในงาน Member 2
 
 - ยังไม่มีหน้าจอ Frontend สำหรับ Purchase หรือ Inventory
-- ยังไม่มี HTTP-to-database integration tests ที่ครอบคลุม Purchase API ทั้ง flow; receive มี persistence tests สำหรับ success, duplicate receive และ rollback
-- Stock Movement GET endpoints ที่ระบุใน PROJECT_PLAN และ Controller tests สำหรับ Inventory/Stock Movement ยังไม่ทำ
+- ยังไม่มี Sales flow ซึ่งอยู่ในขอบเขตงานถัดไปของโปรเจกต์
+- การสร้าง Pull Request, ขอ reviewer และการประสานยืนยันสัญญา API กับเจ้าของโมดูลเป็นขั้นตอนที่ผู้ใช้/ทีมดำเนินการ

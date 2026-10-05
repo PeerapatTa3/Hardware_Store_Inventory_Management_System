@@ -5,13 +5,14 @@
 ## สถานะที่ตรวจพบในโปรเจค
 
 - [x] มี `InventoryStock`, `StockMovement` และ API สำหรับอ่าน/ปรับสต็อกและบันทึก stock movement แล้ว; การปรับยอดสร้าง `ADJUSTMENT` movement ใน transaction เดียวกัน
+- [x] Stock Movement API รองรับ POST, GET รายการทั้งหมด และ GET ตาม Product ID ตาม `PROJECT_PLAN.md`
 - [x] มี unit tests ของ `InventoryStockService` และ `StockMovementService`; ตรวจและต่อยอด ไม่สร้างโมดูลซ้ำ
 - [x] มี `PurchaseOrder` / `PurchaseItem` และ Purchase API ใน backend
 - [x] งานรับสินค้าเข้า (Purchase Receive) เชื่อม Purchase, Inventory และ StockMovement แล้ว
 - [x] ทุกการเปลี่ยนจำนวน stock ผ่าน API ปัจจุบันของ Inventory หรือ StockMovement บันทึก StockMovement ควบคู่กันใน transaction เดียว
 - [x] งานที่ทำในรอบนี้เน้น Backend; ยังไม่เริ่ม Frontend ตามแนวทางให้พิจารณาหลัง Backend เสร็จ
 
-> สถานะโค้ดตรวจจาก working tree และรัน `.\mvnw.cmd test` ล่าสุดผ่าน 48 tests, 0 failures, 0 errors; รายการที่ยังไม่ครบระบุไว้เป็น unchecked ด้านล่าง
+> สถานะโค้ดตรวจจาก working tree และรัน `.\mvnw.cmd test` ล่าสุดผ่าน 63 tests, 0 failures, 0 errors; รายการที่ยังไม่ครบระบุไว้เป็น unchecked ด้านล่าง
 
 ## งานที่ต้องทำ
 
@@ -30,7 +31,8 @@
 - [x] Purchase Receive เรียก flow รับสินค้าเพียงครั้งเดียว เพื่อไม่ให้ Inventory และ StockMovement ถูกปรับ/บันทึกซ้ำ
 - [x] คงการเปลี่ยน Inventory และการบันทึก StockMovement ให้อยู่ใน transaction เดียวกัน
 - [x] ตรวจ API อ่าน/ปรับ Inventory: มี GET/PUT ตามแผน; มี service test กรณีไม่พบ Product และ error handler กลาง
-- [ ] เพิ่ม Stock Movement GET endpoints ตาม `PROJECT_PLAN.md` (`GET /api/v1/stock-movements` และ `GET /api/v1/stock-movements/products/{productId}`); ปัจจุบันมีเฉพาะ POST และยังไม่มี controller tests สำหรับ Inventory/Stock Movement
+- [x] เพิ่ม Stock Movement GET endpoints ตาม `PROJECT_PLAN.md` (`GET /api/v1/stock-movements` และ `GET /api/v1/stock-movements/products/{productId}`); เรียง movement ล่าสุดก่อน, Product ไม่มีตอบ 404 และ Product ที่ไม่มี movement คืน list ว่าง
+- [x] เพิ่ม Inventory และ Stock Movement Controller tests ครอบคลุม GET/PUT/POST, validation และ not-found response
 - [x] เพิ่มหรือปรับ service tests ให้ครอบคลุมการปรับยอด, การบันทึก `ADJUSTMENT` movement และการปฏิเสธยอดต่ำกว่า reserved quantity
 
 ### 3. สร้าง Purchase module
@@ -50,6 +52,7 @@
 - [x] Receive tests: stock เพิ่มตามจำนวน, สร้าง movement `IN`, เปลี่ยนสถานะ, ปฏิเสธรับซ้ำ และไม่มีข้อมูลบางส่วนเมื่อเกิด failure/rollback
 - [x] Controller tests: HTTP method/status, request validation, response และ error cases ของ Purchase API
 - [x] ทดสอบ receive ร่วมกับ Inventory/StockMovement และรัน `mvnw.cmd test` ทั้งชุดก่อนเปิด PR
+- [x] Integration test ผ่าน HTTP API ตั้งแต่สร้าง Purchase ถึงรับสินค้า โดยตรวจ Purchase status, Inventory และ Stock Movement ที่บันทึกในฐานข้อมูล
 - [x] ตรวจ API documentation และอัปเดต endpoints, validation, status codes และ business rules ให้ตรงกับ implementation
 - [x] สร้าง [Member2_test.md](../../test/Member2_Test/Member2_test.md) สรุป test cases ของ Member 2; และ [Member2TestCommit.md](../../test/Member2_Test/Member2TestCommit.md) แยก test ตาม commit
 - [ ] หลัง Backend เสร็จสมบูรณ์ ให้ทีมพิจารณาว่าจะทำ Frontend หรือไม่; หากตกลงทำ ให้กำหนดขอบเขตและแนวทางก่อนพัฒนาหน้า Inventory/Purchase และทดสอบ flow เรียก API จริง
@@ -57,7 +60,7 @@
 
 ## จุดแบ่งงานและ commit ที่แนะนำ
 
-ทำเครื่องหมายเมื่อแต่ละ checkpoint เสร็จและตรวจสอบแล้ว ไม่ต้องสร้าง commit เปล่าหรือแยกการเปลี่ยนแปลงย่อยเกินจำเป็น รายการนี้แบ่งเป็น 8 checkpoints ตาม PROJECT_PLAN
+ทำเครื่องหมายเมื่อแต่ละ checkpoint เสร็จและตรวจสอบแล้ว ไม่ต้องสร้าง commit เปล่าหรือแยกการเปลี่ยนแปลงย่อยเกินจำเป็น รายการเดิมแบ่งเป็น 8 checkpoints ตาม PROJECT_PLAN; checkpoint 9 เป็นงานเสริมที่พบระหว่างตรวจความครบถ้วนของ API
 
 | สถานะ | ลำดับ | งานที่ต้องเสร็จและตรวจสอบ | ตัวอย่าง commit message |
 |---|---:|---|---|
@@ -69,6 +72,7 @@
 | [x] | 6 | ทำ Receive แบบ transaction เชื่อม Inventory/StockMovement พร้อม tests สำหรับ receive/rollback | `feat: receive purchase into inventory` |
 | [x] | 7 | เพิ่ม Purchase REST endpoints/controller tests และรัน regression tests | `test: verify purchase api and backend regression` |
 | [x] | 8 | อัปเดตเอกสาร API/ผลทดสอบ และตรวจความพร้อมก่อนเปิด PR | `docs: document inventory and purchase workflow` |
+| [x] | 9 | เพิ่ม Stock Movement read endpoints, Inventory/Stock Movement controller tests และ Purchase REST-to-database integration test | `feat: add stock movement read APIs and inventory workflow tests` |
 
 หลัง Backend เสร็จสมบูรณ์ ให้ทีมพิจารณา Frontend แยกต่างหาก หากตกลงทำ ให้จัด commit ตามขอบเขตงานจริง โดยไม่จำเป็นต้องนับรวมใน checkpoints ของ Backend ข้างต้น
 
@@ -78,6 +82,6 @@
 - [x] การรับ Purchase อัปเดต stock, movement และสถานะครบใน transaction เดียว ป้องกันการรับซ้ำ และทดสอบ rollback
 - [x] Validation, business rules, error responses และ Purchase REST API ตรงกับเอกสาร
 - [x] Unit/persistence tests ที่เกี่ยวข้องผ่าน และ `mvnw.cmd test` ผ่านทั้งชุด
-- [ ] ทำ Stock Movement GET endpoints และ Controller tests สำหรับ Inventory/Stock Movement ตาม `PROJECT_PLAN.md`
-- [ ] เพิ่ม HTTP-to-database integration tests สำหรับ Purchase REST flow หากต้องการยืนยัน flow ตั้งแต่ controller ถึงฐานข้อมูล (ปัจจุบัน receive มี persistence-backed workflow tests)
+- [x] ทำ Stock Movement GET endpoints และ Controller tests สำหรับ Inventory/Stock Movement ตาม `PROJECT_PLAN.md`
+- [x] เพิ่ม HTTP-to-database integration test สำหรับ Purchase receive workflow; ตรวจสถานะ Purchase, Inventory และ Stock Movement
 - [ ] Pull Request เข้า `develop` ผ่าน review; ไม่มีการ push ตรงเข้า `main`
