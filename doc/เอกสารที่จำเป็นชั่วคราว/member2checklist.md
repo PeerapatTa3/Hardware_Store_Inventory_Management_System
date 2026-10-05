@@ -1,6 +1,6 @@
 # Member 2 Checklist
 
-รายการงานนี้สรุปจาก [PROJECT_PLAN.md](../../PROJECT_PLAN.md), [team-assignment.md](./team-assignment.md) และโค้ดที่มีอยู่ใน repository ขณะจัดทำเอกสาร
+รายการงานนี้สรุปจาก [PROJECT_PLAN.md](../../PROJECT_PLAN.md), [team-assignment.md](./team-assignment.md) และโค้ดที่มีอยู่ใน repository ตรวจสถานะล่าสุดวันที่ 2026-10-06
 
 ## สถานะที่ตรวจพบในโปรเจค
 
@@ -9,27 +9,28 @@
 - [x] มี `PurchaseOrder` / `PurchaseItem` และ Purchase API ใน backend
 - [x] งานรับสินค้าเข้า (Purchase Receive) เชื่อม Purchase, Inventory และ StockMovement แล้ว
 - [x] ทุกการเปลี่ยนจำนวน stock ผ่าน API ปัจจุบันของ Inventory หรือ StockMovement บันทึก StockMovement ควบคู่กันใน transaction เดียว
-- [ ] เน้นพัฒนา Backend ก่อน; หลัง Backend เสร็จสมบูรณ์จึงพิจารณาขอบเขตและแนวทาง Frontend ร่วมกับทีม
+- [x] งานที่ทำในรอบนี้เน้น Backend; ยังไม่เริ่ม Frontend ตามแนวทางให้พิจารณาหลัง Backend เสร็จ
 
-> สถานะข้างต้นเป็นการอ่านไฟล์ใน working tree ไม่ใช่การยืนยันว่าโค้ดผ่านการทดสอบล่าสุด
+> สถานะโค้ดตรวจจาก working tree และรัน `.\mvnw.cmd test` ล่าสุดผ่าน 48 tests, 0 failures, 0 errors; รายการที่ยังไม่ครบระบุไว้เป็น unchecked ด้านล่าง
 
 ## งานที่ต้องทำ
 
 ### 1. เตรียม branch และประสานสัญญา API
 
-- [ ] ทำงานบน branch ของ Member 2 ตามชื่อที่ทีม/อาจารย์กำหนด (`phisit_673380285-2_01` ตาม team-assignment) และ sync กับ `develop`
+- [x] ทำงานบน branch ของ Member 2 (`phisit_673380285-2_01`); branch ติดตาม `origin/phisit_673380285-2_01` และ `develop` เป็น ancestor ของ branch ปัจจุบัน
 - [ ] คุยกับผู้ดูแลโมดูลเดิมเพื่อยืนยัน DTO, exception, URL, วิธีปรับสต็อก และกติกา StockMovement ก่อนต่อยอด
-- [x] รัน `mvnw.cmd test` จาก `code/backend/hardware-store` เพื่อเก็บผล baseline ก่อนแก้โค้ด (15 tests ผ่าน)
-- [ ] ใช้ convention และ dependency ที่โปรเจคมีอยู่ก่อน; `PROJECT_PLAN.md` กล่าวถึง Flyway แต่ backend ที่ตรวจยังไม่มี dependency นี้ ให้ตกลงกับทีมก่อนเพิ่ม migration tooling
+- [x] เก็บผล baseline ก่อนแก้โค้ดไว้แล้ว: 15 tests ผ่าน; ผลล่าสุดหลังพัฒนาให้ดูผล regression ด้านล่าง
+- [x] ใช้ convention และ dependency ที่โปรเจคมีอยู่; ยังไม่เพิ่ม Flyway เพราะ backend ปัจจุบันไม่ได้ใช้ migration tooling
 
 ### 2. ตรวจและทำ Inventory / StockMovement ให้ครบตามกติกา
 
-- [ ] ทบทวน `InventoryStock` ว่าความสัมพันธ์กับ `Product` เป็นหนึ่งต่อหนึ่ง และรองรับ quantity/reserved quantity ตามแบบข้อมูล
+- [x] ทบทวน `InventoryStock`: เชื่อมกับ `Product` แบบ `@OneToOne` และมี quantity/reserved quantity
 - [x] ยืนยันกติกาจำนวนคงเหลือ: ห้ามติดลบ, `OUT` ต้องไม่เกิน available quantity และ `ADJUSTMENT.quantity` คือยอดคงเหลือใหม่ โดยยอดใหม่ต้องไม่น้อยกว่า reserved quantity
 - [x] ปรับ Inventory adjustment ให้สร้าง `ADJUSTMENT` movement ควบคู่กับการแก้ quantity
 - [x] Purchase Receive เรียก flow รับสินค้าเพียงครั้งเดียว เพื่อไม่ให้ Inventory และ StockMovement ถูกปรับ/บันทึกซ้ำ
 - [x] คงการเปลี่ยน Inventory และการบันทึก StockMovement ให้อยู่ใน transaction เดียวกัน
-- [ ] ตรวจ API อ่าน stock และรายการ movement รวมถึงกรณีไม่พบ Product/Inventory และรูปแบบ error response
+- [x] ตรวจ API อ่าน/ปรับ Inventory: มี GET/PUT ตามแผน; มี service test กรณีไม่พบ Product และ error handler กลาง
+- [ ] เพิ่ม Stock Movement GET endpoints ตาม `PROJECT_PLAN.md` (`GET /api/v1/stock-movements` และ `GET /api/v1/stock-movements/products/{productId}`); ปัจจุบันมีเฉพาะ POST และยังไม่มี controller tests สำหรับ Inventory/Stock Movement
 - [x] เพิ่มหรือปรับ service tests ให้ครอบคลุมการปรับยอด, การบันทึก `ADJUSTMENT` movement และการปฏิเสธยอดต่ำกว่า reserved quantity
 
 ### 3. สร้าง Purchase module
@@ -50,6 +51,7 @@
 - [x] Controller tests: HTTP method/status, request validation, response และ error cases ของ Purchase API
 - [x] ทดสอบ receive ร่วมกับ Inventory/StockMovement และรัน `mvnw.cmd test` ทั้งชุดก่อนเปิด PR
 - [x] ตรวจ API documentation และอัปเดต endpoints, validation, status codes และ business rules ให้ตรงกับ implementation
+- [x] สร้าง [Member2_test.md](../../test/Member2_Test/Member2_test.md) สรุป test cases ของ Member 2; และ [Member2TestCommit.md](../../test/Member2_Test/Member2TestCommit.md) แยก test ตาม commit
 - [ ] หลัง Backend เสร็จสมบูรณ์ ให้ทีมพิจารณาว่าจะทำ Frontend หรือไม่; หากตกลงทำ ให้กำหนดขอบเขตและแนวทางก่อนพัฒนาหน้า Inventory/Purchase และทดสอบ flow เรียก API จริง
 - [ ] เปิด Pull Request จาก branch Member 2 เข้า `develop`, สรุปสิ่งที่ทำ/ผลทดสอบ และขอ reviewer อย่างน้อย 1 คน
 
@@ -66,7 +68,7 @@
 | [x] | 5 | ทำการแก้ Purchase และกติกาการเปลี่ยนสถานะก่อนรับสินค้า | `feat: manage pending purchase orders` |
 | [x] | 6 | ทำ Receive แบบ transaction เชื่อม Inventory/StockMovement พร้อม tests สำหรับ receive/rollback | `feat: receive purchase into inventory` |
 | [x] | 7 | เพิ่ม Purchase REST endpoints/controller tests และรัน regression tests | `test: verify purchase api and backend regression` |
-| [ ] | 8 | อัปเดตเอกสาร API/ผลทดสอบ และตรวจความพร้อมก่อนเปิด PR | `docs: document inventory and purchase workflow` |
+| [x] | 8 | อัปเดตเอกสาร API/ผลทดสอบ และตรวจความพร้อมก่อนเปิด PR | `docs: document inventory and purchase workflow` |
 
 หลัง Backend เสร็จสมบูรณ์ ให้ทีมพิจารณา Frontend แยกต่างหาก หากตกลงทำ ให้จัด commit ตามขอบเขตงานจริง โดยไม่จำเป็นต้องนับรวมใน checkpoints ของ Backend ข้างต้น
 
@@ -76,4 +78,6 @@
 - [x] การรับ Purchase อัปเดต stock, movement และสถานะครบใน transaction เดียว ป้องกันการรับซ้ำ และทดสอบ rollback
 - [x] Validation, business rules, error responses และ Purchase REST API ตรงกับเอกสาร
 - [x] Unit/persistence tests ที่เกี่ยวข้องผ่าน และ `mvnw.cmd test` ผ่านทั้งชุด
+- [ ] ทำ Stock Movement GET endpoints และ Controller tests สำหรับ Inventory/Stock Movement ตาม `PROJECT_PLAN.md`
+- [ ] เพิ่ม HTTP-to-database integration tests สำหรับ Purchase REST flow หากต้องการยืนยัน flow ตั้งแต่ controller ถึงฐานข้อมูล (ปัจจุบัน receive มี persistence-backed workflow tests)
 - [ ] Pull Request เข้า `develop` ผ่าน review; ไม่มีการ push ตรงเข้า `main`

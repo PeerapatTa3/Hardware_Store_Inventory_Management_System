@@ -12,12 +12,12 @@
 
 ปัจจุบันระบบ backend หลักของโปรเจคมีความคืบหน้ามากและผ่านการทดสอบจริงแล้วด้วย Maven
 
-- Backend framework: Spring Boot 3.x + Java 17
+- Backend framework: Spring Boot 4.1.1 + Java 17
 - Build tool: Maven
 - Database: H2 สำหรับ development
 - API: RESTful API + Swagger/OpenAPI
 - Testing: JUnit 5 + Mockito
-- ผลการตรวจสอบล่าสุด: 15 tests, 0 failures, 0 errors, BUILD SUCCESS
+- ผลการตรวจสอบล่าสุด (2026-10-06): `.\mvnw.cmd test` ผ่าน 48 tests, 0 failures, 0 errors
 
 ## 3. งานที่ Member 1 ทำเสร็จแล้ว
 
@@ -44,7 +44,7 @@
 ### 3.5 ปัจจุบัน
 Member 1 อยู่ในสถานะที่ “ทำงานหลักของระบบ backend ครบแล้วและพร้อมต่อยอด” สำหรับส่วนที่เหลือของโปรเจคตามใบงาน
 
-## 4. งานที่ Member 2 ควรทำต่อ
+## 4. Member 2 — ขอบเขตและสถานะงาน
 
 ### 4.1 Scope ที่กำหนด
 - เน้นพัฒนา Backend ให้สมบูรณ์ก่อน
@@ -54,17 +54,20 @@ Member 1 อยู่ในสถานะที่ “ทำงานหลั�
 - ตรวจสอบ flow รับ-จ่ายสินค้า
 - พิจารณาขอบเขตและแนวทาง Frontend หลัง Backend เสร็จสมบูรณ์
 
-### 4.2 งานที่ทำไปแล้วในหลักการ
+### 4.2 งานที่ทำแล้วในโค้ด
 - InventoryStock entity และ logic
 - StockMovement entity และ enum
 - API สำหรับตรวจสอบและปรับสต็อก
 - Service สำหรับระบบเคลื่อนไหวสต็อก
+- PurchaseOrder / PurchaseItem persistence, DTO, validation, mapper และ service
+- Purchase REST API สำหรับ create/list/get/update/receive; receive ปรับ Inventory, บันทึก `IN` movement และเปลี่ยนสถานะใน transaction เดียว
+- Unit, persistence, validation, mapper, exception handler และ Purchase Controller tests
 
 ### 4.3 สิ่งที่ยังต้องทำต่อ
-- Purchase module
-- PurchaseOrder / PurchaseItem ตามแบบข้อมูลใน PROJECT_PLAN
-- Flow รับสินค้าเข้าคลังจริง
-- ตรวจสอบ business rule ของคลังสินค้าอย่างละเอียด
+- เพิ่ม `GET /api/v1/stock-movements` และ `GET /api/v1/stock-movements/products/{productId}` ซึ่งระบุไว้ใน PROJECT_PLAN แต่ยังไม่มีใน backend
+- เพิ่ม Controller tests สำหรับ Inventory/Stock Movement และพิจารณา HTTP-to-database integration tests สำหรับ Purchase
+- ทบทวน business rules/API ของ Inventory และ Stock Movement ให้ครบตาม PROJECT_PLAN ก่อนสรุป Backend ของ Member 2
+- พิจารณาขอบเขต Frontend ร่วมกับทีมหลัง Backend เสร็จสมบูรณ์
 
 ## 5. งานที่ Member 3 ควรทำต่อ
 

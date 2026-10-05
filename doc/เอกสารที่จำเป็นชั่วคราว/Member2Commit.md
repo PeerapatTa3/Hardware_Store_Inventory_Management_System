@@ -2,6 +2,8 @@
 
 เอกสารนี้อธิบายสิ่งที่เพิ่ม เหตุผล วิธีทำงาน และประโยชน์ของ commit งาน Member 2 ใน branch `phisit_673380285-2_01` โดยมีทั้งมุมมองการทำงานของระบบและมุมมองของผู้ใช้ที่ไม่ใช่ Developer
 
+ตารางสรุปไฟล์ทดสอบและผลทดสอบแยกตามแต่ละ commit ดูได้ที่ [Member2TestCommit.md](../../test/Member2_Test/Member2TestCommit.md)
+
 > หมายเหตุ: commit `268b6d9` และ `4862967` ใช้ข้อความ commit เหมือนกัน แต่เป็นคนละชุดการเปลี่ยนแปลง: `268b6d9` แก้การทำงาน Inventory/Stock Movement ส่วน `4862967` ปรับเอกสาร แผนงาน และ Git configuration
 
 ## 1. `268b6d9` — `fix: synchronize inventory adjustment movements`
@@ -162,8 +164,31 @@
 
 **ผลทดสอบหลังงานนี้:** 42 tests ผ่าน รวมการทดสอบ receive สำเร็จ, ป้องกันรับซ้ำ และ rollback
 
-## ขอบเขตที่ยังไม่รวมใน commit เหล่านี้
+## 8. `aadd658` — `test:เพิ่ม Purchase REST endpoints/controller tests และรัน regression tests`
 
-- Purchase REST Controller ยังไม่ถูกเพิ่ม ดังนั้น endpoint ที่ระบุใน API documentation ยังไม่พร้อมให้ client เรียกใช้งาน
+### เพิ่มหรือแก้อะไร
+- เพิ่ม `PurchaseOrderController` สำหรับ `GET /api/v1/purchases`, `GET /api/v1/purchases/{id}`, `POST /api/v1/purchases`, `PUT /api/v1/purchases/{id}` และ `POST /api/v1/purchases/{id}/receive`
+- เชื่อม HTTP requests เข้ากับ Purchase service และใช้ `@Valid` ตรวจ request ตอนสร้างและแก้ไข
+- กำหนดให้การสร้าง Purchase ตอบ HTTP 201; การอ่าน แก้ไข และรับสินค้าตอบ HTTP 200 เมื่อสำเร็จ
+- เพิ่ม Controller tests ครอบคลุม routes, response, validation, not-found (404) และ invalid state (409)
+- ปรับ API documentation, Member 2 checklist และ project progress ให้ตรงกับ endpoints และผล regression ล่าสุด
+
+### ทำไมจึงเพิ่ม และทำงานอย่างไร
+ก่อนงานนี้ Purchase มี business logic ใน service แล้ว แต่ client ยังเรียกใช้งานผ่าน REST API ไม่ได้ Controller เพิ่มจุดรับคำขอ HTTP แล้วส่งต่อไปยัง service โดยคงกฎด้าน validation, transaction และสถานะไว้ที่ชั้นเดิม ส่วน exception กลางแปลงข้อผิดพลาดเป็น HTTP response ที่มีรูปแบบมาตรฐาน
+
+### สิ่งที่โปรเจกต์มีเพิ่มและประโยชน์
+- ผู้เรียก API สามารถสร้าง ดู แก้ไข และรับ Purchase ผ่าน endpoints ที่กำหนดได้
+- คำขอผิดรูปแบบหรือการทำรายการที่ผิดสถานะได้รับ HTTP error ที่สื่อความหมาย แทนการตอบว่าสำเร็จ
+- Controller tests ช่วยยืนยันสัญญา HTTP และจับ regression ที่ระดับ endpoint
+- ชุดทดสอบ Backend ทั้งหมดผ่าน 48 tests โดยไม่มี failures หรือ errors
+
+### มุมมองผู้ใช้ที่ไม่ใช่ Developer
+ผู้ใช้ระบบสามารถส่งใบสั่งซื้อเข้าระบบ ตรวจดูรายการหรือรายละเอียด แก้ไขใบที่ยังรอดำเนินการ และยืนยันการรับสินค้าได้ผ่าน API หากส่งข้อมูลไม่ครบหรือพยายามทำรายการที่ไม่อนุญาต ระบบจะแจ้งข้อผิดพลาดแทนการเปลี่ยนข้อมูลอย่างไม่ถูกต้อง
+
+**ผลทดสอบหลังงานนี้:** `.\mvnw.cmd test` ผ่าน 48 tests, 0 failures, 0 errors
+
+## ขอบเขตที่ยังไม่รวมใน commits เหล่านี้
+
 - ยังไม่มีหน้าจอ Frontend สำหรับ Purchase หรือ Inventory
-- งานรับสินค้าในปัจจุบันมี service และ persistence tests รองรับ แต่ยังต้องเพิ่ม Controller tests เมื่อมี REST API
+- ยังไม่มี HTTP-to-database integration tests ที่ครอบคลุม Purchase API ทั้ง flow; receive มี persistence tests สำหรับ success, duplicate receive และ rollback
+- Stock Movement GET endpoints ที่ระบุใน PROJECT_PLAN และ Controller tests สำหรับ Inventory/Stock Movement ยังไม่ทำ

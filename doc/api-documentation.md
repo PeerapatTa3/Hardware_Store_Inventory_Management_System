@@ -42,6 +42,10 @@
 การสร้าง movement ประเภท `IN` หรือ `OUT` จะปรับ Inventory ใน transaction เดียวกัน
 ส่วน `OUT` จะถูกปฏิเสธเมื่อจำนวนที่ขอเกิน available quantity.
 
+หมายเหตุ: `PROJECT_PLAN.md` ระบุ `GET /api/v1/stock-movements` และ
+`GET /api/v1/stock-movements/products/{productId}` สำหรับอ่านประวัติ movement;
+ยังไม่มี implementation ของ GET endpoints เหล่านี้ใน backend ปัจจุบัน.
+
 ## Purchase API
 ### Endpoints
 - GET /api/v1/purchases
