@@ -47,10 +47,12 @@ Member 1 อยู่ในสถานะที่ “ทำงานหลั�
 ## 4. งานที่ Member 2 ควรทำต่อ
 
 ### 4.1 Scope ที่กำหนด
+- เน้นพัฒนา Backend ให้สมบูรณ์ก่อน
 - Inventory / Stock management
 - Purchase workflow
 - การจัดการสต็อกและธุรกรรมคลัง
 - ตรวจสอบ flow รับ-จ่ายสินค้า
+- พิจารณาขอบเขตและแนวทาง Frontend หลัง Backend เสร็จสมบูรณ์
 
 ### 4.2 งานที่ทำไปแล้วในหลักการ
 - InventoryStock entity และ logic
@@ -60,7 +62,7 @@ Member 1 อยู่ในสถานะที่ “ทำงานหลั�
 
 ### 4.3 สิ่งที่ยังต้องทำต่อ
 - Purchase module
-- PurchaseOrder / PurchaseOrderItem (ถ้ามีตามความต้องการ)
+- PurchaseOrder / PurchaseItem ตามแบบข้อมูลใน PROJECT_PLAN
 - Flow รับสินค้าเข้าคลังจริง
 - ตรวจสอบ business rule ของคลังสินค้าอย่างละเอียด
 

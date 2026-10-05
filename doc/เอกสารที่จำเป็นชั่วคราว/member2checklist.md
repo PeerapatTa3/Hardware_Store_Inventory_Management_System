@@ -55,18 +55,18 @@
 
 ## จุดแบ่งงานและ commit ที่แนะนำ
 
-แต่ละ commit ควรเป็นงานที่เสร็จและตรวจสอบได้ ไม่ต้องสร้าง commit เปล่าหรือแยกการเปลี่ยนแปลงย่อยเกินจำเป็น ตัวอย่างด้านล่างแบ่งเป็น 8 checkpoints ให้สอดคล้องกับ PROJECT_PLAN ที่แนะนำ meaningful commits อย่างน้อย 8 ครั้งต่อคน
+ทำเครื่องหมายเมื่อแต่ละ checkpoint เสร็จและตรวจสอบแล้ว ไม่ต้องสร้าง commit เปล่าหรือแยกการเปลี่ยนแปลงย่อยเกินจำเป็น รายการนี้แบ่งเป็น 8 checkpoints ตาม PROJECT_PLAN
 
-| ลำดับ | ทำถึงจุดนี้แล้วจึง commit | ตัวอย่าง commit message |
-|---:|---|---|
-| 1 | ปรับ Inventory/StockMovement ให้สอดคล้องกัน พร้อม unit tests | `fix: keep stock and movement history consistent` |
-| 2 | เพิ่ม PurchaseOrder/PurchaseItem, status, relationships และ repositories | `feat: add purchase persistence model` |
-| 3 | เพิ่ม Purchase DTO, validation, mapper และ tests ที่เกี่ยวข้อง | `feat: add purchase request and response models` |
-| 4 | ทำ create/list/get Purchase พร้อม service tests | `feat: add purchase creation and lookup` |
-| 5 | ทำการแก้ Purchase และกติกาการเปลี่ยนสถานะก่อนรับสินค้า | `feat: manage pending purchase orders` |
-| 6 | ทำ Receive แบบ transaction เชื่อม Inventory/StockMovement พร้อม tests สำหรับ receive/rollback | `feat: receive purchase into inventory` |
-| 7 | เพิ่ม Purchase REST endpoints/controller tests และรัน regression tests | `test: verify purchase api and backend regression` |
-| 8 | อัปเดตเอกสาร API/ผลทดสอบ และตรวจความพร้อมก่อนเปิด PR | `docs: document inventory and purchase workflow` |
+| สถานะ | ลำดับ | งานที่ต้องเสร็จและตรวจสอบ | ตัวอย่าง commit message |
+|---|---:|---|---|
+| [x] | 1 | ปรับ Inventory/StockMovement ให้สอดคล้องกัน พร้อม unit tests | `fix: synchronize inventory adjustment movements` |
+| [ ] | 2 | เพิ่ม PurchaseOrder/PurchaseItem, status, relationships และ repositories | `feat: add purchase persistence model` |
+| [ ] | 3 | เพิ่ม Purchase DTO, validation, mapper และ tests ที่เกี่ยวข้อง | `feat: add purchase request and response models` |
+| [ ] | 4 | ทำ create/list/get Purchase พร้อม service tests | `feat: add purchase creation and lookup` |
+| [ ] | 5 | ทำการแก้ Purchase และกติกาการเปลี่ยนสถานะก่อนรับสินค้า | `feat: manage pending purchase orders` |
+| [ ] | 6 | ทำ Receive แบบ transaction เชื่อม Inventory/StockMovement พร้อม tests สำหรับ receive/rollback | `feat: receive purchase into inventory` |
+| [ ] | 7 | เพิ่ม Purchase REST endpoints/controller tests และรัน regression tests | `test: verify purchase api and backend regression` |
+| [ ] | 8 | อัปเดตเอกสาร API/ผลทดสอบ และตรวจความพร้อมก่อนเปิด PR | `docs: document inventory and purchase workflow` |
 
 หลัง Backend เสร็จสมบูรณ์ ให้ทีมพิจารณา Frontend แยกต่างหาก หากตกลงทำ ให้จัด commit ตามขอบเขตงานจริง โดยไม่จำเป็นต้องนับรวมใน checkpoints ของ Backend ข้างต้น
 

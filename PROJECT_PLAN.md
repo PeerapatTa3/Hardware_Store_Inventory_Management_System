@@ -937,7 +937,8 @@ code/
     └── React Application
 ```
 
-Frontend จะเรียก Backend ผ่าน REST API
+ให้พัฒนา Backend ให้เสร็จสมบูรณ์ก่อน แล้วจึงพิจารณาขอบเขตและแนวทางการพัฒนา Frontend
+รวมถึงการแบ่งผู้รับผิดชอบและการเชื่อมต่อ REST API อีกครั้ง
 
 ตัวอย่าง:
 
@@ -952,7 +953,7 @@ Spring Boot
 PostgreSQL
 ```
 
-แต่ละคนรับผิดชอบ Frontend ของ Module ตัวเอง
+หากทีมตกลงให้พัฒนา Frontend จึงค่อยกำหนดผู้รับผิดชอบของแต่ละ Module
 
 ```text
 Member 1 → Product / Category / Supplier UI
@@ -1151,7 +1152,7 @@ fix: prevent negative stock
 docs: add inventory api documentation
 ```
 
-แต่ละคนต้องมีอย่างน้อย **15 meaningful commits**
+แต่ละคนควรมีอย่างน้อย **8 meaningful commits**
 
 Commit ควรกระจายตลอดระยะเวลาพัฒนา
 
@@ -1375,19 +1376,16 @@ Observer
 
 ---
 
-## Phase 7 — Frontend
+## Phase 7 — พิจารณา Frontend หลัง Backend เสร็จสมบูรณ์
 
-ทุกคนทำ UI ของ Module ตัวเอง
+หลัง Backend เสร็จสมบูรณ์ ให้ทีมพิจารณาว่าจะพัฒนา Frontend หรือไม่
+และกำหนดขอบเขต แนวทาง และผู้รับผิดชอบร่วมกัน
 
 ```text
-Member 1
-→ Product / Category / Supplier
-
-Member 2
-→ Inventory / Purchase
-
-Member 3
-→ Customer / Sales
+หากตกลงพัฒนา Frontend:
+Member 1 → Product / Category / Supplier
+Member 2 → Inventory / Purchase
+Member 3 → Customer / Sales
 ```
 
 ---
@@ -1491,7 +1489,7 @@ Swagger
 [ ] JUnit 5
 [ ] Mockito
 [ ] Git / GitHub
-[ ] 15+ meaningful commits/person
+[ ] 8+ meaningful commits/person
 [ ] PR + Reviewer
 [ ] Dockerfile
 [ ] docker-compose.yml

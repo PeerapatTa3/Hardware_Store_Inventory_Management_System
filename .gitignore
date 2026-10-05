@@ -5,3 +5,9 @@
 
 # Generated project archive
 project-files.json
+
+# VS Code workspace settings
+.vscode/
+
+# Personal checklist
+member2checklist.md
