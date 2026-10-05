@@ -4,11 +4,11 @@
 
 ## สรุปสถานะ
 
-**โปรเจกต์อยู่ช่วง Phase 4 — Purchase** โดยมี Backend พื้นฐาน, CRUD ของ Category / Supplier / Product, InventoryStock, StockMovement, Purchase persistence model/DTO, create/list/get และแก้ไข Purchase เฉพาะสถานะ PENDING แล้ว
+**โปรเจกต์อยู่ช่วง Phase 4 — Purchase** โดยมี Backend พื้นฐาน, CRUD ของ Category / Supplier / Product, InventoryStock, StockMovement, Purchase persistence model/DTO, create/list/get/update และ receive แบบ transactional ใน service แล้ว
 
-อย่างไรก็ตาม **Phase 2 ยังไม่ครบ** เพราะยังไม่พบ Customer module และ Purchase ยังไม่มี REST API หรือ workflow รับสินค้าเชื่อม Inventory กับ StockMovement เป็น end-to-end flow จึงยังไม่ควรถือว่า Backend หรือโปรเจกต์โดยรวมเสร็จแล้ว
+อย่างไรก็ตาม **Phase 2 ยังไม่ครบ** เพราะยังไม่พบ Customer module และ Purchase ยังไม่มี REST controller; receive workflow เชื่อม Inventory กับ StockMovement ใน service แล้ว แต่ยังไม่มี API end-to-end จึงยังไม่ควรถือว่า Backend หรือโปรเจกต์โดยรวมเสร็จแล้ว
 
-การตรวจสอบชุดทดสอบล่าสุด: `.\mvnw.cmd test` ใน `code/backend/hardware-store/` ผ่าน **37 tests, 0 failures, 0 errors** หลังเพิ่มการแก้ Purchase ที่ยังเป็น PENDING และ tests
+การตรวจสอบชุดทดสอบล่าสุด: `.\mvnw.cmd test` ใน `code/backend/hardware-store/` ผ่าน **42 tests, 0 failures, 0 errors** รวม receive success, repeated receive และ transaction rollback tests
 
 ## ความคืบหน้าตาม Roadmap
 
@@ -17,12 +17,12 @@
 | 1 | Project Setup | ทำแล้วเป็นส่วนใหญ่ | มี Spring Boot, Maven, Java 17, JPA, H2, PostgreSQL driver, OpenAPI และ Global Exception Handler; ยังไม่พบ Flyway migration หรือ Docker Compose |
 | 2 | Core CRUD | ทำบางส่วน | Category, Supplier และ Product มี CRUD; ยังไม่พบ Customer |
 | 3 | Inventory System | ทำแกนหลักแล้ว | มี InventoryStock API สำหรับอ่าน/ปรับจำนวน และ StockMovement API; การปรับยอด Inventory สร้าง movement ประเภท `ADJUSTMENT` ใน transaction เดียวกัน; ยังไม่มี Controller/Integration tests |
-| 4 | Purchase | กำลังพัฒนา | มี Purchase entities, status, repositories, DTOs, validation, mapper และ service สำหรับ create/list/get/update โดยแก้ได้เฉพาะ PENDING; ยังไม่มี REST controller หรือ workflow รับสินค้า |
+| 4 | Purchase | กำลังพัฒนา | มี Purchase entities, status, repositories, DTOs, validation, mapper และ service สำหรับ create/list/get/update/receive; receive ปรับ Inventory, บันทึก StockMovement และเปลี่ยนสถานะใน transaction เดียว; ยังไม่มี REST controller |
 | 5 | Sales | ยังไม่เริ่ม | ไม่พบ Customer, SalesOrder, SalesOrderItem หรือการตรวจและตัด stock |
 | 6 | Design Patterns | ยังไม่เริ่ม | State, Strategy และ Observer ปรากฏในเอกสารเป็นแนวทาง แต่ยังไม่พบการนำไปใช้ใน business logic |
 | 7 | Frontend | ยังไม่เริ่ม | ไม่พบ React application หรือ frontend source |
-| 8 | Integration | ทำบางส่วน | มี Product, Inventory และ StockMovement แยกเป็นโมดูล; ยังไม่มี purchase/sales end-to-end flow |
-| 9 | Testing | ทำบางส่วน | Service tests 26 รายการ, JPA persistence tests 2 รายการ, Purchase DTO validation tests 4 รายการ, mapper tests 4 รายการ และ exception handler test 1 รายการผ่าน; ยังไม่มี Controller tests หรือทดสอบ Purchase workflow แบบ end-to-end |
+| 8 | Integration | ทำบางส่วน | Purchase receive เชื่อม Purchase, Inventory และ StockMovement ใน service; ยังไม่มี REST API end-to-end หรือ Sales flow |
+| 9 | Testing | ทำบางส่วน | Service tests 29 รายการ, JPA persistence tests 4 รายการ, Purchase DTO validation tests 4 รายการ, mapper tests 4 รายการ และ exception handler test 1 รายการผ่าน; ยังไม่มี Controller tests |
 | 10 | Documentation | ทำบางส่วน | มี README, API documentation, Data Dictionary, SOLID analysis และ Design Patterns; ไฟล์ diagrams มีเพียง README และ API docs ยังไม่ครอบคลุม Inventory/Purchase/Sales |
 | 11 | Docker & Deployment | ทำบางส่วน | มี Dockerfile; ยังไม่พบ `docker-compose.yml`, deployment configuration หรือ Public URL |
 | 12 | Final Verification | ยังไม่เริ่ม | ยังมี requirement สำคัญที่ขาดตาม checklist ด้านล่าง |
@@ -41,10 +41,10 @@
 | One-to-One | ทำแล้ว | `InventoryStock` เชื่อม `Product` ด้วย `@OneToOne` |
 | One-to-Many | ทำแล้วในระดับ FK | Product อ้าง Category และ Supplier ด้วย `@ManyToOne`; ยังไม่มี inverse `@OneToMany` collection |
 | อย่างน้อย 6 ตารางหลัก | ทำแล้วบางส่วน | พบ Entity 7 ตัว: Category, Product, Supplier, InventoryStock, StockMovement, PurchaseOrder และ PurchaseItem |
-| Purchase / Sales modules | ทำแล้วบางส่วน | Purchase มี entities, repositories, DTOs, validation, mapper และ create/list/get/update service แต่ยังไม่มี REST API/receive workflow; Sales ยังไม่เริ่ม |
+| Purchase / Sales modules | ทำแล้วบางส่วน | Purchase มี entities, repositories, DTOs, validation, mapper และ create/list/get/update/receive service; ยังไม่มี REST controller; Sales ยังไม่เริ่ม |
 | State / Strategy / Observer | ยังไม่เริ่ม | พบเฉพาะคำอธิบายในเอกสาร ยังไม่พบ implementation |
-| Unit / Persistence tests | ทำแล้วบางส่วน | Service 26, JPA persistence 2, Purchase DTO validation 4, mapper 4 และ exception handler 1 tests ผ่าน |
-| Controller / Workflow integration tests | ยังไม่เริ่ม | ยังไม่พบ Controller tests หรือการทดสอบ workflow แบบ end-to-end |
+| Unit / Persistence tests | ทำแล้วบางส่วน | Service 29, JPA persistence 4, Purchase DTO validation 4, mapper 4 และ exception handler 1 tests ผ่าน |
+| Controller / Workflow integration tests | ทำแล้วบางส่วน | มี persistence-backed receive success/duplicate/rollback tests; Purchase Controller tests ยังไม่เริ่ม |
 | Flyway / Database migrations | ยังไม่เริ่ม | ไม่พบ migration scripts; ปัจจุบัน JPA ใช้ `ddl-auto: update` |
 | Docker | ทำแล้วบางส่วน | มี Dockerfile แต่ยังไม่มี Compose |
 | Frontend / Cloud deployment / Public URL | ยังไม่เริ่ม | ไม่พบ implementation หรือ URL |

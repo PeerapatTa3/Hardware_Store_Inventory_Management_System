@@ -46,6 +46,10 @@ public class StockMovementServiceImpl implements StockMovementService {
 
         int quantity = request.getQuantity();
         if (request.getMovementType() == StockMovementType.IN) {
+            if (inventory.getQuantity() > Integer.MAX_VALUE - quantity) {
+                throw new IllegalArgumentException(
+                        "Inbound quantity exceeds supported stock quantity for product id: " + product.getId());
+            }
             inventory.setQuantity(inventory.getQuantity() + quantity);
         } else if (request.getMovementType() == StockMovementType.OUT) {
             int available = inventory.getAvailableQuantity();

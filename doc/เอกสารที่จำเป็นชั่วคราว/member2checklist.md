@@ -34,19 +34,19 @@
 
 ### 3. สร้าง Purchase module
 
-- [ ] เพิ่ม `PurchaseOrder` และ `PurchaseItem` ตามแบบข้อมูลและความสัมพันธ์ใน PROJECT_PLAN: PurchaseOrder มีหลายรายการ, แต่ละรายการอ้าง Product
-- [ ] กำหนดสถานะและ lifecycle ของ Purchase ให้ชัดเจน เช่น สร้างเป็น `PENDING` และเปลี่ยนเป็น `COMPLETED` หลังรับสินค้า (การแก้ไขจำกัดเฉพาะ `PENDING` แล้ว)
-- [ ] เพิ่ม repository, request/response DTO, mapper, service และ controller ตามรูปแบบ layered architecture ที่มีอยู่
-- [ ] ตรวจสอบ Supplier และ Product ที่อ้างถึงว่ามีอยู่จริง; ตรวจจำนวนและ unit cost เป็นค่าที่ถูกต้อง; คำนวณ subtotal/total จากรายการ ไม่เชื่อยอดรวมที่ client ส่งมา
+- [x] เพิ่ม `PurchaseOrder` และ `PurchaseItem` ตามแบบข้อมูลและความสัมพันธ์ใน PROJECT_PLAN: PurchaseOrder มีหลายรายการ, แต่ละรายการอ้าง Product
+- [x] กำหนดสถานะและ lifecycle ของ Purchase: สร้างเป็น `PENDING` และเปลี่ยนเป็น `COMPLETED` หลังรับสินค้า (แก้ไขได้เฉพาะ `PENDING`)
+- [x] เพิ่ม repository, request/response DTO, mapper และ service ตามรูปแบบ layered architecture ที่มีอยู่
+- [x] ตรวจสอบ Supplier และ Product ที่อ้างถึงว่ามีอยู่จริง; validate จำนวนและ unit cost; คำนวณ subtotal/total จากรายการ ไม่รับยอดรวมจาก client
 - [ ] รองรับ endpoint ตามแผน: `GET /api/v1/purchases`, `GET /api/v1/purchases/{id}`, `POST /api/v1/purchases`, `PUT /api/v1/purchases/{id}` และ `POST /api/v1/purchases/{id}/receive`
 - [x] กำหนดกติกาแก้ไข Purchase ให้แก้ได้เฉพาะ `PENDING`; สถานะอื่นตอบกลับ HTTP 409
-- [ ] ทำ Receive แบบ transaction เดียว: เพิ่ม stock ตามทุกรายการ, สร้าง StockMovement ชนิด `IN` ที่อ้างอิง Purchase และเปลี่ยนสถานะ Purchase; หากขั้นตอนใดล้มเหลวต้อง rollback ทั้งหมด
-- [ ] ใช้ validation และ exception handler กลางของโปรเจค; ไม่เพิ่ม error handling ที่คืนผลสำเร็จเมื่อเกิดข้อผิดพลาด
+- [x] ทำ Receive แบบ transaction เดียว: เพิ่ม stock ตามทุกรายการ, สร้าง StockMovement ชนิด `IN` ที่อ้างอิง Purchase และเปลี่ยนสถานะ Purchase; หากขั้นตอนใดล้มเหลวต้อง rollback ทั้งหมด
+- [x] ใช้ validation และ exception handler กลางของโปรเจค; ไม่เพิ่ม error handling ที่คืนผลสำเร็จเมื่อเกิดข้อผิดพลาด
 
 ### 4. ทดสอบและเชื่อมระบบ
 
 - [x] Unit tests: สร้าง Purchase รายการเดียว/หลายรายการ, คำนวณยอด, Product/Supplier ไม่มี, ข้อมูลผิดรูปแบบ และแก้ Purchase ตามสถานะ
-- [ ] Receive tests: stock เพิ่มตามจำนวน, สร้าง movement `IN`, เปลี่ยนสถานะ, ปฏิเสธรับซ้ำ และไม่มีข้อมูลบางส่วนเมื่อเกิด failure/rollback
+- [x] Receive tests: stock เพิ่มตามจำนวน, สร้าง movement `IN`, เปลี่ยนสถานะ, ปฏิเสธรับซ้ำ และไม่มีข้อมูลบางส่วนเมื่อเกิด failure/rollback
 - [ ] Controller tests: HTTP method/status, request validation, response และ error cases ของ Purchase API
 - [ ] ทดสอบร่วมกับ Inventory/StockMovement เดิมและรัน `mvnw.cmd test` ทั้งชุดก่อนเปิด PR
 - [ ] ตรวจ Swagger/API documentation และอัปเดตเอกสารที่เกี่ยวข้องให้ตรงกับ API และ business rules จริง
@@ -64,7 +64,7 @@
 | [x] | 3 | เพิ่ม Purchase DTO, validation, mapper และ tests ที่เกี่ยวข้อง | `feat: add purchase request and response models` |
 | [x] | 4 | ทำ create/list/get Purchase พร้อม service tests | `feat: add purchase creation and lookup` |
 | [x] | 5 | ทำการแก้ Purchase และกติกาการเปลี่ยนสถานะก่อนรับสินค้า | `feat: manage pending purchase orders` |
-| [ ] | 6 | ทำ Receive แบบ transaction เชื่อม Inventory/StockMovement พร้อม tests สำหรับ receive/rollback | `feat: receive purchase into inventory` |
+| [x] | 6 | ทำ Receive แบบ transaction เชื่อม Inventory/StockMovement พร้อม tests สำหรับ receive/rollback | `feat: receive purchase into inventory` |
 | [ ] | 7 | เพิ่ม Purchase REST endpoints/controller tests และรัน regression tests | `test: verify purchase api and backend regression` |
 | [ ] | 8 | อัปเดตเอกสาร API/ผลทดสอบ และตรวจความพร้อมก่อนเปิด PR | `docs: document inventory and purchase workflow` |
 
@@ -72,8 +72,8 @@
 
 ## Definition of Done
 
-- [ ] Inventory, StockMovement และ Purchase ทำงานร่วมกันโดยไม่ทำให้ quantity กับ movement history คลาดเคลื่อน
-- [ ] การรับ Purchase อัปเดต stock, movement และสถานะครบใน transaction เดียว และป้องกันการรับซ้ำ
-- [ ] Validation, business rules, error responses และ API ตรงกับเอกสาร
-- [ ] Unit/controller tests ที่เกี่ยวข้องผ่าน และ `mvnw.cmd test` ผ่านทั้งชุด
+- [x] Inventory, StockMovement และ Purchase ทำงานร่วมกันโดยไม่ทำให้ quantity กับ movement history คลาดเคลื่อนใน service flow
+- [x] การรับ Purchase อัปเดต stock, movement และสถานะครบใน transaction เดียว ป้องกันการรับซ้ำ และทดสอบ rollback
+- [ ] Validation, business rules, error responses และ REST API ตรงกับเอกสาร (Purchase REST controller ยังไม่ทำ)
+- [x] Unit/persistence tests ที่เกี่ยวข้องผ่าน และ `mvnw.cmd test` ผ่านทั้งชุด
 - [ ] Pull Request เข้า `develop` ผ่าน review; ไม่มีการ push ตรงเข้า `main`

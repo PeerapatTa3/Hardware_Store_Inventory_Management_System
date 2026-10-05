@@ -43,7 +43,7 @@
 ส่วน `OUT` จะถูกปฏิเสธเมื่อจำนวนที่ขอเกิน available quantity.
 
 ## Purchase API
-กติกาสำหรับ endpoints ที่จะเปิดใช้ใน Purchase module:
+Endpoints ที่วางแผนไว้สำหรับ Purchase module:
 - GET /api/v1/purchases
 - GET /api/v1/purchases/{id}
 - POST /api/v1/purchases
@@ -54,6 +54,11 @@
 แก้ไข Purchase ได้เฉพาะสถานะ `PENDING`; สถานะอื่นจะถูกปฏิเสธด้วย HTTP 409
 การแก้ไขแทนที่ Supplier และรายการสินค้าทั้งหมด พร้อมคำนวณ subtotal/total ใหม่จากรายการ
 สถานะและยอดรวมไม่ได้รับจาก request เพื่อไม่ให้ client เปลี่ยน lifecycle หรือกำหนดยอดเอง
+
+เมื่อเรียก receive ผ่าน service: ระบบเพิ่ม stock และบันทึก Stock Movement ประเภท `IN`
+สำหรับทุกรายการ แล้วเปลี่ยนสถานะ Purchase เป็น `COMPLETED` ภายใน transaction เดียว
+หากรายการใดล้มเหลว การเปลี่ยน stock, movement และสถานะจะ rollback ทั้งหมด
+Purchase ที่ไม่ใช่ `PENDING` จะรับซ้ำไม่ได้; การรับสำเร็จอ้างอิง movement ด้วย purchase number
 
 ## Notes
 - ใช้ Swagger UI สำหรับทดสอบ API

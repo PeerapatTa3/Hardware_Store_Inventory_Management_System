@@ -6,6 +6,7 @@ import com.hardwarestore.domain.entity.PurchaseOrderStatus;
 import com.hardwarestore.domain.entity.Supplier;
 import com.hardwarestore.dto.request.PurchaseItemRequest;
 import com.hardwarestore.dto.request.PurchaseOrderRequest;
+import com.hardwarestore.dto.request.StockMovementRequest;
 import com.hardwarestore.dto.response.PurchaseOrderResponse;
 import com.hardwarestore.exception.InvalidPurchaseStateException;
 import com.hardwarestore.exception.ResourceNotFoundException;
@@ -13,8 +14,10 @@ import com.hardwarestore.mapper.PurchaseOrderMapper;
 import com.hardwarestore.repository.ProductRepository;
 import com.hardwarestore.repository.PurchaseOrderRepository;
 import com.hardwarestore.repository.SupplierRepository;
+import com.hardwarestore.service.StockMovementService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -43,6 +46,9 @@ class PurchaseOrderServiceImplTest {
 
     @Mock
     private PurchaseOrderMapper purchaseOrderMapper;
+
+    @Mock
+    private StockMovementService stockMovementService;
 
     @InjectMocks
     private PurchaseOrderServiceImpl purchaseOrderService;
@@ -184,6 +190,64 @@ class PurchaseOrderServiceImplTest {
         verifyNoInteractions(supplierRepository, productRepository, purchaseOrderMapper);
     }
 
+    @Test
+    void receiveShouldAddInboundMovementForEachItemAndCompletePurchase() {
+        PurchaseOrder order = new PurchaseOrder();
+        order.setId(18L);
+        order.setPurchaseNumber("PO-RECEIVE");
+        order.setStatus(PurchaseOrderStatus.PENDING);
+        Product hammer = product(1L, "Hammer");
+        Product wrench = product(2L, "Wrench");
+        order.getItems().add(item(order, hammer, 3));
+        order.getItems().add(item(order, wrench, 2));
+        PurchaseOrderResponse response = PurchaseOrderResponse.builder()
+                .id(18L)
+                .status(PurchaseOrderStatus.COMPLETED)
+                .build();
+        when(purchaseOrderRepository.findById(18L)).thenReturn(Optional.of(order));
+        when(purchaseOrderRepository.save(order)).thenReturn(order);
+        when(purchaseOrderMapper.toResponse(order)).thenReturn(response);
+
+        PurchaseOrderResponse result = purchaseOrderService.receive(18L);
+
+        assertSame(response, result);
+        assertEquals(PurchaseOrderStatus.COMPLETED, order.getStatus());
+        ArgumentCaptor<StockMovementRequest> movementCaptor =
+                ArgumentCaptor.forClass(StockMovementRequest.class);
+        verify(stockMovementService, times(2)).create(movementCaptor.capture());
+        assertEquals(List.of(1L, 2L), movementCaptor.getAllValues().stream()
+                .map(StockMovementRequest::getProductId).toList());
+        assertEquals(List.of(3, 2), movementCaptor.getAllValues().stream()
+                .map(StockMovementRequest::getQuantity).toList());
+        assertTrue(movementCaptor.getAllValues().stream()
+                .allMatch(movement -> movement.getMovementType()
+                        == com.hardwarestore.domain.entity.StockMovementType.IN
+                        && "PO-RECEIVE".equals(movement.getReferenceNo())));
+        verify(purchaseOrderRepository).save(order);
+    }
+
+    @Test
+    void receiveShouldRejectPurchaseThatIsNotPending() {
+        PurchaseOrder order = new PurchaseOrder();
+        order.setId(18L);
+        order.setStatus(PurchaseOrderStatus.COMPLETED);
+        when(purchaseOrderRepository.findById(18L)).thenReturn(Optional.of(order));
+
+        assertThrows(InvalidPurchaseStateException.class, () -> purchaseOrderService.receive(18L));
+
+        verifyNoInteractions(stockMovementService, purchaseOrderMapper);
+        verify(purchaseOrderRepository, never()).save(any(PurchaseOrder.class));
+    }
+
+    @Test
+    void receiveShouldFailWhenPurchaseDoesNotExist() {
+        when(purchaseOrderRepository.findById(404L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class, () -> purchaseOrderService.receive(404L));
+
+        verifyNoInteractions(stockMovementService, purchaseOrderMapper);
+    }
+
     private PurchaseOrderRequest request(Long supplierId, PurchaseItemRequest... items) {
         PurchaseOrderRequest request = new PurchaseOrderRequest();
         request.setSupplierId(supplierId);
@@ -204,5 +268,16 @@ class PurchaseOrderServiceImplTest {
         product.setId(id);
         product.setName(name);
         return product;
+    }
+
+    private com.hardwarestore.domain.entity.PurchaseItem item(
+            PurchaseOrder order, Product product, int quantity) {
+        var item = new com.hardwarestore.domain.entity.PurchaseItem();
+        item.setPurchaseOrder(order);
+        item.setProduct(product);
+        item.setQuantity(quantity);
+        item.setUnitCost(new BigDecimal("8.50"));
+        item.setSubtotal(new BigDecimal("8.50").multiply(BigDecimal.valueOf(quantity)));
+        return item;
     }
 }

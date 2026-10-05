@@ -43,6 +43,7 @@ public class PurchaseOrder {
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "purchaseOrder", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id ASC")
     private List<PurchaseItem> items = new ArrayList<>();
 
     @PrePersist

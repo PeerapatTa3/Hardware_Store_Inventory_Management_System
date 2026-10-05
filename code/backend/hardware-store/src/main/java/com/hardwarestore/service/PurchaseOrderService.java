@@ -14,4 +14,6 @@ public interface PurchaseOrderService {
     PurchaseOrderResponse findById(Long id);
 
     PurchaseOrderResponse update(Long id, PurchaseOrderRequest request);
+
+    PurchaseOrderResponse receive(Long id);
 }
