@@ -7,6 +7,7 @@ import com.hardwarestore.domain.entity.Supplier;
 import com.hardwarestore.dto.request.PurchaseItemRequest;
 import com.hardwarestore.dto.request.PurchaseOrderRequest;
 import com.hardwarestore.dto.response.PurchaseOrderResponse;
+import com.hardwarestore.exception.InvalidPurchaseStateException;
 import com.hardwarestore.exception.ResourceNotFoundException;
 import com.hardwarestore.mapper.PurchaseOrderMapper;
 import com.hardwarestore.repository.ProductRepository;
@@ -129,6 +130,58 @@ class PurchaseOrderServiceImplTest {
         when(purchaseOrderRepository.findById(404L)).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> purchaseOrderService.findById(404L));
+    }
+
+    @Test
+    void updateShouldReplacePendingOrderSupplierItemsAndTotal() {
+        PurchaseOrder order = new PurchaseOrder();
+        order.setId(12L);
+        order.setPurchaseNumber("PO-KEEP");
+        order.setStatus(PurchaseOrderStatus.PENDING);
+        Supplier supplier = new Supplier();
+        supplier.setId(7L);
+        Product hammer = product(1L, "Hammer");
+        PurchaseOrderRequest request = request(7L, item(1L));
+        PurchaseOrderResponse response = PurchaseOrderResponse.builder().id(12L).build();
+
+        when(purchaseOrderRepository.findById(12L)).thenReturn(Optional.of(order));
+        when(supplierRepository.findById(7L)).thenReturn(Optional.of(supplier));
+        when(productRepository.findById(1L)).thenReturn(Optional.of(hammer));
+        when(purchaseOrderRepository.save(order)).thenReturn(order);
+        when(purchaseOrderMapper.toResponse(order)).thenReturn(response);
+
+        PurchaseOrderResponse result = purchaseOrderService.update(12L, request);
+
+        assertSame(response, result);
+        verify(purchaseOrderMapper).updatePendingOrder(order, request, supplier, Map.of(1L, hammer));
+        verify(purchaseOrderRepository).save(order);
+        verify(purchaseOrderMapper, never()).toEntity(any(), any(), any(), any());
+    }
+
+    @Test
+    void updateShouldRejectNonPendingPurchaseWithoutChangingIt() {
+        PurchaseOrder order = new PurchaseOrder();
+        order.setId(12L);
+        order.setStatus(PurchaseOrderStatus.COMPLETED);
+        PurchaseOrderRequest request = request(7L, item(1L));
+        when(purchaseOrderRepository.findById(12L)).thenReturn(Optional.of(order));
+
+        InvalidPurchaseStateException exception = assertThrows(InvalidPurchaseStateException.class,
+                () -> purchaseOrderService.update(12L, request));
+
+        assertTrue(exception.getMessage().contains("Only pending purchases can be edited"));
+        verifyNoInteractions(supplierRepository, productRepository, purchaseOrderMapper);
+        verify(purchaseOrderRepository, never()).save(any(PurchaseOrder.class));
+    }
+
+    @Test
+    void updateShouldFailWhenPurchaseDoesNotExist() {
+        when(purchaseOrderRepository.findById(404L)).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> purchaseOrderService.update(404L, request(7L, item(1L))));
+
+        verifyNoInteractions(supplierRepository, productRepository, purchaseOrderMapper);
     }
 
     private PurchaseOrderRequest request(Long supplierId, PurchaseItemRequest... items) {

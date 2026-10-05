@@ -26,6 +26,12 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, "DUPLICATE_SKU", ex.getMessage(), request);
     }
 
+    @ExceptionHandler(InvalidPurchaseStateException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidPurchaseState(
+            InvalidPurchaseStateException ex, HttpServletRequest request) {
+        return build(HttpStatus.CONFLICT, "INVALID_PURCHASE_STATE", ex.getMessage(), request);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(
             MethodArgumentNotValidException ex, HttpServletRequest request) {

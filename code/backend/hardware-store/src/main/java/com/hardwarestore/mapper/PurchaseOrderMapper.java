@@ -27,7 +27,17 @@ public class PurchaseOrderMapper {
         order.setPurchaseNumber(purchaseNumber);
         order.setSupplier(supplier);
         order.setStatus(PurchaseOrderStatus.PENDING);
+        updatePendingOrder(order, request, supplier, productsById);
+        return order;
+    }
 
+    public void updatePendingOrder(
+            PurchaseOrder order,
+            PurchaseOrderRequest request,
+            Supplier supplier,
+            Map<Long, Product> productsById) {
+        order.setSupplier(supplier);
+        order.getItems().clear();
         BigDecimal totalAmount = BigDecimal.ZERO;
         for (PurchaseItemRequest itemRequest : request.getItems()) {
             Product product = productsById.get(itemRequest.getProductId());
@@ -48,7 +58,6 @@ public class PurchaseOrderMapper {
             totalAmount = totalAmount.add(subtotal);
         }
         order.setTotalAmount(totalAmount);
-        return order;
     }
 
     public PurchaseOrderResponse toResponse(PurchaseOrder order) {

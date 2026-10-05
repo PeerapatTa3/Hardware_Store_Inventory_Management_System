@@ -42,6 +42,19 @@
 การสร้าง movement ประเภท `IN` หรือ `OUT` จะปรับ Inventory ใน transaction เดียวกัน
 ส่วน `OUT` จะถูกปฏิเสธเมื่อจำนวนที่ขอเกิน available quantity.
 
+## Purchase API
+กติกาสำหรับ endpoints ที่จะเปิดใช้ใน Purchase module:
+- GET /api/v1/purchases
+- GET /api/v1/purchases/{id}
+- POST /api/v1/purchases
+- PUT /api/v1/purchases/{id}
+- POST /api/v1/purchases/{id}/receive
+
+หมายเหตุ: Purchase REST controller ยังไม่ถูกเพิ่ม; endpoints เหล่านี้ยังเรียกใช้งานไม่ได้จนกว่าจะเสร็จในงาน API/controller
+แก้ไข Purchase ได้เฉพาะสถานะ `PENDING`; สถานะอื่นจะถูกปฏิเสธด้วย HTTP 409
+การแก้ไขแทนที่ Supplier และรายการสินค้าทั้งหมด พร้อมคำนวณ subtotal/total ใหม่จากรายการ
+สถานะและยอดรวมไม่ได้รับจาก request เพื่อไม่ให้ client เปลี่ยน lifecycle หรือกำหนดยอดเอง
+
 ## Notes
 - ใช้ Swagger UI สำหรับทดสอบ API
 - Error response standardized ผ่าน `GlobalExceptionHandler`

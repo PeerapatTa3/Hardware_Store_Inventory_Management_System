@@ -83,6 +83,36 @@ class PurchaseOrderMapperTest {
         assertEquals(0, new BigDecimal("20.00").compareTo(response.getItems().get(0).getSubtotal()));
     }
 
+    @Test
+    void updatePendingOrderShouldReplaceItemsAndRecalculateTotal() {
+        Supplier originalSupplier = new Supplier();
+        originalSupplier.setId(3L);
+        Supplier updatedSupplier = new Supplier();
+        updatedSupplier.setId(7L);
+        Product oldProduct = product(2L, "Old product");
+        Product newProduct = product(1L, "Hammer");
+        PurchaseOrder order = new PurchaseOrder();
+        order.setPurchaseNumber("PO-KEEP");
+        order.setStatus(PurchaseOrderStatus.PENDING);
+        order.setSupplier(originalSupplier);
+        order.setTotalAmount(new BigDecimal("10.00"));
+        order.getItems().add(purchaseItem(order, oldProduct));
+
+        PurchaseOrderRequest request = new PurchaseOrderRequest();
+        request.setSupplierId(7L);
+        request.setItems(List.of(itemRequest(1L, 3, "4.00")));
+
+        mapper.updatePendingOrder(order, request, updatedSupplier, Map.of(1L, newProduct));
+
+        assertEquals("PO-KEEP", order.getPurchaseNumber());
+        assertEquals(PurchaseOrderStatus.PENDING, order.getStatus());
+        assertSame(updatedSupplier, order.getSupplier());
+        assertEquals(1, order.getItems().size());
+        assertSame(order, order.getItems().get(0).getPurchaseOrder());
+        assertSame(newProduct, order.getItems().get(0).getProduct());
+        assertEquals(0, new BigDecimal("12.00").compareTo(order.getTotalAmount()));
+    }
+
     private PurchaseItemRequest itemRequest(Long productId, int quantity, String unitCost) {
         PurchaseItemRequest request = new PurchaseItemRequest();
         request.setProductId(productId);
