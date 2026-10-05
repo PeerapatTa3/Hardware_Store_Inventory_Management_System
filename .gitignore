@@ -1,0 +1,7 @@
+# Environment files (keep example templates)
+.env
+.env.*
+!.env.example
+
+# Generated project archive
+project-files.json

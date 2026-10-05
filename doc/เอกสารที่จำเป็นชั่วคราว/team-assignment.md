@@ -4,9 +4,9 @@
 
 | ลำดับ | ชื่อ-นามสกุล | รหัสนักศึกษา | Section | Branch | หน้าที่รับผิดชอบ |
 |---|---|---:|---:|---|---|
-| 1 | นายพิสิษฐ์ ทรัพย์อุดมโชติ | 673380285-2 | 01 | `peerapol_673380287-8_01` | Member 1: Backend core, Category, Supplier, Product, Inventory, Stock Movement |
-| 2 | นายพีรพล แก้วเจริญสันติสุข | 673380287-8 | 01 | `peerapol_673380287-8_01` | Member 2: Inventory, Purchase, Stock Operations |
-| 3 | นายพีรพัฒน์ แท่นประยุทร | 673380288-6 | 01 | `peerapol_673380287-8_01` | Member 3: Customer, Sales Order, Design Pattern, Documentation |
+| 1 | นายพีรพล แก้วเจริญสันติสุข | 673380287-8 | 01 | `peerapol_673380287-8_01` | Member 1: Backend core, Category, Supplier, Product, Inventory, Stock Movement |
+| 2 | นายพิสิษฐ์ ทรัพย์อุดมโชติ | 673380285-2 | 01 | `phisit_673380285-2_01` | Member 2: Inventory, Purchase, Stock Operations |
+| 3 | นายพีรพัฒน์ แท่นประยุทร | 673380288-6 | 01 | `peerapat_673380288-6_01` | Member 3: Customer, Sales Order, Design Pattern, Documentation |
 
 ## 2. สรุปสถานะโปรเจคปัจจุบัน
 
