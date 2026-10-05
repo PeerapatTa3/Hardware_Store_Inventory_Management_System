@@ -60,7 +60,7 @@
 | สถานะ | ลำดับ | งานที่ต้องเสร็จและตรวจสอบ | ตัวอย่าง commit message |
 |---|---:|---|---|
 | [x] | 1 | ปรับ Inventory/StockMovement ให้สอดคล้องกัน พร้อม unit tests | `fix: synchronize inventory adjustment movements` |
-| [ ] | 2 | เพิ่ม PurchaseOrder/PurchaseItem, status, relationships และ repositories | `feat: add purchase persistence model` |
+| [x] | 2 | เพิ่ม PurchaseOrder/PurchaseItem, status, relationships และ repositories | `feat: add purchase persistence model` |
 | [ ] | 3 | เพิ่ม Purchase DTO, validation, mapper และ tests ที่เกี่ยวข้อง | `feat: add purchase request and response models` |
 | [ ] | 4 | ทำ create/list/get Purchase พร้อม service tests | `feat: add purchase creation and lookup` |
 | [ ] | 5 | ทำการแก้ Purchase และกติกาการเปลี่ยนสถานะก่อนรับสินค้า | `feat: manage pending purchase orders` |

@@ -4,11 +4,11 @@
 
 ## สรุปสถานะ
 
-**โปรเจกต์อยู่ช่วงปลาย Phase 3 — Inventory System และกำลังจะเข้าสู่ Phase 4 — Purchase** โดยมี Backend พื้นฐาน, CRUD ของ Category / Supplier / Product, InventoryStock และการบันทึก StockMovement แล้ว
+**โปรเจกต์อยู่ช่วง Phase 4 — Purchase** โดยมี Backend พื้นฐาน, CRUD ของ Category / Supplier / Product, InventoryStock, StockMovement และเริ่มวาง persistence model ของ Purchase แล้ว
 
-อย่างไรก็ตาม **Phase 2 ยังไม่ครบ** เพราะยังไม่พบ Customer module และ Inventory/Stock Movement ยังไม่ได้เชื่อมกับ Purchase หรือ Sales เป็น end-to-end flow จึงยังไม่ควรถือว่า Backend หรือโปรเจกต์โดยรวมเสร็จแล้ว
+อย่างไรก็ตาม **Phase 2 ยังไม่ครบ** เพราะยังไม่พบ Customer module และ Purchase ยังไม่มี API/workflow เชื่อม Inventory กับ StockMovement เป็น end-to-end flow จึงยังไม่ควรถือว่า Backend หรือโปรเจกต์โดยรวมเสร็จแล้ว
 
-การตรวจสอบชุดทดสอบล่าสุด: `.\mvnw.cmd test` ใน `code/backend/hardware-store/` ผ่าน **17 tests, 0 failures, 0 errors** หลังปรับ flow Inventory/StockMovement
+การตรวจสอบชุดทดสอบล่าสุด: `.\mvnw.cmd test` ใน `code/backend/hardware-store/` ผ่าน **18 tests, 0 failures, 0 errors** หลังเพิ่ม Purchase persistence model และ test ความสัมพันธ์ JPA
 
 ## ความคืบหน้าตาม Roadmap
 
@@ -17,12 +17,12 @@
 | 1 | Project Setup | ทำแล้วเป็นส่วนใหญ่ | มี Spring Boot, Maven, Java 17, JPA, H2, PostgreSQL driver, OpenAPI และ Global Exception Handler; ยังไม่พบ Flyway migration หรือ Docker Compose |
 | 2 | Core CRUD | ทำบางส่วน | Category, Supplier และ Product มี CRUD; ยังไม่พบ Customer |
 | 3 | Inventory System | ทำแกนหลักแล้ว | มี InventoryStock API สำหรับอ่าน/ปรับจำนวน และ StockMovement API; การปรับยอด Inventory สร้าง movement ประเภท `ADJUSTMENT` ใน transaction เดียวกัน; ยังไม่มี Controller/Integration tests |
-| 4 | Purchase | ยังไม่เริ่ม | ไม่พบ PurchaseOrder, PurchaseItem หรือ workflow รับสินค้า |
+| 4 | Purchase | เริ่มวาง persistence | มี PurchaseOrder/PurchaseItem entities, status enum และ repositories; ยังไม่มี DTO, service, API หรือ workflow รับสินค้า |
 | 5 | Sales | ยังไม่เริ่ม | ไม่พบ Customer, SalesOrder, SalesOrderItem หรือการตรวจและตัด stock |
 | 6 | Design Patterns | ยังไม่เริ่ม | State, Strategy และ Observer ปรากฏในเอกสารเป็นแนวทาง แต่ยังไม่พบการนำไปใช้ใน business logic |
 | 7 | Frontend | ยังไม่เริ่ม | ไม่พบ React application หรือ frontend source |
 | 8 | Integration | ทำบางส่วน | มี Product, Inventory และ StockMovement แยกเป็นโมดูล; ยังไม่มี purchase/sales end-to-end flow |
-| 9 | Testing | ทำบางส่วน | Service unit tests 17 รายการผ่าน; ยังไม่พบ MockMvc/Controller tests หรือ Integration tests |
+| 9 | Testing | ทำบางส่วน | Service unit tests 17 รายการและ JPA persistence test 1 รายการผ่าน; ยังไม่มี Controller tests หรือทดสอบ Purchase workflow แบบ end-to-end |
 | 10 | Documentation | ทำบางส่วน | มี README, API documentation, Data Dictionary, SOLID analysis และ Design Patterns; ไฟล์ diagrams มีเพียง README และ API docs ยังไม่ครอบคลุม Inventory/Purchase/Sales |
 | 11 | Docker & Deployment | ทำบางส่วน | มี Dockerfile; ยังไม่พบ `docker-compose.yml`, deployment configuration หรือ Public URL |
 | 12 | Final Verification | ยังไม่เริ่ม | ยังมี requirement สำคัญที่ขาดตาม checklist ด้านล่าง |
@@ -40,11 +40,11 @@
 | Swagger / OpenAPI | ทำแล้ว | มี OpenAPI config และ dependency ใน Maven |
 | One-to-One | ทำแล้ว | `InventoryStock` เชื่อม `Product` ด้วย `@OneToOne` |
 | One-to-Many | ทำแล้วในระดับ FK | Product อ้าง Category และ Supplier ด้วย `@ManyToOne`; ยังไม่มี inverse `@OneToMany` collection |
-| อย่างน้อย 6 ตารางหลัก | ยังไม่ครบ | พบ Entity 5 ตัว: Category, Product, Supplier, InventoryStock และ StockMovement |
-| Purchase / Sales modules | ยังไม่เริ่ม | ยังไม่มี entities, APIs หรือ business workflows |
+| อย่างน้อย 6 ตารางหลัก | ทำแล้วบางส่วน | พบ Entity 7 ตัว: Category, Product, Supplier, InventoryStock, StockMovement, PurchaseOrder และ PurchaseItem |
+| Purchase / Sales modules | ทำแล้วบางส่วน | Purchase มี persistence entities/repositories แต่ยังไม่มี API หรือ workflow; Sales ยังไม่เริ่ม |
 | State / Strategy / Observer | ยังไม่เริ่ม | พบเฉพาะคำอธิบายในเอกสาร ยังไม่พบ implementation |
-| Unit tests | ทำแล้วบางส่วน | Service tests ผ่าน 17 รายการ |
-| Controller / Integration tests | ยังไม่เริ่ม | ยังไม่พบ test ประเภทดังกล่าว |
+| Unit / Persistence tests | ทำแล้วบางส่วน | Service unit tests 17 รายการและ JPA persistence test 1 รายการผ่าน |
+| Controller / Workflow integration tests | ยังไม่เริ่ม | ยังไม่พบ Controller tests หรือการทดสอบ workflow แบบ end-to-end |
 | Flyway / Database migrations | ยังไม่เริ่ม | ไม่พบ migration scripts; ปัจจุบัน JPA ใช้ `ddl-auto: update` |
 | Docker | ทำแล้วบางส่วน | มี Dockerfile แต่ยังไม่มี Compose |
 | Frontend / Cloud deployment / Public URL | ยังไม่เริ่ม | ไม่พบ implementation หรือ URL |
