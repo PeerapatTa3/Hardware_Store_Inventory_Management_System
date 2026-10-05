@@ -54,6 +54,11 @@ public class StockMovementServiceImpl implements StockMovementService {
             }
             inventory.setQuantity(inventory.getQuantity() - quantity);
         } else if (request.getMovementType() == StockMovementType.ADJUSTMENT) {
+            if (quantity < inventory.getReservedQuantity()) {
+                throw new IllegalArgumentException(
+                        "Adjusted quantity cannot be less than reserved quantity for product id: "
+                                + product.getId());
+            }
             inventory.setQuantity(quantity);
         }
 

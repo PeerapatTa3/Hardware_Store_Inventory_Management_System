@@ -21,6 +21,27 @@
 - PUT /api/v1/products/{id}
 - DELETE /api/v1/products/{id}
 
+## Inventory API
+- GET /api/v1/inventory/products/{productId}
+- PUT /api/v1/inventory/products/{productId}
+
+ตัวอย่าง request สำหรับปรับยอด:
+```json
+{
+  "quantity": 15,
+  "reason": "ตรวจนับสินค้า"
+}
+```
+- `quantity` คือยอดคงเหลือใหม่ ไม่ใช่จำนวนที่เพิ่มหรือลด
+- การปรับยอดจะอัปเดต Inventory และสร้าง Stock Movement ประเภท `ADJUSTMENT` ใน transaction เดียวกัน
+- `ADJUSTMENT.quantity` ในประวัติคือยอดคงเหลือใหม่ และยอดใหม่ต้องไม่น้อยกว่า reserved quantity
+
+## Stock Movement API
+- POST /api/v1/stock-movements
+
+การสร้าง movement ประเภท `IN` หรือ `OUT` จะปรับ Inventory ใน transaction เดียวกัน
+ส่วน `OUT` จะถูกปฏิเสธเมื่อจำนวนที่ขอเกิน available quantity.
+
 ## Notes
 - ใช้ Swagger UI สำหรับทดสอบ API
 - Error response standardized ผ่าน `GlobalExceptionHandler`

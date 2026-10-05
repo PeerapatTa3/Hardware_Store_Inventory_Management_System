@@ -133,6 +133,67 @@ class StockMovementServiceImplTest {
     }
 
     @Test
+    void create_shouldSetStockToTargetForAdjustmentMovement() {
+        StockMovementRequest request = new StockMovementRequest();
+        request.setProductId(10L);
+        request.setMovementType(StockMovementType.ADJUSTMENT);
+        request.setQuantity(6);
+        request.setNote("Stock count correction");
+
+        InventoryStock stock = new InventoryStock();
+        stock.setId(1L);
+        stock.setProduct(product);
+        stock.setQuantity(12);
+        stock.setReservedQuantity(2);
+
+        when(productRepository.findById(10L)).thenReturn(Optional.of(product));
+        when(inventoryStockRepository.findByProductId(10L)).thenReturn(Optional.of(stock));
+        when(stockMovementRepository.save(any(StockMovement.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+        when(stockMovementMapper.toResponse(any(StockMovement.class)))
+                .thenReturn(StockMovementResponse.builder()
+                        .productId(10L)
+                        .movementType(StockMovementType.ADJUSTMENT)
+                        .quantity(6)
+                        .note("Stock count correction")
+                        .build());
+
+        StockMovementResponse result = stockMovementService.create(request);
+
+        assertEquals(6, stock.getQuantity());
+        assertEquals(StockMovementType.ADJUSTMENT, result.getMovementType());
+        assertEquals(6, result.getQuantity());
+        verify(inventoryStockRepository).save(stock);
+        verify(stockMovementRepository).save(argThat(movement ->
+                movement.getMovementType() == StockMovementType.ADJUSTMENT
+                        && movement.getQuantity() == 6
+                        && "Stock count correction".equals(movement.getNote())));
+    }
+
+    @Test
+    void create_shouldRejectAdjustmentBelowReservedQuantity() {
+        StockMovementRequest request = new StockMovementRequest();
+        request.setProductId(10L);
+        request.setMovementType(StockMovementType.ADJUSTMENT);
+        request.setQuantity(1);
+
+        InventoryStock stock = new InventoryStock();
+        stock.setId(1L);
+        stock.setProduct(product);
+        stock.setQuantity(12);
+        stock.setReservedQuantity(2);
+
+        when(productRepository.findById(10L)).thenReturn(Optional.of(product));
+        when(inventoryStockRepository.findByProductId(10L)).thenReturn(Optional.of(stock));
+
+        assertThrows(IllegalArgumentException.class, () -> stockMovementService.create(request));
+
+        assertEquals(12, stock.getQuantity());
+        verify(inventoryStockRepository, never()).save(any(InventoryStock.class));
+        verify(stockMovementRepository, never()).save(any(StockMovement.class));
+    }
+
+    @Test
     void create_shouldThrowWhenProductDoesNotExist() {
         StockMovementRequest request = new StockMovementRequest();
         request.setProductId(99L);
