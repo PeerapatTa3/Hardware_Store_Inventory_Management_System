@@ -5,7 +5,7 @@
 ## ภาพรวม
 
 - มี test case ใหม่ **48 รายการ** และปรับ test เดิม **1 รายการ** ในชุดงาน Member 2
-- Regression test ล่าสุดหลังเพิ่ม Stock Movement read API และ controller/integration tests ผ่าน **63 tests, 0 failures, 0 errors**
+- Regression ล่าสุด ณ 2026-10-06 หลัง commit `919e439` ผ่าน **63 tests, 0 failures, 0 errors**
 - ตารางด้านล่างแสดง commit, test file, test method และสิ่งที่ทดสอบ
 
 ## รายการ Test Cases
@@ -47,7 +47,7 @@
 | `aadd658` — `test:เพิ่ม Purchase REST endpoints/controller tests และรัน regression tests` | `PurchaseOrderControllerTest.invalidRequestShouldReturnValidationError` | POST/PUT ที่ request ไม่ผ่าน validation ตอบ HTTP 400 พร้อม `VALIDATION_FAILED` และ path ถูกต้อง โดยไม่เรียก service |
 | `aadd658` — `test:เพิ่ม Purchase REST endpoints/controller tests และรัน regression tests` | `PurchaseOrderControllerTest.serviceErrorsShouldUseStandardNotFoundAndConflictResponses` | ตรวจ exception จาก service ถูกแปลงเป็น HTTP 404 `RESOURCE_NOT_FOUND` และ HTTP 409 `INVALID_PURCHASE_STATE` |
 
-## งานที่เพิ่มหลัง `aadd658` — ยังไม่ commit
+## งานที่เพิ่มใน commit `919e439` — `feat: add stock movement read APIs and inventory workflow tests`
 
 ข้อความ commit ที่เสนอ: `feat: add stock movement read APIs and inventory workflow tests`
 
@@ -91,7 +91,7 @@
 .\mvnw.cmd test
 ```
 
-ผล regression ล่าสุดใน working tree: **63 tests, 0 failures, 0 errors**. ผลในอดีตหลัง commit `aadd658` ยังคงเป็น 48 tests.
+ผล regression ล่าสุด ณ 2026-10-06 บน branch ที่ HEAD เป็น commit `919e439`: **63 tests, 0 failures, 0 errors**. ผล 48 tests เป็นผลจากรอบก่อนหน้า commit นี้ ไม่ใช่ผลทดสอบล่าสุด.
 
 ## ขอบเขต
 

@@ -187,17 +187,27 @@
 
 **ผลทดสอบหลังงานนี้:** `.\mvnw.cmd test` ผ่าน 48 tests, 0 failures, 0 errors
 
-## งานต่อยอดหลัง commit `aadd658` (ยังไม่ commit)
+## 9. `919e439` — `feat: add stock movement read APIs and inventory workflow tests`
 
-ข้อความ commit ที่เสนอ: `feat: add stock movement read APIs and inventory workflow tests`
+### เพิ่มหรือแก้อะไร
+- เพิ่ม `GET /api/v1/stock-movements` และ `GET /api/v1/stock-movements/products/{productId}` โดยเรียง movement ล่าสุดก่อน; Product ที่ไม่มีอยู่ตอบ 404 ส่วน Product ที่มีแต่ไม่มี movement คืนรายการว่าง
+- เพิ่ม Inventory และ Stock Movement Controller tests ครอบคลุม GET/PUT/POST, validation และ not-found response
+- เพิ่ม `InventoryPurchaseApiIntegrationTest` ซึ่งสร้าง Purchase และรับสินค้าผ่าน HTTP API แล้วตรวจ Purchase status, Inventory stock และ StockMovement ทั้งในฐานข้อมูลและ GET API
+- เพิ่ม service tests สำหรับกรณี Inventory ไม่พบ, Product ไม่มี movement และการเรียงลำดับ movement
 
-- เพิ่ม `GET /api/v1/stock-movements` และ `GET /api/v1/stock-movements/products/{productId}`; เรียงตามเวลาล่าสุดก่อน, Product ที่ไม่มีอยู่ตอบ 404 และ Product ที่ไม่มี movement คืน list ว่าง
-- เพิ่ม Controller tests สำหรับ Inventory และ Stock Movement รวม validation, response และ not-found behavior
-- เพิ่ม `InventoryPurchaseApiIntegrationTest` ทดสอบผ่าน HTTP ตั้งแต่สร้าง Purchase ถึง receive พร้อมยืนยัน stock, Purchase status และ movements ในฐานข้อมูล/GET endpoints
-- อัปเดต API docs, checklist, progress และ test summaries ให้ตรง implementation
-- Regression ล่าสุดใน working tree ผ่าน 63 tests, 0 failures, 0 errors
+### ทำไมจึงเพิ่ม และทำงานอย่างไร
+`PROJECT_PLAN.md` ระบุให้ Stock Movement อ่านได้ทั้งแบบรายการรวมและกรองตาม Product แต่ก่อนหน้านี้ API รองรับการสร้าง movement เท่านั้น จึงเพิ่ม query ที่เรียงตาม `movementAt` จากใหม่ไปเก่า และตรวจ Product ก่อนค้นรายการ เพื่อให้แยกกรณี Product ไม่มีอยู่ (404) ออกจาก Product ที่ยังไม่มีประวัติ (รายการว่าง) ได้ชัดเจน ส่วน integration test ยืนยัน workflow จากการสร้าง Purchase จนรับสินค้าและเห็นผลที่เชื่อมถึง Inventory/StockMovement ผ่าน HTTP จริง
 
-> การเปลี่ยนแปลงส่วนนี้ยังอยู่ใน working tree และยังไม่มี commit hash; จะไม่สร้าง commit โดยไม่ได้รับอนุญาต
+### สิ่งที่โปรเจกต์มีเพิ่มและประโยชน์
+- ผู้เรียก API ตรวจดูประวัติ movement ทั้งหมดหรือของ Product รายตัวได้
+- มี Controller-level coverage สำหรับ Inventory และ Stock Movement พร้อมตรวจ status/error responses
+- มีหลักฐานทดสอบ end-to-end ระดับ API ว่าการรับ Purchase สะท้อนยอด stock และ movement ที่บันทึกจริง
+- Regression เมื่อ 2026-10-06 ผ่าน 63 tests, 0 failures, 0 errors
+
+### มุมมองผู้ใช้ที่ไม่ใช่ Developer
+ผู้ใช้ระบบสามารถเรียกดูประวัติการเปลี่ยนแปลงคลังย้อนหลัง หรือดูเฉพาะสินค้าที่ต้องการได้ และการยืนยันรับสินค้าใน Purchase จะเพิ่มยอดคลังพร้อมบันทึกประวัติการรับเข้าให้ตรวจสอบได้
+
+> สถานะ: โค้ดของ commit นี้อยู่บน branch `phisit_673380285-2_01` และตรงกับ upstream; การอัปเดตเอกสารสถานะในรอบนี้ยังอยู่ใน working tree และยังไม่ commit
 
 ## ขอบเขตที่ยังไม่รวมในงาน Member 2
 

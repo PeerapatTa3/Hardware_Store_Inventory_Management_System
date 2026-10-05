@@ -12,7 +12,7 @@
 - [x] ทุกการเปลี่ยนจำนวน stock ผ่าน API ปัจจุบันของ Inventory หรือ StockMovement บันทึก StockMovement ควบคู่กันใน transaction เดียว
 - [x] งานที่ทำในรอบนี้เน้น Backend; ยังไม่เริ่ม Frontend ตามแนวทางให้พิจารณาหลัง Backend เสร็จ
 
-> สถานะโค้ดตรวจจาก working tree และรัน `.\mvnw.cmd test` ล่าสุดผ่าน 63 tests, 0 failures, 0 errors; รายการที่ยังไม่ครบระบุไว้เป็น unchecked ด้านล่าง
+> สถานะโค้ดตรวจจาก commit `919e439` บน branch `phisit_673380285-2_01` ซึ่งตรงกับ upstream รัน `.\mvnw.cmd test` ล่าสุดเมื่อ 2026-10-06 ผ่าน 63 tests, 0 failures, 0 errors; การอัปเดตเอกสารสถานะรอบนี้ยังไม่ commit และรายการงานที่ยังไม่ครบระบุไว้เป็น unchecked ด้านล่าง
 
 ## งานที่ต้องทำ
 

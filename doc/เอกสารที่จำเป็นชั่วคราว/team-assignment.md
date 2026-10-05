@@ -17,7 +17,7 @@
 - Database: H2 สำหรับ development
 - API: RESTful API + Swagger/OpenAPI
 - Testing: JUnit 5 + Mockito
-- ผลการตรวจสอบล่าสุด (2026-10-06): `.\mvnw.cmd test` ผ่าน 63 tests, 0 failures, 0 errors; งาน Stock Movement GET และ tests ล่าสุดยังอยู่ใน working tree และยังไม่ commit
+- ผลการตรวจสอบล่าสุด (2026-10-06): `.\mvnw.cmd test` ผ่าน 63 tests, 0 failures, 0 errors; งาน Stock Movement GET และ tests ล่าสุดอยู่ใน commit `919e439` บน branch Member 2 ซึ่งตรงกับ upstream การอัปเดตเอกสารสถานะรอบนี้ยังไม่ commit
 
 ## 3. งานที่ Member 1 ทำเสร็จแล้ว
 

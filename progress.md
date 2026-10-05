@@ -8,7 +8,7 @@
 
 อย่างไรก็ตาม **Phase 2 ยังไม่ครบ** เพราะยังไม่พบ Customer module; Purchase มี REST-to-database integration test ครอบคลุม create/receive/read stock movement แล้ว แต่ยังขาด Sales flow และ requirement อื่นตาม roadmap จึงยังไม่ควรถือว่า Backend หรือโปรเจกต์โดยรวมเสร็จแล้ว
 
-การตรวจสอบชุดทดสอบล่าสุด: `.\mvnw.cmd test` ใน `code/backend/hardware-store/` ผ่าน **63 tests, 0 failures, 0 errors** รวม Controller tests ของ Inventory/Stock Movement/Purchase, Purchase REST-to-database integration, receive success, repeated receive และ transaction rollback tests งาน Stock Movement GET และ tests ล่าสุดยังอยู่ใน working tree และยังไม่ commit
+การตรวจสอบชุดทดสอบล่าสุดเมื่อ 2026-10-06: `.\mvnw.cmd test` ใน `code/backend/hardware-store/` ผ่าน **63 tests, 0 failures, 0 errors** รวม Controller tests ของ Inventory/Stock Movement/Purchase, Purchase REST-to-database integration, receive success, repeated receive และ transaction rollback tests งาน Stock Movement GET และ tests ล่าสุดอยู่ใน commit `919e439` ซึ่งตรงกับ upstream; การอัปเดตเอกสารสถานะในรอบนี้ยังเป็นการเปลี่ยนแปลงใน working tree
 
 ## ความคืบหน้าตาม Roadmap
 

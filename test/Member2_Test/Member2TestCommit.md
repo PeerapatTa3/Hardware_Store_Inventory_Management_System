@@ -116,9 +116,9 @@
 - Commit `4862967` ไม่รวมในตาราง เพราะไม่มีไฟล์ test เปลี่ยนแปลง
 - `CategoryServiceImplTest` ไม่ได้ถูกเพิ่มหรือแก้ใน commits ของ Member 2 ที่สรุปไว้ จึงไม่นำมาใส่ในตาราง test ของ commit
 
-## งานล่าสุดที่ยังไม่ commit
+## `919e439` — `feat: add stock movement read APIs and inventory workflow tests`
 
-ข้อความ commit ที่เสนอ: `feat: add stock movement read APIs and inventory workflow tests`
+เพิ่ม tests 15 รายการ ครอบคลุม service, controller และ integration:
 
 | Test file | Test cases | ขอบเขต |
 |---|---|---|
@@ -128,4 +128,4 @@
 | `StockMovementControllerTest` | `findAllShouldReturnMovementList`; `findByProductIdShouldReturnMovementList`; `findByProductIdShouldReturnNotFoundForUnknownProduct`; `createShouldReturnCreatedMovement`; `invalidMovementShouldReturnValidationErrorWithoutCallingService` | GET all/by-product, POST, response/status, validation 400 และ Product ที่ไม่มีอยู่ตอบ 404 |
 | `InventoryPurchaseApiIntegrationTest` | `purchaseReceiveApiShouldPersistOrderStockAndInboundMovement` | ผ่าน HTTP ตั้งแต่สร้าง Purchase ถึง receive; ตรวจ Purchase status, Inventory stock และ movement ในฐานข้อมูลและ GET endpoints |
 
-Regression ล่าสุดของ working tree หลังเพิ่มงานนี้: **63 tests, 0 failures, 0 errors**. ยังไม่มี commit hash เพราะผู้ใช้จะเป็นผู้ commit เอง.
+ผล regression หลัง commit นี้ เมื่อ 2026-10-06: **63 tests, 0 failures, 0 errors**.
