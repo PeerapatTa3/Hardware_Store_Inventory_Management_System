@@ -4,20 +4,20 @@
 
 | ลำดับ | ชื่อ-นามสกุล | รหัสนักศึกษา | Section | Branch | หน้าที่รับผิดชอบ |
 |---|---|---:|---:|---|---|
-| 1 | นายพิสิษฐ์ ทรัพย์อุดมโชติ | 673380285-2 | 01 | `peerapol_673380287-8_01` | Member 1: Backend core, Category, Supplier, Product, Inventory, Stock Movement |
-| 2 | นายพีรพล แก้วเจริญสันติสุข | 673380287-8 | 01 | `peerapol_673380287-8_01` | Member 2: Inventory, Purchase, Stock Operations |
-| 3 | นายพีรพัฒน์ แท่นประยุทร | 673380288-6 | 01 | `peerapol_673380287-8_01` | Member 3: Customer, Sales Order, Design Pattern, Documentation |
+| 1 | นายพีรพล แก้วเจริญสันติสุข | 673380287-8 | 01 | `peerapol_673380287-8_01` | Member 1: Backend core, Category, Supplier, Product, Inventory, Stock Movement |
+| 2 | นายพิสิษฐ์ ทรัพย์อุดมโชติ | 673380285-2 | 01 | `phisit_673380285-2_01` | Member 2: Inventory, Purchase, Stock Operations |
+| 3 | นายพีรพัฒน์ แท่นประยุทร | 673380288-6 | 01 | `peerapat_673380288-6_01` | Member 3: Customer, Sales Order, Design Pattern, Documentation |
 
 ## 2. สรุปสถานะโปรเจคปัจจุบัน
 
 ปัจจุบันระบบ backend หลักของโปรเจคมีความคืบหน้ามากและผ่านการทดสอบจริงแล้วด้วย Maven
 
-- Backend framework: Spring Boot 3.x + Java 17
+- Backend framework: Spring Boot 4.1.1 + Java 17
 - Build tool: Maven
 - Database: H2 สำหรับ development
 - API: RESTful API + Swagger/OpenAPI
 - Testing: JUnit 5 + Mockito
-- ผลการตรวจสอบล่าสุด: 15 tests, 0 failures, 0 errors, BUILD SUCCESS
+- ผลการตรวจสอบล่าสุด (2026-10-06): `.\mvnw.cmd test` ผ่าน 63 tests, 0 failures, 0 errors; งาน Stock Movement GET และ tests ล่าสุดอยู่ใน commit `919e439` บน branch Member 2 ซึ่งตรงกับ upstream การอัปเดตเอกสารสถานะรอบนี้ยังไม่ commit
 
 ## 3. งานที่ Member 1 ทำเสร็จแล้ว
 
@@ -44,25 +44,30 @@
 ### 3.5 ปัจจุบัน
 Member 1 อยู่ในสถานะที่ “ทำงานหลักของระบบ backend ครบแล้วและพร้อมต่อยอด” สำหรับส่วนที่เหลือของโปรเจคตามใบงาน
 
-## 4. งานที่ Member 2 ควรทำต่อ
+## 4. Member 2 — ขอบเขตและสถานะงาน
 
 ### 4.1 Scope ที่กำหนด
+- เน้นพัฒนา Backend ให้สมบูรณ์ก่อน
 - Inventory / Stock management
 - Purchase workflow
 - การจัดการสต็อกและธุรกรรมคลัง
 - ตรวจสอบ flow รับ-จ่ายสินค้า
+- พิจารณาขอบเขตและแนวทาง Frontend หลัง Backend เสร็จสมบูรณ์
 
-### 4.2 งานที่ทำไปแล้วในหลักการ
+### 4.2 งานที่ทำแล้วในโค้ด
 - InventoryStock entity และ logic
 - StockMovement entity และ enum
 - API สำหรับตรวจสอบและปรับสต็อก
 - Service สำหรับระบบเคลื่อนไหวสต็อก
+- PurchaseOrder / PurchaseItem persistence, DTO, validation, mapper และ service
+- Purchase REST API สำหรับ create/list/get/update/receive; receive ปรับ Inventory, บันทึก `IN` movement และเปลี่ยนสถานะใน transaction เดียว
+- Stock Movement API สำหรับอ่าน movement ทั้งหมดและกรองตาม Product ID; Product ที่ไม่มีอยู่ตอบ 404 และ Product ที่ไม่มี movement คืนรายการว่าง
+- Unit, persistence, validation, mapper, exception handler และ Controller tests สำหรับ Inventory/Stock Movement/Purchase รวมถึง Purchase receive API integration test
 
 ### 4.3 สิ่งที่ยังต้องทำต่อ
-- Purchase module
-- PurchaseOrder / PurchaseOrderItem (ถ้ามีตามความต้องการ)
-- Flow รับสินค้าเข้าคลังจริง
-- ตรวจสอบ business rule ของคลังสินค้าอย่างละเอียด
+- ประสานยืนยัน DTO, exception, URL และ stock rules กับผู้ดูแลโมดูลเดิม หากยังไม่ได้ทำร่วมกัน
+- สร้าง Pull Request จาก branch Member 2 เข้า `develop` และขอ reviewer
+- พิจารณาขอบเขต Frontend ร่วมกับทีมหลัง Backend เสร็จสมบูรณ์
 
 ## 5. งานที่ Member 3 ควรทำต่อ
 
