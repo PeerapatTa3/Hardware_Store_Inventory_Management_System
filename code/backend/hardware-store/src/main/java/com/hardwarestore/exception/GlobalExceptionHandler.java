@@ -32,6 +32,12 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, "INVALID_PURCHASE_STATE", ex.getMessage(), request);
     }
 
+    @ExceptionHandler(InvalidSalesOrderStateException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidSalesOrderState(
+            InvalidSalesOrderStateException ex, HttpServletRequest request) {
+        return build(HttpStatus.CONFLICT, "INVALID_SALES_ORDER_STATE", ex.getMessage(), request);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidation(
             MethodArgumentNotValidException ex, HttpServletRequest request) {
