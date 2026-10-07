@@ -190,7 +190,7 @@ class SalesOrderServiceImplTest {
 
         SalesOrderResponse response = SalesOrderResponse.builder().id(3L).status(PENDING).build();
 
-        when(salesOrderRepository.findAll(any())).thenReturn(List.of(order));
+        when(salesOrderRepository.findAll(any(org.springframework.data.domain.Sort.class))).thenReturn(List.of(order));
         when(salesOrderMapper.toResponse(order)).thenReturn(response);
 
         assertEquals(List.of(response), salesOrderService.findAll());
@@ -216,6 +216,7 @@ class SalesOrderServiceImplTest {
         SalesOrder order = new SalesOrder();
         order.setId(5L);
         order.setStatus(PENDING);
+        order.setItems(List.of(createItem(order, product, 2, new BigDecimal("50.00"))));
 
         SalesOrderResponse response = SalesOrderResponse.builder().id(5L).status(PENDING).build();
 
