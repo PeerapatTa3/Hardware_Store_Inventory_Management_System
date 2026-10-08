@@ -19,6 +19,7 @@ public class SalesOrderItemRequest {
     @Positive(message = "quantity must be positive")
     private Integer quantity;
 
+    @Deprecated
     @Positive(message = "unitPrice must be positive")
     private BigDecimal unitPrice;
 }

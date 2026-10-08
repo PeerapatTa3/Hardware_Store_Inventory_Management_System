@@ -45,12 +45,7 @@ public class SalesOrderMapper {
                         "Product must be resolved before mapping sales order item: " + itemRequest.getProductId());
             }
 
-            BigDecimal unitPrice = itemRequest.getUnitPrice() != null
-                    ? itemRequest.getUnitPrice()
-                    : product.getPrice();
-            if (unitPrice == null) {
-                unitPrice = BigDecimal.ZERO;
-            }
+            BigDecimal unitPrice = product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO;
 
             BigDecimal subtotal = unitPrice
                     .multiply(BigDecimal.valueOf(itemRequest.getQuantity()))

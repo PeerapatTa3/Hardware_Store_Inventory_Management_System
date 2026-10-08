@@ -23,12 +23,12 @@ class SalesOrderMapperTest {
     @Test
     void toEntityShouldMapItemsAndCalculateTotals() {
         Customer customer = customer(7L, "Alice");
-        Product hammer = product(1L, "Hammer");
-        Product wrench = product(2L, "Wrench");
+        Product hammer = product(1L, "Hammer", "10.25");
+        Product wrench = product(2L, "Wrench", "4.50");
 
         SalesOrderRequest request = new SalesOrderRequest();
         request.setCustomerId(7L);
-        request.setItems(List.of(itemRequest(1L, 3, "10.25"), itemRequest(2L, 2, "4.50")));
+        request.setItems(List.of(itemRequest(1L, 3, "1.00"), itemRequest(2L, 2, "1.00")));
 
         SalesOrder order = mapper.toEntity(request, customer, Map.of(1L, hammer, 2L, wrench));
 
@@ -40,6 +40,23 @@ class SalesOrderMapperTest {
         assertEquals(0, new BigDecimal("30.75").compareTo(order.getItems().get(0).getSubtotal()));
         assertEquals(0, new BigDecimal("9.00").compareTo(order.getItems().get(1).getSubtotal()));
         assertEquals(0, new BigDecimal("39.75").compareTo(order.getTotalAmount()));
+    }
+
+    @Test
+    void toEntityShouldIgnoreClientProvidedUnitPriceAndUseProductPrice() {
+        Customer customer = customer(7L, "Alice");
+        Product product = product(10L, "Product B", "50.00");
+
+        SalesOrderRequest request = new SalesOrderRequest();
+        request.setCustomerId(7L);
+        request.setItems(List.of(itemRequest(10L, 2, "1.00")));
+
+        SalesOrder order = mapper.toEntity(request, customer, Map.of(10L, product));
+
+        assertEquals(1, order.getItems().size());
+        assertEquals(0, new BigDecimal("50.00").compareTo(order.getItems().get(0).getUnitPrice()));
+        assertEquals(0, new BigDecimal("100.00").compareTo(order.getItems().get(0).getSubtotal()));
+        assertEquals(0, new BigDecimal("100.00").compareTo(order.getTotalAmount()));
     }
 
     @Test
@@ -78,7 +95,7 @@ class SalesOrderMapperTest {
         assertEquals(SalesOrderStatus.PENDING, order.getStatus());
         assertEquals(1, order.getItems().size());
         assertSame(newProduct, order.getItems().get(0).getProduct());
-        assertEquals(0, new BigDecimal("12.00").compareTo(order.getTotalAmount()));
+        assertEquals(0, new BigDecimal("30.00").compareTo(order.getTotalAmount()));
     }
 
     @Test
@@ -127,9 +144,14 @@ class SalesOrderMapperTest {
     }
 
     private Product product(Long id, String name) {
+        return product(id, name, "10.00");
+    }
+
+    private Product product(Long id, String name, String price) {
         Product product = new Product();
         product.setId(id);
         product.setName(name);
+        product.setPrice(new BigDecimal(price));
         return product;
     }
 
