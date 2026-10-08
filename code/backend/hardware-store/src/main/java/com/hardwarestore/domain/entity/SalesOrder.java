@@ -10,6 +10,7 @@ import com.hardwarestore.domain.enums.SalesOrderStatus;
 import com.hardwarestore.domain.state.CancelledState;
 import com.hardwarestore.domain.state.CompletedState;
 import com.hardwarestore.domain.state.ConfirmedState;
+import com.hardwarestore.domain.state.ShippedState;
 import com.hardwarestore.domain.state.OrderState;
 import com.hardwarestore.domain.state.PendingState;
 import com.hardwarestore.service.strategy.BulkDiscount;
@@ -93,6 +94,10 @@ public class SalesOrder {
 
     public void cancel() {
         getCurrentState().cancel(this);
+    }
+
+    public void ship() {
+        getCurrentState().ship(this);
     }
 
     public void complete() {
@@ -181,7 +186,8 @@ public class SalesOrder {
 
         return switch (status) {
             case PENDING -> new PendingState();
-            case CONFIRMED, SHIPPED -> new ConfirmedState();
+            case CONFIRMED -> new ConfirmedState();
+            case SHIPPED -> new ShippedState();
             case COMPLETED -> new CompletedState();
             case CANCELLED -> new CancelledState();
         };
@@ -204,3 +210,4 @@ public class SalesOrder {
     }
 
 }
+

@@ -2,6 +2,7 @@ package com.hardwarestore.domain.state;
 
 import com.hardwarestore.domain.entity.SalesOrder;
 import com.hardwarestore.domain.enums.SalesOrderStatus;
+import com.hardwarestore.exception.InvalidSalesOrderStateException;
 
 public class PendingState implements OrderState {
     @Override
@@ -17,8 +18,13 @@ public class PendingState implements OrderState {
     }
 
     @Override
+    public void ship(SalesOrder order) {
+        throw new InvalidSalesOrderStateException("Cannot ship order from status " + getStatus());
+    }
+
+    @Override
     public void complete(SalesOrder order) {
-        throw new IllegalStateException("Only confirmed orders can be completed.");
+        throw new InvalidSalesOrderStateException("Only confirmed orders can be completed.");
     }
 
     @Override
@@ -26,3 +32,6 @@ public class PendingState implements OrderState {
         return SalesOrderStatus.PENDING;
     }
 }
+
+
+

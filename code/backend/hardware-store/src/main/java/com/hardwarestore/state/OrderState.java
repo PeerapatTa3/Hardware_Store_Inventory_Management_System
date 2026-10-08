@@ -8,7 +8,10 @@ public interface OrderState {
 
     void cancel(SalesOrder order);
 
+    void ship(SalesOrder order);
+
     void complete(SalesOrder order);
 
     SalesOrderStatus getStatus();
 }
+

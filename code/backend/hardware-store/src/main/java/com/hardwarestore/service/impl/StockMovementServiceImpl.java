@@ -50,27 +50,8 @@ public class StockMovementServiceImpl implements StockMovementService {
             inventory.setProduct(product);
         }
 
-        int quantity = request.getQuantity();
-        if (request.getMovementType() == StockMovementType.IN) {
-            if (inventory.getQuantity() > Integer.MAX_VALUE - quantity) {
-                throw new IllegalArgumentException(
-                        "Inbound quantity exceeds supported stock quantity for product id: " + product.getId());
-            }
-            inventory.setQuantity(inventory.getQuantity() + quantity);
-        } else if (request.getMovementType() == StockMovementType.OUT) {
-            int available = inventory.getAvailableQuantity();
-            if (available < quantity) {
-                throw new IllegalArgumentException("Insufficient available quantity for product id: " + product.getId());
-            }
-            inventory.setQuantity(inventory.getQuantity() - quantity);
-        } else if (request.getMovementType() == StockMovementType.ADJUSTMENT) {
-            if (quantity < inventory.getReservedQuantity()) {
-                throw new IllegalArgumentException(
-                        "Adjusted quantity cannot be less than reserved quantity for product id: "
-                                + product.getId());
-            }
-            inventory.setQuantity(quantity);
-        }
+                int quantity = request.getQuantity();
+        request.getMovementType().process(inventory, quantity);
 
         inventoryStockRepository.save(inventory);
 
@@ -118,3 +99,4 @@ public class StockMovementServiceImpl implements StockMovementService {
                 .toList();
     }
 }
+
