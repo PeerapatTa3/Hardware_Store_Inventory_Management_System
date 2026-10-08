@@ -24,12 +24,6 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, "DUPLICATE_RESOURCE", ex.getMessage(), request);
     }
 
-    @ExceptionHandler(DuplicateSkuException.class)
-    public ResponseEntity<ErrorResponse> handleDuplicateSku(
-            DuplicateSkuException ex, HttpServletRequest request) {
-        return build(HttpStatus.CONFLICT, "DUPLICATE_SKU", ex.getMessage(), request);
-    }
-
     @ExceptionHandler(InvalidPurchaseStateException.class)
     public ResponseEntity<ErrorResponse> handleInvalidPurchaseState(
             InvalidPurchaseStateException ex, HttpServletRequest request) {
@@ -82,3 +76,4 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(body);
     }
 }
+

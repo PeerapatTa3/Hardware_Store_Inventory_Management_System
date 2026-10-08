@@ -5,7 +5,7 @@ import com.hardwarestore.domain.entity.Product;
 import com.hardwarestore.domain.entity.Supplier;
 import com.hardwarestore.dto.request.ProductRequest;
 import com.hardwarestore.dto.response.ProductResponse;
-import com.hardwarestore.exception.DuplicateSkuException;
+import com.hardwarestore.exception.DuplicateResourceException;
 import com.hardwarestore.exception.ResourceNotFoundException;
 import com.hardwarestore.mapper.ProductMapper;
 import com.hardwarestore.repository.CategoryRepository;
@@ -37,7 +37,7 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Supplier not found with id: " + request.getSupplierId()));
 
         if (productRepository.existsBySkuIgnoreCase(request.getSku())) {
-            throw new DuplicateSkuException(request.getSku());
+            throw new DuplicateResourceException("SKU already exists: " + request.getSku());
         }
 
         Product product = productMapper.toEntity(request, category, supplier);
@@ -82,7 +82,7 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Supplier not found with id: " + request.getSupplierId()));
 
         if (!product.getSku().equalsIgnoreCase(request.getSku()) && productRepository.existsBySkuIgnoreCase(request.getSku())) {
-            throw new DuplicateSkuException(request.getSku());
+            throw new DuplicateResourceException("SKU already exists: " + request.getSku());
         }
 
         product.setSku(request.getSku());
@@ -108,3 +108,5 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
     }
 }
+
+

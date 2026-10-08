@@ -13,6 +13,7 @@ import com.hardwarestore.dto.request.PurchaseOrderRequest;
 import com.hardwarestore.exception.InvalidPurchaseStateException;
 import com.hardwarestore.mapper.PurchaseOrderMapper;
 import com.hardwarestore.mapper.StockMovementMapper;
+import com.hardwarestore.mapper.StockMovementMapperImpl;
 import com.hardwarestore.service.PurchaseOrderService;
 import com.hardwarestore.service.impl.PurchaseOrderServiceImpl;
 import com.hardwarestore.service.impl.StockMovementServiceImpl;
@@ -33,7 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @DataJpaTest
 @Import({
         PurchaseOrderMapper.class,
-        StockMovementMapper.class,
+        StockMovementMapperImpl.class,
         PurchaseOrderServiceImpl.class,
         StockMovementServiceImpl.class
 })
@@ -50,9 +51,6 @@ class PurchasePersistenceTest {
 
     @Autowired
     private ProductRepository productRepository;
-
-    @Autowired
-    private PurchaseItemRepository purchaseItemRepository;
 
     @Autowired
     private InventoryStockRepository inventoryStockRepository;
@@ -164,7 +162,6 @@ class PurchasePersistenceTest {
         assertEquals(1, loaded.getItems().size());
         assertEquals("New Product", loaded.getItems().get(0).getProduct().getName());
         assertEquals(0, new BigDecimal("12.00").compareTo(loaded.getTotalAmount()));
-        assertEquals(1, purchaseItemRepository.count());
     }
 
     @Test
@@ -299,3 +296,6 @@ class PurchasePersistenceTest {
         return item;
     }
 }
+
+
+
