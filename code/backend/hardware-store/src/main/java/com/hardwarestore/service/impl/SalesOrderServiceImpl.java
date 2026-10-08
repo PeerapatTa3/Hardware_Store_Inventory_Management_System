@@ -148,12 +148,19 @@ public class SalesOrderServiceImpl implements SalesOrderService {
                     throw new InvalidSalesOrderStateException(
                             "Completed order id " + id + " cannot be cancelled.");
                 }
+                if (order.getStatus() == SalesOrderStatus.SHIPPED) {
+                    throw new InvalidSalesOrderStateException(
+                            "Shipped order id " + id + " cannot be cancelled from the sales order status flow.");
+                }
                 order.cancel();
             }
             default -> throw new IllegalArgumentException("Unsupported sales order status: " + status);
         }
 
         SalesOrder savedOrder = salesOrderRepository.save(order);
+        if (savedOrder.getStatus() == SalesOrderStatus.CANCELLED) {
+            applyStockReturnOnCancel(savedOrder);
+        }
         return salesOrderMapper.toResponse(savedOrder);
     }
 
@@ -246,6 +253,18 @@ public class SalesOrderServiceImpl implements SalesOrderService {
             movementRequest.setQuantity(item.getQuantity());
             movementRequest.setReferenceNo(order.getOrderNumber());
             movementRequest.setNote("Sales order " + order.getOrderNumber());
+            stockMovementService.create(movementRequest);
+        }
+    }
+
+    private void applyStockReturnOnCancel(SalesOrder order) {
+        for (SalesOrderItems item : order.getItems()) {
+            StockMovementRequest movementRequest = new StockMovementRequest();
+            movementRequest.setProductId(item.getProduct().getId());
+            movementRequest.setMovementType(StockMovementType.IN);
+            movementRequest.setQuantity(item.getQuantity());
+            movementRequest.setReferenceNo(order.getOrderNumber());
+            movementRequest.setNote("Cancelled sales order " + order.getOrderNumber());
             stockMovementService.create(movementRequest);
         }
     }
