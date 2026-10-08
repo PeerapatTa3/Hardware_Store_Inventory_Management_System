@@ -77,7 +77,7 @@ public class SalesOrder {
     private transient OrderState state;
 
     @Transient
-    private DiscountStrategy discountStrategy = new NormalDiscount();
+    private DiscountStrategy discountStrategy;
 
     @PostLoad
     public void initializeState() {
@@ -118,14 +118,18 @@ public class SalesOrder {
     }
 
     public DiscountStrategy getDiscountStrategy() {
-        if (discountStrategy == null) {
-            discountStrategy = resolveDiscountStrategy();
+        if (discountStrategy == null || discountStrategy instanceof NormalDiscount) {
+            DiscountStrategy resolved = resolveDiscountStrategy();
+            if (discountStrategy == null || discountStrategy instanceof NormalDiscount) {
+                discountStrategy = resolved;
+            }
+            return resolved;
         }
         return discountStrategy;
     }
 
     public void setDiscountStrategy(DiscountStrategy discountStrategy) {
-        this.discountStrategy = discountStrategy == null ? resolveDiscountStrategy() : discountStrategy;
+        this.discountStrategy = discountStrategy;
     }
 
     public DiscountStrategy resolveDiscountStrategy() {
