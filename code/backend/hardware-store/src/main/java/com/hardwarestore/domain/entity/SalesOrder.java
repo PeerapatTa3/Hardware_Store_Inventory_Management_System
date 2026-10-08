@@ -11,7 +11,9 @@ import com.hardwarestore.domain.state.CompletedState;
 import com.hardwarestore.domain.state.ConfirmedState;
 import com.hardwarestore.domain.state.OrderState;
 import com.hardwarestore.domain.state.PendingState;
+import com.hardwarestore.service.strategy.BulkDiscount;
 import com.hardwarestore.service.strategy.DiscountStrategy;
+import com.hardwarestore.service.strategy.MemberDiscount;
 import com.hardwarestore.service.strategy.NormalDiscount;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -116,11 +118,31 @@ public class SalesOrder {
     }
 
     public DiscountStrategy getDiscountStrategy() {
-        return discountStrategy == null ? new NormalDiscount() : discountStrategy;
+        if (discountStrategy == null) {
+            discountStrategy = resolveDiscountStrategy();
+        }
+        return discountStrategy;
     }
 
     public void setDiscountStrategy(DiscountStrategy discountStrategy) {
-        this.discountStrategy = discountStrategy == null ? new NormalDiscount() : discountStrategy;
+        this.discountStrategy = discountStrategy == null ? resolveDiscountStrategy() : discountStrategy;
+    }
+
+    public DiscountStrategy resolveDiscountStrategy() {
+        if (customer != null && customer.isMember()) {
+            return new MemberDiscount();
+        }
+
+        int totalQuantity = items == null ? 0 : items.stream()
+                .filter(item -> item != null)
+                .mapToInt(item -> item.getQuantity() == null ? 0 : item.getQuantity())
+                .sum();
+
+        if (totalQuantity >= 10) {
+            return new BulkDiscount();
+        }
+
+        return new NormalDiscount();
     }
 
     public BigDecimal calculateTotal() {
@@ -128,12 +150,13 @@ public class SalesOrder {
             return totalAmount == null ? BigDecimal.ZERO : totalAmount;
         }
 
+        DiscountStrategy strategy = getDiscountStrategy();
         BigDecimal total = items.stream()
                 .filter(item -> item != null)
                 .map(item -> {
                     BigDecimal unitPrice = item.getUnitPrice() == null ? BigDecimal.ZERO : item.getUnitPrice();
                     int quantity = item.getQuantity() == null ? 0 : item.getQuantity();
-                    return getDiscountStrategy().apply(unitPrice, quantity);
+                    return strategy.apply(unitPrice, quantity);
                 })
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .setScale(2, RoundingMode.HALF_UP);

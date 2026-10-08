@@ -46,6 +46,9 @@ public class Customer {
     @Column(length = 500)
     private String address;
 
+    @Column(name = "is_member", nullable = false)
+    private boolean member = false;
+
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
