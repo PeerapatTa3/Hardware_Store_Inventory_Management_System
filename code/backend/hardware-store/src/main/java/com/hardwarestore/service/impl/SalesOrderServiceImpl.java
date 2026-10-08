@@ -90,11 +90,15 @@ public class SalesOrderServiceImpl implements SalesOrderService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Customer not found with id: " + request.getCustomerId()));
 
+        Map<Long, Integer> previousQuantitiesByProduct = order.getItems().stream()
+                .collect(HashMap::new, (map, item) -> map.merge(item.getProduct().getId(), item.getQuantity(), Integer::sum), HashMap::putAll);
+
         Map<Long, Product> productsById = resolveProducts(request);
         salesOrderMapper.updatePendingOrder(order, request, customer, productsById);
-        validateStockAvailability(order);
+        validateStockAvailability(order, previousQuantitiesByProduct);
 
         SalesOrder savedOrder = salesOrderRepository.save(order);
+        applyPendingOrderStockAdjustment(savedOrder, previousQuantitiesByProduct);
         return salesOrderMapper.toResponse(savedOrder);
     }
 
@@ -168,17 +172,69 @@ public class SalesOrderServiceImpl implements SalesOrderService {
     }
 
     private void validateStockAvailability(SalesOrder order) {
-        for (SalesOrderItems item : order.getItems()) {
-            InventoryStock inventory = inventoryStockRepository.findByProductId(item.getProduct().getId())
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Inventory not found for product id: " + item.getProduct().getId()));
+        validateStockAvailability(order, Map.of());
+    }
 
-            int available = inventory.getAvailableQuantity();
-            if (available < item.getQuantity()) {
-                throw new IllegalArgumentException(
-                        "Insufficient stock for product id: " + item.getProduct().getId()
-                                + ". Available: " + available + ", requested: " + item.getQuantity());
+    private void validateStockAvailability(SalesOrder order, Map<Long, Integer> previousQuantitiesByProduct) {
+        Map<Long, Integer> requestedQuantitiesByProduct = new HashMap<>();
+        for (SalesOrderItems item : order.getItems()) {
+            if (item.getProduct() == null) {
+                continue;
             }
+            requestedQuantitiesByProduct.merge(item.getProduct().getId(), item.getQuantity(), Integer::sum);
+        }
+
+        for (Long productId : java.util.stream.Stream.concat(
+                previousQuantitiesByProduct.keySet().stream(),
+                requestedQuantitiesByProduct.keySet().stream())
+                .distinct()
+                .toList()) {
+            InventoryStock inventory = inventoryStockRepository.findByProductId(productId)
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Inventory not found for product id: " + productId));
+
+            int previousQuantity = previousQuantitiesByProduct.getOrDefault(productId, 0);
+            int requestedQuantity = requestedQuantitiesByProduct.getOrDefault(productId, 0);
+            int availableAfterAdjustment = inventory.getAvailableQuantity() + previousQuantity - requestedQuantity;
+
+            if (availableAfterAdjustment < 0) {
+                throw new IllegalArgumentException(
+                        "Insufficient stock for product id: " + productId
+                                + ". Available: " + inventory.getAvailableQuantity()
+                                + ", previous quantity: " + previousQuantity
+                                + ", requested: " + requestedQuantity);
+            }
+        }
+    }
+
+    private void applyPendingOrderStockAdjustment(SalesOrder order, Map<Long, Integer> previousQuantitiesByProduct) {
+        Map<Long, Integer> newQuantitiesByProduct = new HashMap<>();
+        for (SalesOrderItems item : order.getItems()) {
+            if (item.getProduct() == null) {
+                continue;
+            }
+            newQuantitiesByProduct.merge(item.getProduct().getId(), item.getQuantity(), Integer::sum);
+        }
+
+        for (Long productId : java.util.stream.Stream.concat(
+                previousQuantitiesByProduct.keySet().stream(),
+                newQuantitiesByProduct.keySet().stream())
+                .distinct()
+                .toList()) {
+            int previousQuantity = previousQuantitiesByProduct.getOrDefault(productId, 0);
+            int newQuantity = newQuantitiesByProduct.getOrDefault(productId, 0);
+            int delta = newQuantity - previousQuantity;
+            if (delta == 0) {
+                continue;
+            }
+
+            StockMovementRequest movementRequest = new StockMovementRequest();
+            movementRequest.setProductId(productId);
+            movementRequest.setMovementType(delta > 0 ? StockMovementType.OUT : StockMovementType.IN);
+            movementRequest.setQuantity(Math.abs(delta));
+            movementRequest.setReferenceNo(order.getOrderNumber());
+            movementRequest.setNote("Sales order update " + order.getOrderNumber());
+            stockMovementService.create(movementRequest);
         }
     }
 

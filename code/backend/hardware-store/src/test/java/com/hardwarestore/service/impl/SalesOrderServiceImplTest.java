@@ -5,6 +5,7 @@ import com.hardwarestore.domain.entity.InventoryStock;
 import com.hardwarestore.domain.entity.Product;
 import com.hardwarestore.domain.entity.SalesOrder;
 import com.hardwarestore.domain.entity.SalesOrderItems;
+import com.hardwarestore.domain.entity.StockMovementType;
 import com.hardwarestore.dto.request.SalesOrderItemRequest;
 import com.hardwarestore.dto.request.SalesOrderRequest;
 import com.hardwarestore.dto.request.StockMovementRequest;
@@ -25,6 +26,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -232,6 +235,58 @@ class SalesOrderServiceImplTest {
 
         assertEquals(response, result);
         verify(salesOrderRepository).save(order);
+    }
+
+    @Test
+    void updateShouldReturnOriginalStockAndDeductReplacementStockForPendingOrder() {
+        SalesOrderRequest request = new SalesOrderRequest();
+        request.setCustomerId(1L);
+
+        SalesOrderItemRequest replacementItem = new SalesOrderItemRequest();
+        replacementItem.setProductId(20L);
+        replacementItem.setQuantity(1);
+        replacementItem.setUnitPrice(new BigDecimal("120.00"));
+        request.setItems(List.of(replacementItem));
+
+        Customer customer = new Customer();
+        customer.setId(1L);
+
+        Product originalProduct = new Product();
+        originalProduct.setId(10L);
+        originalProduct.setName("Product A");
+
+        Product replacementProduct = new Product();
+        replacementProduct.setId(20L);
+        replacementProduct.setName("Product B");
+
+        SalesOrder order = new SalesOrder();
+        order.setId(5L);
+        order.setStatusnew ArrayList<>(List.of(createItem(order, originalProduct, 2, new BigDecimal("100.00")order, originalProduct, 2, new BigDecimal("100.00")))));
+
+        when(salesOrderRepository.findById(5L)).thenReturn(Optional.of(order));
+        when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
+        when(productRepository.findById(20L)).thenReturn(Optional.of(replacementProduct));
+        when(inventoryStockRepository.findByProductId(10L)).thenReturn(Optional.of(createInventoryStock(originalProduct, 8)));
+        when(inventoryStockRepository.findByProductId(20L)).thenReturn(Optional.of(createInventoryStock(replacementProduct, 7)));
+        doAnswer(invocation -> {
+            SalesOrder target = invocation.getArgument(0);
+            target.getItems().clear();
+            target.getItems().add(createItem(target, replacementProduct, 1, new BigDecimal("120.00")));
+            return null;
+        }).when(salesOrderMapper).updatePendingOrder(eq(order), eq(request), eq(customer), anyMap());
+        when(salesOrderRepository.save(order)).thenReturn(order);
+        when(stockMovementService.create(any(StockMovementRequest.class))).thenReturn(new StockMovementResponse());
+
+        salesOrderService.update(5L, request);
+
+        verify(stockMovementService).create(argThat(movement ->
+                movement.getProductId().equals(10L)
+                        && movement.getMovementType() == StockMovementType.IN
+                        && movement.getQuantity() == 2));
+        verify(stockMovementService).create(argThat(movement ->
+                movement.getProductId().equals(20L)
+                        && movement.getMovementType() == StockMovementType.OUT
+                        && movement.getQuantity() == 1));
     }
 
     @Test
