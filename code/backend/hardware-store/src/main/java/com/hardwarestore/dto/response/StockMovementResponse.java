@@ -1,6 +1,6 @@
 package com.hardwarestore.dto.response;
 
-import com.hardwarestore.domain.entity.StockMovementType;
+import com.hardwarestore.domain.enums.StockMovementType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

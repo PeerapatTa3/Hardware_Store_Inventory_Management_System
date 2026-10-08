@@ -3,7 +3,7 @@ package com.hardwarestore.mapper;
 import com.hardwarestore.domain.entity.Customer;
 import com.hardwarestore.domain.entity.Product;
 import com.hardwarestore.domain.entity.SalesOrder;
-import com.hardwarestore.domain.entity.SalesOrder.SalesOrderStatus;
+import com.hardwarestore.domain.enums.SalesOrderStatus;
 import com.hardwarestore.domain.entity.SalesOrderItems;
 import com.hardwarestore.dto.request.SalesOrderItemRequest;
 import com.hardwarestore.dto.request.SalesOrderRequest;

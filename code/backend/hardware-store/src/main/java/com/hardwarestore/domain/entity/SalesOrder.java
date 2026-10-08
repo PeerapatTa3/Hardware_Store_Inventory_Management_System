@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.hardwarestore.domain.enums.SalesOrderStatus;
 import com.hardwarestore.domain.state.CancelledState;
 import com.hardwarestore.domain.state.CompletedState;
 import com.hardwarestore.domain.state.ConfirmedState;
@@ -202,11 +203,4 @@ public class SalesOrder {
         }
     }
 
-    public enum SalesOrderStatus {
-        PENDING,
-        CONFIRMED,
-        SHIPPED,
-        COMPLETED,
-        CANCELLED
-    }
 }

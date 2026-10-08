@@ -5,7 +5,7 @@ import com.hardwarestore.domain.entity.InventoryStock;
 import com.hardwarestore.domain.entity.Product;
 import com.hardwarestore.domain.entity.SalesOrder;
 import com.hardwarestore.domain.entity.SalesOrderItems;
-import com.hardwarestore.domain.entity.StockMovementType;
+import com.hardwarestore.domain.enums.StockMovementType;
 import com.hardwarestore.dto.request.SalesOrderItemRequest;
 import com.hardwarestore.dto.request.SalesOrderRequest;
 import com.hardwarestore.dto.request.StockMovementRequest;
@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static com.hardwarestore.domain.entity.SalesOrder.SalesOrderStatus.*;
+import static com.hardwarestore.domain.enums.SalesOrderStatus.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
@@ -164,7 +164,6 @@ class SalesOrderServiceImplTest {
 
         when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));
         when(productRepository.findById(10L)).thenReturn(Optional.of(product));
-        when(salesOrderMapper.toEntity(any(SalesOrderRequest.class), eq(customer), anyMap())).thenReturn(order);
         when(inventoryStockRepository.findByProductId(10L)).thenReturn(Optional.of(createInventoryStock(product, 2)));
 
         assertThrows(IllegalArgumentException.class, () -> salesOrderService.create(request));

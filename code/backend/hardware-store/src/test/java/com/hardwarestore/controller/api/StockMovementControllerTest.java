@@ -1,6 +1,6 @@
 package com.hardwarestore.controller.api;
 
-import com.hardwarestore.domain.entity.StockMovementType;
+import com.hardwarestore.domain.enums.StockMovementType;
 import com.hardwarestore.dto.response.StockMovementResponse;
 import com.hardwarestore.exception.ResourceNotFoundException;
 import com.hardwarestore.service.StockMovementService;

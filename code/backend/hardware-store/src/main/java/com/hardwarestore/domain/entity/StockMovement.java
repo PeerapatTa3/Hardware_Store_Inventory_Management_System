@@ -1,5 +1,6 @@
 package com.hardwarestore.domain.entity;
 
+import com.hardwarestore.domain.enums.StockMovementType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

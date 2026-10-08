@@ -1,6 +1,6 @@
 package com.hardwarestore.controller.api;
 
-import com.hardwarestore.domain.entity.SalesOrder.SalesOrderStatus;
+import com.hardwarestore.domain.enums.SalesOrderStatus;
 import com.hardwarestore.dto.response.SalesOrderItemResponse;
 import com.hardwarestore.dto.response.SalesOrderResponse;
 import com.hardwarestore.exception.InvalidSalesOrderStateException;

@@ -3,6 +3,7 @@ package com.hardwarestore.domain.state;
 import com.hardwarestore.domain.entity.Customer;
 import com.hardwarestore.domain.entity.SalesOrder;
 import com.hardwarestore.domain.entity.SalesOrderItems;
+import com.hardwarestore.domain.enums.SalesOrderStatus;
 import com.hardwarestore.service.strategy.BulkDiscount;
 import org.junit.jupiter.api.Test;
 
@@ -15,7 +16,7 @@ class SalesOrderStrategyStateTest {
     @Test
     void pendingOrderShouldApplyBulkDiscountWhenConfirmedAndCompleted() {
         SalesOrder order = new SalesOrder();
-        order.setStatus(SalesOrder.SalesOrderStatus.PENDING);
+        order.setStatus(SalesOrderStatus.PENDING);
         order.setDiscountStrategy(new BulkDiscount());
 
         SalesOrderItems item = new SalesOrderItems();
@@ -24,17 +25,17 @@ class SalesOrderStrategyStateTest {
         order.getItems().add(item);
 
         order.confirm();
-        assertEquals(SalesOrder.SalesOrderStatus.CONFIRMED, order.getStatus());
+        assertEquals(SalesOrderStatus.CONFIRMED, order.getStatus());
 
         order.complete();
-        assertEquals(SalesOrder.SalesOrderStatus.COMPLETED, order.getStatus());
+        assertEquals(SalesOrderStatus.COMPLETED, order.getStatus());
         assertEquals(new BigDecimal("900.00"), order.getTotalAmount().setScale(2));
     }
 
     @Test
     void completeShouldResolveBulkDiscountFromOrderQuantityWhenStrategyWasNotPersisted() {
         SalesOrder order = new SalesOrder();
-        order.setStatus(SalesOrder.SalesOrderStatus.PENDING);
+        order.setStatus(SalesOrderStatus.PENDING);
         order.setDiscountStrategy(null);
 
         SalesOrderItems item = new SalesOrderItems();
@@ -51,7 +52,7 @@ class SalesOrderStrategyStateTest {
     @Test
     void completeShouldResolveMemberDiscountBeforeBulkDiscountWhenCustomerIsMember() {
         SalesOrder order = new SalesOrder();
-        order.setStatus(SalesOrder.SalesOrderStatus.PENDING);
+        order.setStatus(SalesOrderStatus.PENDING);
 
         Customer customer = new Customer();
         customer.setMember(true);

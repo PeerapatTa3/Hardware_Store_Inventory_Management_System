@@ -11,6 +11,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.hardwarestore.domain.enums.PurchaseOrderStatus;
+
 @Entity
 @Table(name = "purchase_orders", indexes = {
         @Index(name = "idx_purchase_order_number", columnList = "purchase_number", unique = true)

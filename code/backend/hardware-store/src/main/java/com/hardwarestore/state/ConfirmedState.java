@@ -1,6 +1,7 @@
 package com.hardwarestore.domain.state;
 
 import com.hardwarestore.domain.entity.SalesOrder;
+import com.hardwarestore.domain.enums.SalesOrderStatus;
 
 public class ConfirmedState implements OrderState {
     @Override
@@ -10,19 +11,19 @@ public class ConfirmedState implements OrderState {
 
     @Override
     public void cancel(SalesOrder order) {
-        order.setStatus(SalesOrder.SalesOrderStatus.CANCELLED);
+        order.setStatus(SalesOrderStatus.CANCELLED);
         order.setState(new CancelledState());
     }
 
     @Override
     public void complete(SalesOrder order) {
         order.applyPricing();
-        order.setStatus(SalesOrder.SalesOrderStatus.COMPLETED);
+        order.setStatus(SalesOrderStatus.COMPLETED);
         order.setState(new CompletedState());
     }
 
     @Override
-    public SalesOrder.SalesOrderStatus getStatus() {
-        return SalesOrder.SalesOrderStatus.CONFIRMED;
+    public SalesOrderStatus getStatus() {
+        return SalesOrderStatus.CONFIRMED;
     }
 }

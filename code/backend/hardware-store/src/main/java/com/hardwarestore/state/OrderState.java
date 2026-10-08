@@ -1,6 +1,7 @@
 package com.hardwarestore.domain.state;
 
 import com.hardwarestore.domain.entity.SalesOrder;
+import com.hardwarestore.domain.enums.SalesOrderStatus;
 
 public interface OrderState {
     void confirm(SalesOrder order);
@@ -9,5 +10,5 @@ public interface OrderState {
 
     void complete(SalesOrder order);
 
-    SalesOrder.SalesOrderStatus getStatus();
+    SalesOrderStatus getStatus();
 }

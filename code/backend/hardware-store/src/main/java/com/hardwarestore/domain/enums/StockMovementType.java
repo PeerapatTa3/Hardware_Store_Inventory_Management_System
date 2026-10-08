@@ -1,4 +1,4 @@
-package com.hardwarestore.domain.entity;
+package com.hardwarestore.domain.enums;
 
 public enum StockMovementType {
     IN,

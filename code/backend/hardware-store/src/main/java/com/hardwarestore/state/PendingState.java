@@ -1,17 +1,18 @@
 package com.hardwarestore.domain.state;
 
 import com.hardwarestore.domain.entity.SalesOrder;
+import com.hardwarestore.domain.enums.SalesOrderStatus;
 
 public class PendingState implements OrderState {
     @Override
     public void confirm(SalesOrder order) {
-        order.setStatus(SalesOrder.SalesOrderStatus.CONFIRMED);
+        order.setStatus(SalesOrderStatus.CONFIRMED);
         order.setState(new ConfirmedState());
     }
 
     @Override
     public void cancel(SalesOrder order) {
-        order.setStatus(SalesOrder.SalesOrderStatus.CANCELLED);
+        order.setStatus(SalesOrderStatus.CANCELLED);
         order.setState(new CancelledState());
     }
 
@@ -21,7 +22,7 @@ public class PendingState implements OrderState {
     }
 
     @Override
-    public SalesOrder.SalesOrderStatus getStatus() {
-        return SalesOrder.SalesOrderStatus.PENDING;
+    public SalesOrderStatus getStatus() {
+        return SalesOrderStatus.PENDING;
     }
 }

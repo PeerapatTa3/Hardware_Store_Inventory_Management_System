@@ -2,7 +2,7 @@ package com.hardwarestore.service.impl;
 
 import com.hardwarestore.domain.entity.InventoryStock;
 import com.hardwarestore.domain.entity.Product;
-import com.hardwarestore.domain.entity.StockMovementType;
+import com.hardwarestore.domain.enums.StockMovementType;
 import com.hardwarestore.dto.request.InventoryStockRequest;
 import com.hardwarestore.dto.request.StockMovementRequest;
 import com.hardwarestore.dto.response.InventoryStockResponse;

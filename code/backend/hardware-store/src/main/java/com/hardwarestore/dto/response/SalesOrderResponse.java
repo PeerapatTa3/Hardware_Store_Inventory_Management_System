@@ -1,6 +1,6 @@
 package com.hardwarestore.dto.response;
 
-import com.hardwarestore.domain.entity.SalesOrder.SalesOrderStatus;
+import com.hardwarestore.domain.enums.SalesOrderStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
