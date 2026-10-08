@@ -3,9 +3,10 @@ package com.hardwarestore.service.impl;
 import com.hardwarestore.domain.entity.InventoryStock;
 import com.hardwarestore.domain.entity.Product;
 import com.hardwarestore.domain.entity.StockMovement;
-import com.hardwarestore.domain.entity.StockMovementType;
+import com.hardwarestore.domain.enums.StockMovementType;
 import com.hardwarestore.dto.request.StockMovementRequest;
 import com.hardwarestore.dto.response.StockMovementResponse;
+import com.hardwarestore.event.LowStockEvent;
 import com.hardwarestore.exception.ResourceNotFoundException;
 import com.hardwarestore.mapper.StockMovementMapper;
 import com.hardwarestore.repository.InventoryStockRepository;
@@ -13,6 +14,7 @@ import com.hardwarestore.repository.ProductRepository;
 import com.hardwarestore.repository.StockMovementRepository;
 import com.hardwarestore.service.StockMovementService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,6 +29,7 @@ public class StockMovementServiceImpl implements StockMovementService {
     private final ProductRepository productRepository;
     private final InventoryStockRepository inventoryStockRepository;
     private final StockMovementMapper stockMovementMapper;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -79,7 +82,21 @@ public class StockMovementServiceImpl implements StockMovementService {
         movement.setNote(request.getNote());
         StockMovement saved = stockMovementRepository.save(movement);
 
+        publishLowStockEventIfNeeded(product, inventory);
+
         return stockMovementMapper.toResponse(saved);
+    }
+
+    private void publishLowStockEventIfNeeded(Product product, InventoryStock inventory) {
+        Integer minimumStock = product.getMinimumStock();
+        if (minimumStock == null) {
+            return;
+        }
+        int available = inventory.getAvailableQuantity();
+        if (available <= minimumStock) {
+            eventPublisher.publishEvent(new LowStockEvent(
+                    product.getId(), product.getSku(), product.getName(), available, minimumStock));
+        }
     }
 
     @Override
