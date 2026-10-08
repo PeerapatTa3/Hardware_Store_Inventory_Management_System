@@ -13,6 +13,9 @@ import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.EntityListeners;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.data.annotation.CreatedDate;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,6 +23,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "customers", indexes = {
         @Index(name = "idx_customer_phone", columnList = "phone", unique = true),
         @Index(name = "idx_customer_email", columnList = "email", unique = true)
@@ -50,6 +54,7 @@ public class Customer {
     private boolean member = false;
 
     @Column(name = "created_at", nullable = false)
+    @CreatedDate
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "customer")
@@ -63,3 +68,4 @@ public class Customer {
         }
     }
 }
+

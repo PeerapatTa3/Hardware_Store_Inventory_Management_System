@@ -2,6 +2,9 @@ package com.hardwarestore.domain.entity;
 
 import com.hardwarestore.domain.enums.StockMovementType;
 import jakarta.persistence.*;
+import jakarta.persistence.EntityListeners;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.data.annotation.CreatedDate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -10,6 +13,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "stock_movements")
 @Getter
 @Setter
@@ -39,6 +43,7 @@ public class StockMovement {
     private String note;
 
     @Column(nullable = false)
+    @CreatedDate
     private LocalDateTime movementAt;
 
     @PrePersist
@@ -48,3 +53,4 @@ public class StockMovement {
         }
     }
 }
+

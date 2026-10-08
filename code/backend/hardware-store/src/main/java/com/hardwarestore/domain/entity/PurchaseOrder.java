@@ -1,6 +1,9 @@
 package com.hardwarestore.domain.entity;
 
 import jakarta.persistence.*;
+import jakarta.persistence.EntityListeners;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.data.annotation.CreatedDate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,6 +17,7 @@ import java.util.List;
 import com.hardwarestore.domain.enums.PurchaseOrderStatus;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "purchase_orders", indexes = {
         @Index(name = "idx_purchase_order_number", columnList = "purchase_number", unique = true)
 })
@@ -42,12 +46,29 @@ public class PurchaseOrder {
     private BigDecimal totalAmount = BigDecimal.ZERO;
 
     @Column(name = "created_at", nullable = false)
+    @CreatedDate
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "purchaseOrder", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id ASC")
     private List<PurchaseItem> items = new ArrayList<>();
 
+    public void calculateTotal() {
+        if (items == null || items.isEmpty()) {
+            this.totalAmount = BigDecimal.ZERO;
+            return;
+        }
+        
+        BigDecimal total = BigDecimal.ZERO;
+        for (PurchaseItem item : items) {
+            if (item != null) {
+                item.calculateSubtotal();
+                total = total.add(item.getSubtotal());
+            }
+        }
+        this.totalAmount = total;
+    }
+    
     @PrePersist
     public void prePersist() {
         if (status == null) {
@@ -56,8 +77,8 @@ public class PurchaseOrder {
         if (totalAmount == null) {
             totalAmount = BigDecimal.ZERO;
         }
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
-        }
+
     }
 }
+
+

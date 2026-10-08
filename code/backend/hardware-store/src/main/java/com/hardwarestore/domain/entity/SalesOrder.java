@@ -33,6 +33,9 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.PostLoad;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.EntityListeners;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.data.annotation.CreatedDate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
@@ -41,6 +44,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "sales_orders", indexes = {
         @Index(name = "idx_sales_order_number", columnList = "order_number", unique = true)
 })
@@ -69,6 +73,7 @@ public class SalesOrder {
     private BigDecimal totalAmount = BigDecimal.ZERO;
 
     @Column(name = "created_at", nullable = false)
+    @CreatedDate
     private LocalDateTime createdAt;
 
     @OneToMany(mappedBy = "salesOrder", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -204,10 +209,9 @@ public class SalesOrder {
         if (totalAmount == null) {
             totalAmount = BigDecimal.ZERO;
         }
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
-        }
+
     }
 
 }
+
 
