@@ -27,7 +27,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -261,7 +260,8 @@ class SalesOrderServiceImplTest {
 
         SalesOrder order = new SalesOrder();
         order.setId(5L);
-        order.setStatusnew ArrayList<>(List.of(createItem(order, originalProduct, 2, new BigDecimal("100.00")order, originalProduct, 2, new BigDecimal("100.00")))));
+        order.setStatus(PENDING);
+        order.setItems(new ArrayList<>(List.of(createItem(order, originalProduct, 2, new BigDecimal("100.00")))));
 
         when(salesOrderRepository.findById(5L)).thenReturn(Optional.of(order));
         when(customerRepository.findById(1L)).thenReturn(Optional.of(customer));

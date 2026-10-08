@@ -129,6 +129,20 @@ class SalesOrderControllerTest {
                 .andExpect(jsonPath("$.error").value("INVALID_SALES_ORDER_STATE"));
     }
 
+    @Test
+    void illegalStateTransitionsShouldReturnConflict() throws Exception {
+        when(salesOrderService.updateStatus(12L, SalesOrderStatus.CANCELLED))
+                .thenThrow(new IllegalStateException("Order is already cancelled."));
+
+        mockMvc.perform(post("/api/v1/orders/12/status")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"status":"CANCELLED"}
+                                """))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error").value("INVALID_SALES_ORDER_STATE"));
+    }
+
     private SalesOrderResponse order(Long id, SalesOrderStatus status) {
         return SalesOrderResponse.builder()
                 .id(id)
