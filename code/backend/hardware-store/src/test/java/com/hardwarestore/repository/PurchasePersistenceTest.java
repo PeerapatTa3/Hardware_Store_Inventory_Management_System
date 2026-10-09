@@ -33,7 +33,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
 @Import({
-        PurchaseOrderMapper.class,
+        com.hardwarestore.mapper.PurchaseOrderMapperImpl.class,
         StockMovementMapperImpl.class,
         PurchaseOrderServiceImpl.class,
         StockMovementServiceImpl.class

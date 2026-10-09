@@ -22,7 +22,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(PurchaseOrderController.class)
-class PurchaseOrderControllerTest {
+class PurchaseOrderControllerTest extends BaseControllerTest {
 
     @Autowired
     private MockMvc mockMvc;

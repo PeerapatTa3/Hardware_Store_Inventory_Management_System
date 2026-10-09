@@ -4,6 +4,7 @@ import com.hardwarestore.domain.entity.Category;
 import com.hardwarestore.domain.entity.Product;
 import com.hardwarestore.domain.entity.Supplier;
 import com.hardwarestore.dto.request.ProductRequest;
+import com.hardwarestore.dto.response.ProductAdminResponse;
 import com.hardwarestore.dto.response.ProductResponse;
 import com.hardwarestore.exception.ResourceNotFoundException;
 import com.hardwarestore.mapper.ProductMapper;

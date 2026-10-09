@@ -4,7 +4,7 @@ import com.hardwarestore.domain.entity.Customer;
 import com.hardwarestore.domain.entity.SalesOrder;
 import com.hardwarestore.domain.entity.SalesOrderItems;
 import com.hardwarestore.domain.enums.SalesOrderStatus;
-import com.hardwarestore.service.strategy.BulkDiscount;
+import com.hardwarestore.strategy.BulkDiscount;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;

@@ -24,7 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(SalesOrderController.class)
-class SalesOrderControllerTest {
+class SalesOrderControllerTest extends BaseControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
