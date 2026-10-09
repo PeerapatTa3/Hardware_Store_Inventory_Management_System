@@ -6,6 +6,11 @@
 # Generated project archive
 project-files.json
 
+# Frontend dependency and build output
+code/frontend/node_modules/
+code/frontend/build/
+code/frontend/coverage/
+
 # VS Code workspace settings
 .vscode/
 
