@@ -69,7 +69,6 @@ class SalesOrderServiceImplTest {
         SalesOrderItemRequest itemRequest = new SalesOrderItemRequest();
         itemRequest.setProductId(10L);
         itemRequest.setQuantity(2);
-        itemRequest.setUnitPrice(new BigDecimal("150.00"));
         request.setItems(List.of(itemRequest));
 
         Customer customer = new Customer();
@@ -205,7 +204,6 @@ class SalesOrderServiceImplTest {
         SalesOrderItemRequest itemRequest = new SalesOrderItemRequest();
         itemRequest.setProductId(10L);
         itemRequest.setQuantity(2);
-        itemRequest.setUnitPrice(new BigDecimal("50.00"));
         request.setItems(List.of(itemRequest));
 
         Customer customer = new Customer();
@@ -243,7 +241,6 @@ class SalesOrderServiceImplTest {
         SalesOrderItemRequest replacementItem = new SalesOrderItemRequest();
         replacementItem.setProductId(20L);
         replacementItem.setQuantity(1);
-        replacementItem.setUnitPrice(new BigDecimal("120.00"));
         request.setItems(List.of(replacementItem));
 
         Customer customer = new Customer();
@@ -296,7 +293,6 @@ class SalesOrderServiceImplTest {
         SalesOrderItemRequest itemRequest = new SalesOrderItemRequest();
         itemRequest.setProductId(10L);
         itemRequest.setQuantity(1);
-        itemRequest.setUnitPrice(new BigDecimal("50.00"));
         request.setItems(List.of(itemRequest));
 
         SalesOrder order = new SalesOrder();
@@ -360,3 +356,4 @@ class SalesOrderServiceImplTest {
         return item;
     }
 }
+

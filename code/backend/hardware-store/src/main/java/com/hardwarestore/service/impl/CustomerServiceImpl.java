@@ -42,6 +42,13 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
+    public CustomerResponse getCustomerByPhone(String phone) {
+        return customerRepository.findByPhone(phone)
+                .map(customerMapper::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("Customer with phone " + phone + " not found"));
+    }
+
+    @Override
     public CustomerResponse findById(Long id) {
         return customerMapper.toResponse(getCustomerOrThrow(id));
     }
@@ -78,4 +85,7 @@ public class CustomerServiceImpl implements CustomerService {
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + id));
     }
 }
+
+
+
 

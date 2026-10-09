@@ -26,4 +26,6 @@ public class CustomerRequest {
 
     @Size(max = 500, message = "address must not exceed 500 characters")
     private String address;
+
+    private boolean member;
 }

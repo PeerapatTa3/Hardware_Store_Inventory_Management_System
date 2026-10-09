@@ -132,7 +132,6 @@ class SalesOrderMapperTest {
         SalesOrderItemRequest request = new SalesOrderItemRequest();
         request.setProductId(productId);
         request.setQuantity(quantity);
-        request.setUnitPrice(new BigDecimal(unitPrice));
         return request;
     }
 
@@ -165,3 +164,5 @@ class SalesOrderMapperTest {
         return item;
     }
 }
+
+
