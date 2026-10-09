@@ -2,8 +2,8 @@ package com.hardwarestore.service.impl;
 
 import com.hardwarestore.domain.entity.Product;
 import com.hardwarestore.domain.entity.PurchaseOrder;
-import com.hardwarestore.domain.entity.PurchaseOrderStatus;
-import com.hardwarestore.domain.entity.StockMovementType;
+import com.hardwarestore.domain.enums.PurchaseOrderStatus;
+import com.hardwarestore.domain.enums.StockMovementType;
 import com.hardwarestore.domain.entity.Supplier;
 import com.hardwarestore.dto.request.PurchaseOrderRequest;
 import com.hardwarestore.dto.request.StockMovementRequest;

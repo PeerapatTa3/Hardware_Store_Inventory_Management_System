@@ -8,6 +8,8 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "categories")
+@org.hibernate.annotations.SQLDelete(sql = "UPDATE categories SET is_active = false WHERE id=?")
+@org.hibernate.annotations.SQLRestriction("is_active = true")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -23,4 +25,7 @@ public class Category {
 
     @Column(length = 255)
     private String description;
+
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = true;
 }

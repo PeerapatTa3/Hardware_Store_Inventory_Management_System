@@ -4,6 +4,7 @@ import com.hardwarestore.domain.entity.Category;
 import com.hardwarestore.domain.entity.Product;
 import com.hardwarestore.domain.entity.Supplier;
 import com.hardwarestore.dto.request.ProductRequest;
+import com.hardwarestore.dto.response.ProductAdminResponse;
 import com.hardwarestore.dto.response.ProductResponse;
 import com.hardwarestore.exception.ResourceNotFoundException;
 import com.hardwarestore.mapper.ProductMapper;
@@ -78,7 +79,7 @@ class ProductServiceImplTest {
         entity.setCategory(category);
         entity.setSupplier(supplier);
 
-        ProductResponse response = ProductResponse.builder()
+        ProductAdminResponse response = ProductAdminResponse.builder()
                 .id(10L)
                 .sku("DRILL-001")
                 .name("Cordless Drill")
@@ -96,9 +97,9 @@ class ProductServiceImplTest {
         when(productRepository.existsBySkuIgnoreCase("DRILL-001")).thenReturn(false);
         when(productMapper.toEntity(request, category, supplier)).thenReturn(entity);
         when(productRepository.save(entity)).thenReturn(entity);
-        when(productMapper.toResponse(entity)).thenReturn(response);
+        when(productMapper.toAdminResponse(entity)).thenReturn(response);
 
-        ProductResponse result = productService.create(request);
+        ProductAdminResponse result = productService.create(request);
 
         assertNotNull(result);
         assertEquals("DRILL-001", result.getSku());
@@ -129,8 +130,6 @@ class ProductServiceImplTest {
                 .name("Hammer")
                 .unit("pcs")
                 .price(new BigDecimal("150.00"))
-                .costPrice(new BigDecimal("100.00"))
-                .minimumStock(3)
                 .build();
 
         PageRequest pageable = PageRequest.of(0, 10, Sort.by(Sort.Direction.ASC, "id"));

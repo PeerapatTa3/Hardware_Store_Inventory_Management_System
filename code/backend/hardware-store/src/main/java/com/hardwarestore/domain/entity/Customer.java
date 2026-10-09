@@ -13,6 +13,9 @@ import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.EntityListeners;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.data.annotation.CreatedDate;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,9 +23,12 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
+@org.hibernate.annotations.SQLDelete(sql = "UPDATE customers SET is_active = false WHERE id=?")
+@org.hibernate.annotations.SQLRestriction("is_active = true")
 @Table(name = "customers", indexes = {
         @Index(name = "idx_customer_phone", columnList = "phone", unique = true),
-        @Index(name = "idx_customer_email", columnList = "email", unique = true)
+        @Index(name = "idx_customer_email", columnList = "email")
 })
 @Getter
 @Setter
@@ -40,7 +46,7 @@ public class Customer {
     @Column(nullable = false, unique = true, length = 20)
     private String phone;
 
-    @Column(nullable = false, unique = true, length = 150)
+    @Column(length = 150)
     private String email;
 
     @Column(length = 500)
@@ -50,7 +56,11 @@ public class Customer {
     private boolean member = false;
 
     @Column(name = "created_at", nullable = false)
+    @CreatedDate
     private LocalDateTime createdAt;
+
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = true;
 
     @OneToMany(mappedBy = "customer")
     @OrderBy("id ASC")
@@ -63,3 +73,4 @@ public class Customer {
         }
     }
 }
+

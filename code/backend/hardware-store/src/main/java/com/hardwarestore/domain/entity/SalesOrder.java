@@ -6,15 +6,17 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.hardwarestore.domain.enums.SalesOrderStatus;
 import com.hardwarestore.domain.state.CancelledState;
 import com.hardwarestore.domain.state.CompletedState;
 import com.hardwarestore.domain.state.ConfirmedState;
+import com.hardwarestore.domain.state.ShippedState;
 import com.hardwarestore.domain.state.OrderState;
 import com.hardwarestore.domain.state.PendingState;
-import com.hardwarestore.service.strategy.BulkDiscount;
-import com.hardwarestore.service.strategy.DiscountStrategy;
-import com.hardwarestore.service.strategy.MemberDiscount;
-import com.hardwarestore.service.strategy.NormalDiscount;
+import com.hardwarestore.strategy.BulkDiscount;
+import com.hardwarestore.strategy.DiscountStrategy;
+import com.hardwarestore.strategy.MemberDiscount;
+import com.hardwarestore.strategy.NormalDiscount;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -31,6 +33,9 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.PostLoad;
 import jakarta.persistence.PrePersist;
+import jakarta.persistence.EntityListeners;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.data.annotation.CreatedDate;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
@@ -39,6 +44,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "sales_orders", indexes = {
         @Index(name = "idx_sales_order_number", columnList = "order_number", unique = true)
 })
@@ -56,8 +62,14 @@ public class SalesOrder {
     private String orderNumber;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id", nullable = false)
+    @JoinColumn(name = "customer_id")
     private Customer customer;
+
+    @Column(name = "shipping_address", length = 500)
+    private String shippingAddress;
+
+    @Column(name = "payment_method", length = 50)
+    private String paymentMethod;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
@@ -66,8 +78,21 @@ public class SalesOrder {
     @Column(name = "total_amount", nullable = false, precision = 19, scale = 2)
     private BigDecimal totalAmount = BigDecimal.ZERO;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
+    @CreatedDate
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    @org.springframework.data.annotation.LastModifiedDate
+    private LocalDateTime updatedAt;
+
+    @Column(name = "created_by", updatable = false)
+    @org.springframework.data.annotation.CreatedBy
+    private String createdBy;
+
+    @Column(name = "updated_by")
+    @org.springframework.data.annotation.LastModifiedBy
+    private String updatedBy;
 
     @OneToMany(mappedBy = "salesOrder", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id ASC")
@@ -92,6 +117,10 @@ public class SalesOrder {
 
     public void cancel() {
         getCurrentState().cancel(this);
+    }
+
+    public void ship() {
+        getCurrentState().ship(this);
     }
 
     public void complete() {
@@ -180,7 +209,8 @@ public class SalesOrder {
 
         return switch (status) {
             case PENDING -> new PendingState();
-            case CONFIRMED, SHIPPED -> new ConfirmedState();
+            case CONFIRMED -> new ConfirmedState();
+            case SHIPPED -> new ShippedState();
             case COMPLETED -> new CompletedState();
             case CANCELLED -> new CancelledState();
         };
@@ -197,16 +227,9 @@ public class SalesOrder {
         if (totalAmount == null) {
             totalAmount = BigDecimal.ZERO;
         }
-        if (createdAt == null) {
-            createdAt = LocalDateTime.now();
-        }
+
     }
 
-    public enum SalesOrderStatus {
-        PENDING,
-        CONFIRMED,
-        SHIPPED,
-        COMPLETED,
-        CANCELLED
-    }
 }
+
+

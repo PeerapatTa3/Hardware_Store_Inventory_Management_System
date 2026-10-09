@@ -18,8 +18,6 @@ public class ProductResponse {
     private String description;
     private String unit;
     private BigDecimal price;
-    private BigDecimal costPrice;
-    private Integer minimumStock;
     private Long categoryId;
     private Long supplierId;
 }

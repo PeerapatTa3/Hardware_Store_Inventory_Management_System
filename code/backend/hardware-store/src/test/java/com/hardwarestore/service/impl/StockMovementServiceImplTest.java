@@ -3,7 +3,7 @@ package com.hardwarestore.service.impl;
 import com.hardwarestore.domain.entity.InventoryStock;
 import com.hardwarestore.domain.entity.Product;
 import com.hardwarestore.domain.entity.StockMovement;
-import com.hardwarestore.domain.entity.StockMovementType;
+import com.hardwarestore.domain.enums.StockMovementType;
 import com.hardwarestore.dto.request.StockMovementRequest;
 import com.hardwarestore.dto.response.StockMovementResponse;
 import com.hardwarestore.exception.ResourceNotFoundException;
@@ -14,6 +14,7 @@ import com.hardwarestore.repository.StockMovementRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Sort;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -40,6 +41,9 @@ class StockMovementServiceImplTest {
 
     @Mock
     private StockMovementMapper stockMovementMapper;
+
+    @Mock
+    private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private StockMovementServiceImpl stockMovementService;

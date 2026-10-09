@@ -3,7 +3,7 @@ package com.hardwarestore.service.impl;
 import com.hardwarestore.domain.entity.Category;
 import com.hardwarestore.dto.request.CategoryRequest;
 import com.hardwarestore.dto.response.CategoryResponse;
-import com.hardwarestore.exception.DuplicateSkuException;
+import com.hardwarestore.exception.DuplicateResourceException;
 import com.hardwarestore.exception.ResourceNotFoundException;
 import com.hardwarestore.mapper.CategoryMapper;
 import com.hardwarestore.repository.CategoryRepository;
@@ -23,7 +23,7 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     public CategoryResponse create(CategoryRequest request) {
         if (categoryRepository.existsByNameIgnoreCase(request.getName())) {
-            throw new DuplicateSkuException(request.getName());
+            throw new DuplicateResourceException("Category name already exists: " + request.getName());
         }
         Category saved = categoryRepository.save(categoryMapper.toEntity(request));
         return categoryMapper.toResponse(saved);
@@ -59,3 +59,4 @@ public class CategoryServiceImpl implements CategoryService {
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + id));
     }
 }
+

@@ -36,4 +36,13 @@ public class PurchaseItem {
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal subtotal;
+
+    public void calculateSubtotal() {
+        if (quantity != null && unitCost != null) {
+            this.subtotal = unitCost.multiply(BigDecimal.valueOf(quantity));
+        } else {
+            this.subtotal = BigDecimal.ZERO;
+        }
+    }
 }
+

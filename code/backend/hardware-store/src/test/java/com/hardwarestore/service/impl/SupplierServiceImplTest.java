@@ -100,3 +100,4 @@ class SupplierServiceImplTest {
         assertThrows(ResourceNotFoundException.class, () -> supplierService.findById(99L));
     }
 }
+

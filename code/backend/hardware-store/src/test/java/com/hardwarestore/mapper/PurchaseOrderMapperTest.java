@@ -3,7 +3,7 @@ package com.hardwarestore.mapper;
 import com.hardwarestore.domain.entity.Product;
 import com.hardwarestore.domain.entity.PurchaseItem;
 import com.hardwarestore.domain.entity.PurchaseOrder;
-import com.hardwarestore.domain.entity.PurchaseOrderStatus;
+import com.hardwarestore.domain.enums.PurchaseOrderStatus;
 import com.hardwarestore.domain.entity.Supplier;
 import com.hardwarestore.dto.request.PurchaseItemRequest;
 import com.hardwarestore.dto.request.PurchaseOrderRequest;
@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class PurchaseOrderMapperTest {
 
-    private final PurchaseOrderMapper mapper = new PurchaseOrderMapper();
+    private final PurchaseOrderMapper mapper = org.mapstruct.factory.Mappers.getMapper(PurchaseOrderMapper.class);
 
     @Test
     void toEntityShouldMapItemsAndCalculateTotals() {

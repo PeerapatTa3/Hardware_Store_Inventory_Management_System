@@ -2,7 +2,7 @@ package com.hardwarestore.service.impl;
 
 import com.hardwarestore.domain.entity.Product;
 import com.hardwarestore.domain.entity.PurchaseOrder;
-import com.hardwarestore.domain.entity.PurchaseOrderStatus;
+import com.hardwarestore.domain.enums.PurchaseOrderStatus;
 import com.hardwarestore.domain.entity.Supplier;
 import com.hardwarestore.dto.request.PurchaseItemRequest;
 import com.hardwarestore.dto.request.PurchaseOrderRequest;
@@ -221,7 +221,7 @@ class PurchaseOrderServiceImplTest {
                 .map(StockMovementRequest::getQuantity).toList());
         assertTrue(movementCaptor.getAllValues().stream()
                 .allMatch(movement -> movement.getMovementType()
-                        == com.hardwarestore.domain.entity.StockMovementType.IN
+                        == com.hardwarestore.domain.enums.StockMovementType.IN
                         && "PO-RECEIVE".equals(movement.getReferenceNo())));
         verify(purchaseOrderRepository).save(order);
     }

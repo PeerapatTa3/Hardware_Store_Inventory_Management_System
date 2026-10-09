@@ -1,6 +1,10 @@
 package com.hardwarestore.domain.entity;
 
+import com.hardwarestore.domain.enums.StockMovementType;
 import jakarta.persistence.*;
+import jakarta.persistence.EntityListeners;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import org.springframework.data.annotation.CreatedDate;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,6 +13,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "stock_movements")
 @Getter
 @Setter
@@ -37,8 +42,27 @@ public class StockMovement {
     @Column(length = 500)
     private String note;
 
-    @Column(nullable = false)
+    @Column(nullable = false, updatable = false)
+    @CreatedDate
     private LocalDateTime movementAt;
+
+    @Column(name = "updated_at")
+    @org.springframework.data.annotation.LastModifiedDate
+    private LocalDateTime updatedAt;
+
+    @Column(name = "created_by", updatable = false)
+    @org.springframework.data.annotation.CreatedBy
+    private String createdBy;
+
+    @Column(name = "updated_by")
+    @org.springframework.data.annotation.LastModifiedBy
+    private String updatedBy;
+
+    @Column(name = "status")
+    private String status = "APPROVED";
+
+    @Column(name = "approved_by")
+    private String approvedBy;
 
     @PrePersist
     public void prePersist() {
@@ -47,3 +71,4 @@ public class StockMovement {
         }
     }
 }
+

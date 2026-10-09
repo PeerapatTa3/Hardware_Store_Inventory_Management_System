@@ -1,6 +1,6 @@
 package com.hardwarestore.controller.api;
 
-import com.hardwarestore.domain.entity.SalesOrder.SalesOrderStatus;
+import com.hardwarestore.domain.enums.SalesOrderStatus;
 import com.hardwarestore.dto.response.SalesOrderItemResponse;
 import com.hardwarestore.dto.response.SalesOrderResponse;
 import com.hardwarestore.exception.InvalidSalesOrderStateException;
@@ -24,7 +24,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(SalesOrderController.class)
-class SalesOrderControllerTest {
+class SalesOrderControllerTest extends BaseControllerTest {
 
     @Autowired
     private MockMvc mockMvc;

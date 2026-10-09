@@ -1,6 +1,7 @@
-package com.hardwarestore.service.strategy;
+package com.hardwarestore.strategy;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class BulkDiscount implements DiscountStrategy {
 
@@ -15,8 +16,9 @@ public class BulkDiscount implements DiscountStrategy {
 
         BigDecimal subtotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
         if (quantity >= BULK_THRESHOLD) {
-            return subtotal.multiply(BULK_DISCOUNT_RATE).setScale(2, BigDecimal.ROUND_HALF_UP);
+            return subtotal.multiply(BULK_DISCOUNT_RATE).setScale(2, RoundingMode.HALF_UP);
         }
-        return subtotal.setScale(2, BigDecimal.ROUND_HALF_UP);
+        return subtotal.setScale(2, RoundingMode.HALF_UP);
     }
 }
+

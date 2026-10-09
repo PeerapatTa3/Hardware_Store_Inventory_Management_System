@@ -3,7 +3,7 @@ package com.hardwarestore.service.impl;
 import com.hardwarestore.domain.entity.Customer;
 import com.hardwarestore.dto.request.CustomerRequest;
 import com.hardwarestore.dto.response.CustomerResponse;
-import com.hardwarestore.exception.DuplicateSkuException;
+import com.hardwarestore.exception.DuplicateResourceException;
 import com.hardwarestore.exception.ResourceNotFoundException;
 import com.hardwarestore.mapper.CustomerMapper;
 import com.hardwarestore.repository.CustomerRepository;
@@ -64,7 +64,7 @@ class CustomerServiceImplTest {
 
         when(customerRepository.existsByPhone(request.getPhone())).thenReturn(true);
 
-        assertThrows(DuplicateSkuException.class, () -> customerService.create(request));
+        assertThrows(DuplicateResourceException.class, () -> customerService.create(request));
         verify(customerRepository, never()).save(any());
     }
 
@@ -77,7 +77,7 @@ class CustomerServiceImplTest {
         when(customerRepository.existsByPhone(request.getPhone())).thenReturn(false);
         when(customerRepository.existsByEmailIgnoreCase(request.getEmail())).thenReturn(true);
 
-        assertThrows(DuplicateSkuException.class, () -> customerService.create(request));
+        assertThrows(DuplicateResourceException.class, () -> customerService.create(request));
         verify(customerRepository, never()).save(any());
     }
 
@@ -142,7 +142,7 @@ class CustomerServiceImplTest {
         when(customerRepository.findById(9L)).thenReturn(Optional.of(existing));
         when(customerRepository.existsByPhone("0999999999")).thenReturn(true);
 
-        assertThrows(DuplicateSkuException.class, () -> customerService.update(9L, request));
+        assertThrows(DuplicateResourceException.class, () -> customerService.update(9L, request));
         verify(customerRepository, never()).save(any());
     }
 
@@ -158,3 +158,4 @@ class CustomerServiceImplTest {
         verify(customerRepository).delete(existing);
     }
 } 
+

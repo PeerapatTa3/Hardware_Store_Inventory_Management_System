@@ -1,4 +1,4 @@
-package com.hardwarestore.service.strategy;
+package com.hardwarestore.strategy;
 
 import org.junit.jupiter.api.Test;
 
