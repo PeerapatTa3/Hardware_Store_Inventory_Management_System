@@ -32,4 +32,5 @@ INSERT INTO customers (name, phone, email, address, is_member, created_at) VALUE
 
 -- Users
 INSERT INTO users (username, password, name, role, created_at) VALUES
-('admin', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HCGz.O6j0v1w7w0yHkK1m', 'Administrator', 'OWNER', CURRENT_TIMESTAMP);
+('admin', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HCGz.O6j0v1w7w0yHkK1m', 'Administrator', 'OWNER', CURRENT_TIMESTAMP),
+('admin2', '$2a$10$PDT5yCBSmIzItVrqJRTNzOjjbDKIzUgiZRFBBD6fzctqPlZv/xjWi', 'Administrator', 'OWNER', CURRENT_TIMESTAMP);
