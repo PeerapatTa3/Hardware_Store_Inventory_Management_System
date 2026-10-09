@@ -1,4 +1,4 @@
-package com.hardwarestore.service.strategy;
+package com.hardwarestore.strategy;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
