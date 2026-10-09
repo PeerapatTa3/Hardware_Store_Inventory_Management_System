@@ -19,6 +19,8 @@ public class SalesOrderResponse {
     private String orderNumber;
     private Long customerId;
     private String customerName;
+    private String shippingAddress;
+    private String paymentMethod;
     private SalesOrderStatus status;
     private BigDecimal totalAmount;
     private LocalDateTime createdAt;

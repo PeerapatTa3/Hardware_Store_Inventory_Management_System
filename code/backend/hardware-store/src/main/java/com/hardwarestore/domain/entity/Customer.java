@@ -26,7 +26,7 @@ import lombok.Setter;
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "customers", indexes = {
         @Index(name = "idx_customer_phone", columnList = "phone", unique = true),
-        @Index(name = "idx_customer_email", columnList = "email", unique = true)
+        @Index(name = "idx_customer_email", columnList = "email")
 })
 @Getter
 @Setter
@@ -44,7 +44,7 @@ public class Customer {
     @Column(nullable = false, unique = true, length = 20)
     private String phone;
 
-    @Column(nullable = false, unique = true, length = 150)
+    @Column(length = 150)
     private String email;
 
     @Column(length = 500)

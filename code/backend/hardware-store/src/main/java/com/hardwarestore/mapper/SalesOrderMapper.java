@@ -24,7 +24,11 @@ public class SalesOrderMapper {
         SalesOrder order = new SalesOrder();
         order.setOrderNumber("SO-" + UUID.randomUUID());
         order.setCustomer(customer);
+        order.setShippingAddress(request.getShippingAddress());
+        order.setPaymentMethod(request.getPaymentMethod());
         order.setStatus(SalesOrderStatus.PENDING);
+        order.setShippingAddress(request.getShippingAddress());
+        order.setPaymentMethod(request.getPaymentMethod());
         updatePendingOrder(order, request, customer, productsById);
         return order;
     }
@@ -35,6 +39,8 @@ public class SalesOrderMapper {
             Customer customer,
             Map<Long, Product> productsById) {
         order.setCustomer(customer);
+        order.setShippingAddress(request.getShippingAddress());
+        order.setPaymentMethod(request.getPaymentMethod());
         order.getItems().clear();
 
         BigDecimal totalAmount = BigDecimal.ZERO;
@@ -78,6 +84,8 @@ public class SalesOrderMapper {
                 .orderNumber(order.getOrderNumber())
                 .customerId(order.getCustomer() != null ? order.getCustomer().getId() : null)
                 .customerName(order.getCustomer() != null ? order.getCustomer().getName() : null)
+                .shippingAddress(order.getShippingAddress())
+                .paymentMethod(order.getPaymentMethod())
                 .status(order.getStatus())
                 .totalAmount(order.getTotalAmount())
                 .createdAt(order.getCreatedAt())

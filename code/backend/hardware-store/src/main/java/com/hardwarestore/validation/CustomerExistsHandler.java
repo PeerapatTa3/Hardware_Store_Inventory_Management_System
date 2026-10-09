@@ -15,6 +15,10 @@ public class CustomerExistsHandler extends OrderValidationHandler {
     @Override
     protected void validate(OrderValidationContext context) {
         Long customerId = context.getRequest().getCustomerId();
+        if (customerId == null) {
+            context.setCustomer(null);
+            return;
+        }
         context.setCustomer(customerRepository.findById(customerId)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Customer not found with id: " + customerId)));
