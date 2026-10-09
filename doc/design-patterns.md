@@ -161,9 +161,9 @@ classDiagram
 - ยกเลิก order → คืนสต็อก (`applyStockReturnOnCancel`, บรรทัด 217-227 เรียกที่บรรทัด 160-162)
 - แก้ order ที่ยัง PENDING → ปรับสต็อกเฉพาะส่วนต่าง (`applyPendingOrderStockAdjustment`, บรรทัด 174-203)
 
-**จุดเด่นของการออกแบบ (Fully Delegated)**
-- `SalesOrderServiceImpl.updateStatus` ได้รับการ Refactor ให้ส่งต่อ (Delegate) ผ่านคำสั่ง `order.confirm()`, `order.ship()`, `order.complete()`, และ `order.cancel()` ไปยัง State Class โดยตรงทั้งหมด ทำให้ State Pattern ทำหน้าที่เป็น Single Source of Truth ในการควบคุมสถานะอย่างแท้จริงตามหลัก Open/Closed Principle (OCP)
-- ลดความซ้ำซ้อนของ Logic และป้องกันบั๊กจากการข้ามสถานะที่ไม่ได้รับอนุญาต
+**ข้อควรรู้**
+- `SalesOrderServiceImpl.updateStatus` (บรรทัด 114-157) มี `switch` ตรวจเงื่อนไขซ้ำกับ state class บางส่วน และกรณี `SHIPPED` เรียก `order.setStatus(SHIPPED)` ตรงๆ (บรรทัด 135) ไม่ผ่าน `order.ship()` — ถ้าต้องการให้ State เป็นแหล่งความจริงเดียว ควรเรียก `order.ship()` แทน
+- ไฟล์ state ทั้ง 6 อยู่ในโฟลเดอร์ `…/state/` แต่ประกาศ `package com.hardwarestore.domain.state;` (บรรทัดที่ 1 ของแต่ละไฟล์) ซึ่งไม่ตรงกับโฟลเดอร์ — คอมไพล์ผ่านเพราะ Maven ส่งไฟล์ทั้งหมดให้ `javac` แต่ IDE อาจแจ้งเตือน
 
 **Test:** `src/test/java/com/hardwarestore/…/SalesOrderStateTest.java`, `SalesOrderStrategyStateTest.java`
 
