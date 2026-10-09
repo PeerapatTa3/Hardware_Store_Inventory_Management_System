@@ -78,9 +78,21 @@ public class SalesOrder {
     @Column(name = "total_amount", nullable = false, precision = 19, scale = 2)
     private BigDecimal totalAmount = BigDecimal.ZERO;
 
-    @Column(name = "created_at", nullable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
     @CreatedDate
     private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    @org.springframework.data.annotation.LastModifiedDate
+    private LocalDateTime updatedAt;
+
+    @Column(name = "created_by", updatable = false)
+    @org.springframework.data.annotation.CreatedBy
+    private String createdBy;
+
+    @Column(name = "updated_by")
+    @org.springframework.data.annotation.LastModifiedBy
+    private String updatedBy;
 
     @OneToMany(mappedBy = "salesOrder", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id ASC")

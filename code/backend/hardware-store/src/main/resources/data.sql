@@ -28,3 +28,8 @@ INSERT INTO inventory_stocks (product_id, quantity, reserved_quantity) VALUES
 INSERT INTO customers (name, phone, email, address, is_member, created_at) VALUES
 ('General Walk-in', '000-000-0000', NULL, NULL, FALSE, CURRENT_TIMESTAMP),
 ('Somchai Contractor', '081-999-8888', 'somchai@build.com', '789 Nonthaburi Thailand', TRUE, CURRENT_TIMESTAMP);
+
+
+-- Users
+INSERT INTO users (username, password, name, role, created_at) VALUES
+('admin', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HCGz.O6j0v1w7w0yHkK1m', 'Administrator', 'OWNER', CURRENT_TIMESTAMP);

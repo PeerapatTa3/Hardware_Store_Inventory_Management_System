@@ -52,6 +52,11 @@ CREATE TABLE stock_movements (
     reference_no VARCHAR(100),
     note VARCHAR(500),
     movement_at TIMESTAMP NOT NULL,
+    created_by VARCHAR(50),
+    updated_by VARCHAR(50),
+    updated_at TIMESTAMP,
+    status VARCHAR(20) DEFAULT 'APPROVED',
+    approved_by VARCHAR(50),
     CONSTRAINT fk_movement_product FOREIGN KEY (product_id) REFERENCES products(id)
 );
 
@@ -76,6 +81,9 @@ CREATE TABLE purchase_orders (
     status VARCHAR(20) NOT NULL,
     total_amount DECIMAL(19,2) NOT NULL,
     created_at TIMESTAMP NOT NULL,
+    created_by VARCHAR(50),
+    updated_by VARCHAR(50),
+    updated_at TIMESTAMP,
     CONSTRAINT fk_po_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers(id)
 );
 CREATE INDEX idx_purchase_order_number ON purchase_orders(purchase_number);
@@ -102,6 +110,9 @@ CREATE TABLE sales_orders (
     shipping_address VARCHAR(500),
     payment_method VARCHAR(50),
     created_at TIMESTAMP NOT NULL,
+    created_by VARCHAR(50),
+    updated_by VARCHAR(50),
+    updated_at TIMESTAMP,
     CONSTRAINT fk_so_customer FOREIGN KEY (customer_id) REFERENCES customers(id)
 );
 CREATE INDEX idx_sales_order_number ON sales_orders(order_number);
@@ -116,4 +127,15 @@ CREATE TABLE sales_order_items (
     subtotal DECIMAL(19,2) NOT NULL,
     CONSTRAINT fk_soi_so FOREIGN KEY (sales_order_id) REFERENCES sales_orders(id),
     CONSTRAINT fk_soi_product FOREIGN KEY (product_id) REFERENCES products(id)
+);
+
+
+-- Users
+CREATE TABLE users (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(100) NOT NULL,
+    name VARCHAR(150),
+    role VARCHAR(50) NOT NULL,
+    created_at TIMESTAMP NOT NULL
 );
