@@ -20,7 +20,7 @@
 | 4 | Purchase | ทำแกนหลักแล้ว | มี Purchase entities, status, repositories, DTOs, validation, mapper, service และ REST controller สำหรับ create/list/get/update/receive; receive ปรับ Inventory, บันทึก StockMovement และเปลี่ยนสถานะใน transaction เดียว |
 | 5 | Sales | ยังไม่เริ่ม | ไม่พบ Customer, SalesOrder, SalesOrderItem หรือการตรวจและตัด stock |
 | 6 | Design Patterns | ยังไม่เริ่ม | State, Strategy และ Observer ปรากฏในเอกสารเป็นแนวทาง แต่ยังไม่พบการนำไปใช้ใน business logic |
-| 7 | Frontend | ยังไม่เริ่ม | ไม่พบ React application หรือ frontend source |
+| 7 | Frontend | ทำแล้วบางส่วน | มี React SPA สำหรับ authentication, dashboard, catalog CRUD, inventory, stock movements, purchases และ sales orders; ยังต้องตรวจ production build และทดสอบการเชื่อมต่อกับ backend ใน environment ที่มี Node.js |
 | 8 | Integration | ทำบางส่วน | Purchase receive เชื่อม Purchase, Inventory และ StockMovement ผ่าน service และ REST API; มี HTTP-to-database integration test สำหรับ create/receive/read movement; ยังไม่มี Sales flow |
 | 9 | Testing | ทำบางส่วน | Service 34, JPA persistence 4, Purchase DTO validation 4, mapper 4, exception handler 1, Controller 15 และ API integration 1 tests ผ่าน; รวม 63 tests |
 | 10 | Documentation | ทำบางส่วน | มี README, API documentation (Inventory, Stock Movement, Purchase), Data Dictionary ครอบคลุม Inventory/StockMovement/Purchase, SOLID analysis และ Design Patterns; ยังขาด diagrams และ API docs ของ Sales |
@@ -47,7 +47,7 @@
 | Controller / Workflow integration tests | ทำแล้วบางส่วน | Controller tests ครอบคลุม Inventory GET/PUT, Stock Movement POST/GET, Purchase routes, validation และ error responses; persistence-backed receive tests ครอบคลุม success/duplicate/rollback; API integration test ยืนยัน Purchase receive เชื่อม Inventory/StockMovement |
 | Flyway / Database migrations | ยังไม่เริ่ม | ไม่พบ migration scripts; ปัจจุบัน JPA ใช้ `ddl-auto: update` |
 | Docker | ทำแล้วบางส่วน | มี Dockerfile แต่ยังไม่มี Compose |
-| Frontend / Cloud deployment / Public URL | ยังไม่เริ่ม | ไม่พบ implementation หรือ URL |
+| Frontend / Cloud deployment / Public URL | ทำแล้วบางส่วน | มี React frontend ใน `code/frontend/` และคู่มือใน `doc/เอกสารที่จำเป็นชั่วคราว/frontend.md`; ยังไม่ยืนยัน production build, cloud deployment หรือ Public URL |
 | Required diagrams | ยังไม่เริ่ม | ยังไม่พบ diagram assets ใน `doc/diagrams/` |
 | Git workflow / PR | ทำแล้วบางส่วน | มี branch Member 2 และ push branch ขึ้น origin; ยังไม่พบ Pull Request จาก branch นี้ และยังไม่มี reviewer/merge เข้า `develop` ให้ยืนยัน |
 
