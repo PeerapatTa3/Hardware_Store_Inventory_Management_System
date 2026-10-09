@@ -1,6 +1,7 @@
-package com.hardwarestore.service.strategy;
+package com.hardwarestore.strategy;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class NormalDiscount implements DiscountStrategy {
 
@@ -9,6 +10,7 @@ public class NormalDiscount implements DiscountStrategy {
         if (unitPrice == null) {
             return BigDecimal.ZERO;
         }
-        return unitPrice.multiply(BigDecimal.valueOf(quantity)).setScale(2, BigDecimal.ROUND_HALF_UP);
+        return unitPrice.multiply(BigDecimal.valueOf(quantity)).setScale(2, RoundingMode.HALF_UP);
     }
 }
+

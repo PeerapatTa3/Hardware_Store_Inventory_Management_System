@@ -1,6 +1,6 @@
 package com.hardwarestore.dto.response;
 
-import com.hardwarestore.domain.entity.SalesOrder.SalesOrderStatus;
+import com.hardwarestore.domain.enums.SalesOrderStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,6 +19,8 @@ public class SalesOrderResponse {
     private String orderNumber;
     private Long customerId;
     private String customerName;
+    private String shippingAddress;
+    private String paymentMethod;
     private SalesOrderStatus status;
     private BigDecimal totalAmount;
     private LocalDateTime createdAt;

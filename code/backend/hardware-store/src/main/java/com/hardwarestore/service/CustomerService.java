@@ -13,7 +13,11 @@ public interface CustomerService {
 
     CustomerResponse findById(Long id);
 
+    CustomerResponse getCustomerByPhone(String phone);
+
     CustomerResponse update(Long id, CustomerRequest request);
 
     void delete(Long id);
 }
+
+

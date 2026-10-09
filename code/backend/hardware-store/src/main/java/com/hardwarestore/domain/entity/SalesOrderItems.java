@@ -44,4 +44,13 @@ public class SalesOrderItems {
 
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal subtotal;
+
+    public void calculateSubtotal() {
+        if (quantity != null && unitPrice != null) {
+            this.subtotal = unitPrice.multiply(BigDecimal.valueOf(quantity)).setScale(2, java.math.RoundingMode.HALF_UP);
+        } else {
+            this.subtotal = BigDecimal.ZERO;
+        }
+    }
 }
+

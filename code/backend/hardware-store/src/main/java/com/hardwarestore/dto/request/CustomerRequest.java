@@ -20,11 +20,12 @@ public class CustomerRequest {
     @Size(max = 20, message = "phone must not exceed 20 characters")
     private String phone;
 
-    @NotBlank(message = "email must not be blank")
     @Email(message = "email format is invalid")
     @Size(max = 150, message = "email must not exceed 150 characters")
     private String email;
 
     @Size(max = 500, message = "address must not exceed 500 characters")
     private String address;
+
+    private boolean member;
 }

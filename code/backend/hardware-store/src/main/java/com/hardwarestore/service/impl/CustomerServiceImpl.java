@@ -3,7 +3,7 @@ package com.hardwarestore.service.impl;
 import com.hardwarestore.domain.entity.Customer;
 import com.hardwarestore.dto.request.CustomerRequest;
 import com.hardwarestore.dto.response.CustomerResponse;
-import com.hardwarestore.exception.DuplicateSkuException;
+import com.hardwarestore.exception.DuplicateResourceException;
 import com.hardwarestore.exception.ResourceNotFoundException;
 import com.hardwarestore.mapper.CustomerMapper;
 import com.hardwarestore.repository.CustomerRepository;
@@ -23,11 +23,11 @@ public class CustomerServiceImpl implements CustomerService {
     @Override
     public CustomerResponse create(CustomerRequest request) {
         if (request.getPhone() != null && customerRepository.existsByPhone(request.getPhone())) {
-            throw new DuplicateSkuException(request.getPhone());
+            throw new DuplicateResourceException("Phone already exists: " + request.getPhone());
         }
 
         if (request.getEmail() != null && customerRepository.existsByEmailIgnoreCase(request.getEmail())) {
-            throw new DuplicateSkuException(request.getEmail());
+            throw new DuplicateResourceException("Email already exists: " + request.getEmail());
         }
 
         Customer saved = customerRepository.save(customerMapper.toEntity(request));
@@ -42,6 +42,13 @@ public class CustomerServiceImpl implements CustomerService {
     }
 
     @Override
+    public CustomerResponse getCustomerByPhone(String phone) {
+        return customerRepository.findByPhone(phone)
+                .map(customerMapper::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("Customer with phone " + phone + " not found"));
+    }
+
+    @Override
     public CustomerResponse findById(Long id) {
         return customerMapper.toResponse(getCustomerOrThrow(id));
     }
@@ -52,12 +59,12 @@ public class CustomerServiceImpl implements CustomerService {
 
         if (request.getPhone() != null && !request.getPhone().equalsIgnoreCase(customer.getPhone())
                 && customerRepository.existsByPhone(request.getPhone())) {
-            throw new DuplicateSkuException(request.getPhone());
+            throw new DuplicateResourceException("Phone already exists: " + request.getPhone());
         }
 
         if (request.getEmail() != null && !request.getEmail().equalsIgnoreCase(customer.getEmail())
                 && customerRepository.existsByEmailIgnoreCase(request.getEmail())) {
-            throw new DuplicateSkuException(request.getEmail());
+            throw new DuplicateResourceException("Email already exists: " + request.getEmail());
         }
 
         customer.setName(request.getName());
@@ -78,3 +85,7 @@ public class CustomerServiceImpl implements CustomerService {
                 .orElseThrow(() -> new ResourceNotFoundException("Customer not found with id: " + id));
     }
 }
+
+
+
+

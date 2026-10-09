@@ -1,6 +1,6 @@
 package com.hardwarestore.service;
 
-import com.hardwarestore.domain.entity.SalesOrder.SalesOrderStatus;
+import com.hardwarestore.domain.enums.SalesOrderStatus;
 import com.hardwarestore.dto.request.SalesOrderRequest;
 import com.hardwarestore.dto.response.SalesOrderResponse;
 

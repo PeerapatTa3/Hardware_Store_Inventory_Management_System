@@ -1,6 +1,6 @@
 package com.hardwarestore.controller.api;
 
-import com.hardwarestore.domain.entity.PurchaseOrderStatus;
+import com.hardwarestore.domain.enums.PurchaseOrderStatus;
 import com.hardwarestore.dto.response.PurchaseOrderResponse;
 import com.hardwarestore.exception.InvalidPurchaseStateException;
 import com.hardwarestore.exception.ResourceNotFoundException;
@@ -22,7 +22,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(PurchaseOrderController.class)
-class PurchaseOrderControllerTest {
+class PurchaseOrderControllerTest extends BaseControllerTest {
 
     @Autowired
     private MockMvc mockMvc;

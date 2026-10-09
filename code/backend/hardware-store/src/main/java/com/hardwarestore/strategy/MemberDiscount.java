@@ -1,6 +1,7 @@
-package com.hardwarestore.service.strategy;
+package com.hardwarestore.strategy;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class MemberDiscount implements DiscountStrategy {
 
@@ -12,6 +13,7 @@ public class MemberDiscount implements DiscountStrategy {
             return BigDecimal.ZERO;
         }
         BigDecimal subtotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
-        return subtotal.multiply(MEMBER_DISCOUNT_RATE).setScale(2, BigDecimal.ROUND_HALF_UP);
+        return subtotal.multiply(MEMBER_DISCOUNT_RATE).setScale(2, RoundingMode.HALF_UP);
     }
 }
+

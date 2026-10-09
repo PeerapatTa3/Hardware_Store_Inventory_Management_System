@@ -28,6 +28,11 @@ public class CustomerController {
         return customerService.findAll();
     }
 
+    @GetMapping("/search")
+    public CustomerResponse searchByPhone(@RequestParam String phone) {
+        return customerService.getCustomerByPhone(phone);
+    }
+
     @GetMapping("/{id}")
     public CustomerResponse findById(@PathVariable Long id) {
         return customerService.findById(id);
@@ -44,3 +49,5 @@ public class CustomerController {
         customerService.delete(id);
     }
 }
+
+

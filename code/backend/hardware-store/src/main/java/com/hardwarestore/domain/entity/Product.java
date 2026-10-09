@@ -9,6 +9,8 @@ import lombok.Setter;
 import java.math.BigDecimal;
 
 @Entity
+@org.hibernate.annotations.SQLDelete(sql = "UPDATE products SET is_active = false WHERE id=?")
+@org.hibernate.annotations.SQLRestriction("is_active = true")
 @Table(name = "products", indexes = {
         @Index(name = "idx_product_sku", columnList = "sku", unique = true),
         @Index(name = "idx_product_name", columnList = "name")
@@ -51,4 +53,7 @@ public class Product {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "supplier_id", nullable = false)
     private Supplier supplier;
+
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = true;
 }

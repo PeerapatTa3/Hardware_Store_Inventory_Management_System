@@ -5,7 +5,8 @@ import com.hardwarestore.domain.entity.Product;
 import com.hardwarestore.domain.entity.Supplier;
 import com.hardwarestore.dto.request.ProductRequest;
 import com.hardwarestore.dto.response.ProductResponse;
-import com.hardwarestore.exception.DuplicateSkuException;
+import com.hardwarestore.dto.response.ProductAdminResponse;
+import com.hardwarestore.exception.DuplicateResourceException;
 import com.hardwarestore.exception.ResourceNotFoundException;
 import com.hardwarestore.mapper.ProductMapper;
 import com.hardwarestore.repository.CategoryRepository;
@@ -18,6 +19,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -29,7 +31,7 @@ public class ProductServiceImpl implements ProductService {
     private final ProductMapper productMapper;
 
     @Override
-    public ProductResponse create(ProductRequest request) {
+    public ProductAdminResponse create(ProductRequest request) {
         Category category = categoryRepository.findById(request.getCategoryId())
                 .orElseThrow(() -> new ResourceNotFoundException("Category not found with id: " + request.getCategoryId()));
 
@@ -37,12 +39,12 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Supplier not found with id: " + request.getSupplierId()));
 
         if (productRepository.existsBySkuIgnoreCase(request.getSku())) {
-            throw new DuplicateSkuException(request.getSku());
+            throw new DuplicateResourceException("SKU already exists: " + request.getSku());
         }
 
         Product product = productMapper.toEntity(request, category, supplier);
         Product saved = productRepository.save(product);
-        return productMapper.toResponse(saved);
+        return productMapper.toAdminResponse(saved);
     }
 
     @Override
@@ -67,12 +69,39 @@ public class ProductServiceImpl implements ProductService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Page<ProductAdminResponse> findAllAdmin(int page, int size, String sortBy, String direction, String keyword, Long categoryId) {
+        String effectiveSortBy = (sortBy == null || sortBy.isBlank()) ? "id" : sortBy;
+        Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, effectiveSortBy));
+        Page<Product> productPage;
+        if (keyword != null && !keyword.isBlank() && categoryId != null) {
+            productPage = productRepository.findByNameContainingIgnoreCaseAndCategoryId(keyword, categoryId, pageable);
+        } else if (keyword != null && !keyword.isBlank()) {
+            productPage = productRepository.findByNameContainingIgnoreCase(keyword, pageable);
+        } else if (categoryId != null) {
+            productPage = productRepository.findByCategoryId(categoryId, pageable);
+        } else {
+            productPage = productRepository.findAll(pageable);
+        }
+        return productPage.map(productMapper::toAdminResponse);
+    }
+
+    @Override
+    public ProductAdminResponse findByIdAdmin(Long id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
+        return productMapper.toAdminResponse(product);
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
     public ProductResponse findById(Long id) {
         return productMapper.toResponse(getProductOrThrow(id));
     }
 
     @Override
-    public ProductResponse update(Long id, ProductRequest request) {
+    public ProductAdminResponse update(Long id, ProductRequest request) {
         Product product = getProductOrThrow(id);
 
         Category category = categoryRepository.findById(request.getCategoryId())
@@ -82,7 +111,7 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Supplier not found with id: " + request.getSupplierId()));
 
         if (!product.getSku().equalsIgnoreCase(request.getSku()) && productRepository.existsBySkuIgnoreCase(request.getSku())) {
-            throw new DuplicateSkuException(request.getSku());
+            throw new DuplicateResourceException("SKU already exists: " + request.getSku());
         }
 
         product.setSku(request.getSku());
@@ -95,7 +124,7 @@ public class ProductServiceImpl implements ProductService {
         product.setCategory(category);
         product.setSupplier(supplier);
 
-        return productMapper.toResponse(productRepository.save(product));
+        return productMapper.toAdminResponse(productRepository.save(product));
     }
 
     @Override
@@ -108,3 +137,5 @@ public class ProductServiceImpl implements ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + id));
     }
 }
+
+

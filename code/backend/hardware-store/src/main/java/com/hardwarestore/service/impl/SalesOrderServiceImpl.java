@@ -4,9 +4,9 @@ import com.hardwarestore.domain.entity.Customer;
 import com.hardwarestore.domain.entity.InventoryStock;
 import com.hardwarestore.domain.entity.Product;
 import com.hardwarestore.domain.entity.SalesOrder;
-import com.hardwarestore.domain.entity.SalesOrder.SalesOrderStatus;
+import com.hardwarestore.domain.enums.SalesOrderStatus;
 import com.hardwarestore.domain.entity.SalesOrderItems;
-import com.hardwarestore.domain.entity.StockMovementType;
+import com.hardwarestore.domain.enums.StockMovementType;
 import com.hardwarestore.dto.request.SalesOrderItemRequest;
 import com.hardwarestore.dto.request.SalesOrderRequest;
 import com.hardwarestore.dto.request.StockMovementRequest;
@@ -20,6 +20,11 @@ import com.hardwarestore.repository.ProductRepository;
 import com.hardwarestore.repository.SalesOrderRepository;
 import com.hardwarestore.service.SalesOrderService;
 import com.hardwarestore.service.StockMovementService;
+import com.hardwarestore.validation.CustomerExistsHandler;
+import com.hardwarestore.validation.OrderValidationContext;
+import com.hardwarestore.validation.OrderValidationHandler;
+import com.hardwarestore.validation.ProductsExistHandler;
+import com.hardwarestore.validation.StockAvailableHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
@@ -44,13 +49,10 @@ public class SalesOrderServiceImpl implements SalesOrderService {
     @Override
     @Transactional
     public SalesOrderResponse create(SalesOrderRequest request) {
-        Customer customer = customerRepository.findById(request.getCustomerId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Customer not found with id: " + request.getCustomerId()));
+        OrderValidationContext context = new OrderValidationContext(request, Map.of());
+        buildValidationChain().handle(context);
 
-        Map<Long, Product> productsById = resolveProducts(request);
-        SalesOrder order = salesOrderMapper.toEntity(request, customer, productsById);
-        validateStockAvailability(order);
+        SalesOrder order = salesOrderMapper.toEntity(request, context.getCustomer(), context.getProductsById());
 
         SalesOrder savedOrder = salesOrderRepository.save(order);
         applyStockOut(savedOrder);
@@ -86,16 +88,13 @@ public class SalesOrderServiceImpl implements SalesOrderService {
                             + " has status " + order.getStatus());
         }
 
-        Customer customer = customerRepository.findById(request.getCustomerId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Customer not found with id: " + request.getCustomerId()));
-
         Map<Long, Integer> previousQuantitiesByProduct = order.getItems().stream()
                 .collect(HashMap::new, (map, item) -> map.merge(item.getProduct().getId(), item.getQuantity(), Integer::sum), HashMap::putAll);
 
-        Map<Long, Product> productsById = resolveProducts(request);
-        salesOrderMapper.updatePendingOrder(order, request, customer, productsById);
-        validateStockAvailability(order, previousQuantitiesByProduct);
+        OrderValidationContext context = new OrderValidationContext(request, previousQuantitiesByProduct);
+        buildValidationChain().handle(context);
+
+        salesOrderMapper.updatePendingOrder(order, request, context.getCustomer(), context.getProductsById());
 
         SalesOrder savedOrder = salesOrderRepository.save(order);
         applyPendingOrderStockAdjustment(savedOrder, previousQuantitiesByProduct);
@@ -164,54 +163,12 @@ public class SalesOrderServiceImpl implements SalesOrderService {
         return salesOrderMapper.toResponse(savedOrder);
     }
 
-    private Map<Long, Product> resolveProducts(SalesOrderRequest request) {
-        Map<Long, Product> productsById = new HashMap<>();
-        for (SalesOrderItemRequest itemRequest : request.getItems()) {
-            Long productId = itemRequest.getProductId();
-            if (!productsById.containsKey(productId)) {
-                Product product = productRepository.findById(productId)
-                        .orElseThrow(() -> new ResourceNotFoundException(
-                                "Product not found with id: " + productId));
-                productsById.put(productId, product);
-            }
-        }
-        return productsById;
-    }
-
-    private void validateStockAvailability(SalesOrder order) {
-        validateStockAvailability(order, Map.of());
-    }
-
-    private void validateStockAvailability(SalesOrder order, Map<Long, Integer> previousQuantitiesByProduct) {
-        Map<Long, Integer> requestedQuantitiesByProduct = new HashMap<>();
-        for (SalesOrderItems item : order.getItems()) {
-            if (item.getProduct() == null) {
-                continue;
-            }
-            requestedQuantitiesByProduct.merge(item.getProduct().getId(), item.getQuantity(), Integer::sum);
-        }
-
-        for (Long productId : java.util.stream.Stream.concat(
-                previousQuantitiesByProduct.keySet().stream(),
-                requestedQuantitiesByProduct.keySet().stream())
-                .distinct()
-                .toList()) {
-            InventoryStock inventory = inventoryStockRepository.findByProductId(productId)
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Inventory not found for product id: " + productId));
-
-            int previousQuantity = previousQuantitiesByProduct.getOrDefault(productId, 0);
-            int requestedQuantity = requestedQuantitiesByProduct.getOrDefault(productId, 0);
-            int availableAfterAdjustment = inventory.getAvailableQuantity() + previousQuantity - requestedQuantity;
-
-            if (availableAfterAdjustment < 0) {
-                throw new IllegalArgumentException(
-                        "Insufficient stock for product id: " + productId
-                                + ". Available: " + inventory.getAvailableQuantity()
-                                + ", previous quantity: " + previousQuantity
-                                + ", requested: " + requestedQuantity);
-            }
-        }
+    /** Builds the Chain of Responsibility: customer -> products -> stock. */
+    private OrderValidationHandler buildValidationChain() {
+        OrderValidationHandler first = new CustomerExistsHandler(customerRepository);
+        first.setNext(new ProductsExistHandler(productRepository))
+                .setNext(new StockAvailableHandler(inventoryStockRepository));
+        return first;
     }
 
     private void applyPendingOrderStockAdjustment(SalesOrder order, Map<Long, Integer> previousQuantitiesByProduct) {
@@ -269,3 +226,4 @@ public class SalesOrderServiceImpl implements SalesOrderService {
         }
     }
 }
+

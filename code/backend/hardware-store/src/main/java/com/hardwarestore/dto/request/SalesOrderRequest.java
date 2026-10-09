@@ -13,9 +13,11 @@ import java.util.List;
 @Setter
 public class SalesOrderRequest {
 
-    @NotNull(message = "customerId is required")
-    @Positive(message = "customerId must be positive")
     private Long customerId;
+
+    private String shippingAddress;
+    
+    private String paymentMethod;
 
     @NotEmpty(message = "items must not be empty")
     private List<@NotNull @Valid SalesOrderItemRequest> items;
