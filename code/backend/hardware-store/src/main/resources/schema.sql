@@ -4,7 +4,8 @@
 CREATE TABLE categories (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE,
-    description VARCHAR(255)
+    description VARCHAR(255),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 -- Suppliers
@@ -13,7 +14,8 @@ CREATE TABLE suppliers (
     name VARCHAR(150) NOT NULL UNIQUE,
     phone VARCHAR(20),
     email VARCHAR(150),
-    address VARCHAR(500)
+    address VARCHAR(500),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
 );
 
 -- Products
@@ -28,6 +30,7 @@ CREATE TABLE products (
     minimum_stock INT NOT NULL DEFAULT 0,
     category_id BIGINT NOT NULL,
     supplier_id BIGINT NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
     CONSTRAINT fk_product_category FOREIGN KEY (category_id) REFERENCES categories(id),
     CONSTRAINT fk_product_supplier FOREIGN KEY (supplier_id) REFERENCES suppliers(id)
 );
@@ -68,7 +71,8 @@ CREATE TABLE customers (
     email VARCHAR(150),
     address VARCHAR(500),
     is_member BOOLEAN NOT NULL DEFAULT FALSE,
-    created_at TIMESTAMP NOT NULL
+    created_at TIMESTAMP NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE
 );
 CREATE INDEX idx_customer_phone ON customers(phone);
 CREATE INDEX idx_customer_email ON customers(email);

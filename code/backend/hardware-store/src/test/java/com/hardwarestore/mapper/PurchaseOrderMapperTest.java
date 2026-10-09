@@ -18,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class PurchaseOrderMapperTest {
 
-    private final PurchaseOrderMapper mapper = new PurchaseOrderMapper();
+    private final PurchaseOrderMapper mapper = org.mapstruct.factory.Mappers.getMapper(PurchaseOrderMapper.class);
 
     @Test
     void toEntityShouldMapItemsAndCalculateTotals() {

@@ -8,6 +8,8 @@ import lombok.Setter;
 
 @Entity
 @Table(name = "suppliers")
+@org.hibernate.annotations.SQLDelete(sql = "UPDATE suppliers SET is_active = false WHERE id=?")
+@org.hibernate.annotations.SQLRestriction("is_active = true")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -29,4 +31,7 @@ public class Supplier {
 
     @Column(length = 255)
     private String address;
+
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = true;
 }

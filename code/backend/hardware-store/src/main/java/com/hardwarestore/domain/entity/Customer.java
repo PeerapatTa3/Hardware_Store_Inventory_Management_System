@@ -24,6 +24,8 @@ import lombok.Setter;
 
 @Entity
 @EntityListeners(AuditingEntityListener.class)
+@org.hibernate.annotations.SQLDelete(sql = "UPDATE customers SET is_active = false WHERE id=?")
+@org.hibernate.annotations.SQLRestriction("is_active = true")
 @Table(name = "customers", indexes = {
         @Index(name = "idx_customer_phone", columnList = "phone", unique = true),
         @Index(name = "idx_customer_email", columnList = "email")
@@ -56,6 +58,9 @@ public class Customer {
     @Column(name = "created_at", nullable = false)
     @CreatedDate
     private LocalDateTime createdAt;
+
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = true;
 
     @OneToMany(mappedBy = "customer")
     @OrderBy("id ASC")

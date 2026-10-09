@@ -9,14 +9,14 @@ import com.hardwarestore.dto.request.PurchaseItemRequest;
 import com.hardwarestore.dto.request.PurchaseOrderRequest;
 import com.hardwarestore.dto.response.PurchaseItemResponse;
 import com.hardwarestore.dto.response.PurchaseOrderResponse;
-import org.springframework.stereotype.Component;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Map;
 
-@Component
-public class PurchaseOrderMapper {
+@Mapper(componentModel = "spring")
+public abstract class PurchaseOrderMapper {
 
     public PurchaseOrder toEntity(
             PurchaseOrderRequest request,
@@ -25,7 +25,6 @@ public class PurchaseOrderMapper {
             Map<Long, Product> productsById) {
         PurchaseOrder order = new PurchaseOrder();
         order.setPurchaseNumber(purchaseNumber);
-        order.setSupplier(supplier);
         order.setStatus(PurchaseOrderStatus.PENDING);
         updatePendingOrder(order, request, supplier, productsById);
         return order;
@@ -60,36 +59,11 @@ public class PurchaseOrderMapper {
         order.setTotalAmount(totalAmount);
     }
 
-    public PurchaseOrderResponse toResponse(PurchaseOrder order) {
-        if (order == null) {
-            return null;
-        }
+    @Mapping(target = "supplierId", source = "supplier.id")
+    @Mapping(target = "supplierName", source = "supplier.name")
+    public abstract PurchaseOrderResponse toResponse(PurchaseOrder order);
 
-        List<PurchaseItemResponse> items = order.getItems().stream()
-                .map(this::toItemResponse)
-                .toList();
-        return PurchaseOrderResponse.builder()
-                .id(order.getId())
-                .purchaseNumber(order.getPurchaseNumber())
-                .supplierId(order.getSupplier() != null ? order.getSupplier().getId() : null)
-                .supplierName(order.getSupplier() != null ? order.getSupplier().getName() : null)
-                .status(order.getStatus())
-                .totalAmount(order.getTotalAmount())
-                .createdAt(order.getCreatedAt())
-                .items(items)
-                .build();
-    }
-
-    private PurchaseItemResponse toItemResponse(PurchaseItem item) {
-        Product product = item.getProduct();
-        return PurchaseItemResponse.builder()
-                .id(item.getId())
-                .productId(product != null ? product.getId() : null)
-                .productName(product != null ? product.getName() : null)
-                .quantity(item.getQuantity())
-                .unitCost(item.getUnitCost())
-                .subtotal(item.getSubtotal())
-                .build();
-    }
+    @Mapping(target = "productId", source = "product.id")
+    @Mapping(target = "productName", source = "product.name")
+    protected abstract PurchaseItemResponse toItemResponse(PurchaseItem item);
 }
-
