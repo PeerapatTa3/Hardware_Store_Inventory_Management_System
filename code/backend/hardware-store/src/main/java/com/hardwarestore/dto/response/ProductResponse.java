@@ -20,4 +20,5 @@ public class ProductResponse {
     private BigDecimal price;
     private Long categoryId;
     private Long supplierId;
+    private Integer quantity;
 }

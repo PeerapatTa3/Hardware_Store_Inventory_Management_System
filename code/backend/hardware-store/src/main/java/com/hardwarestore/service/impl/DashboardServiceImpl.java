@@ -22,7 +22,10 @@ public class DashboardServiceImpl implements DashboardService {
     private final SalesOrderRepository salesOrderRepository;
     private final SupplierRepository supplierRepository;
     private final CustomerRepository customerRepository;
+    private final StockMovementRepository stockMovementRepository;
     private final SalesOrderMapper salesOrderMapper;
+    private final com.hardwarestore.mapper.InventoryStockMapper inventoryStockMapper;
+    private final com.hardwarestore.mapper.StockMovementMapper stockMovementMapper;
 
     @Override
     @Transactional(readOnly = true)
@@ -40,6 +43,16 @@ public class DashboardServiceImpl implements DashboardService {
                 .map(salesOrderMapper::toResponse)
                 .collect(Collectors.toList());
 
+        List<com.hardwarestore.dto.response.InventoryStockResponse> lowStockItems = inventoryStockRepository.findLowStockItems()
+                .stream()
+                .map(inventoryStockMapper::toResponse)
+                .collect(Collectors.toList());
+
+        List<com.hardwarestore.dto.response.StockMovementResponse> pendingApprovals = stockMovementRepository.findByStatus(com.hardwarestore.domain.enums.StockMovementStatus.PENDING)
+                .stream()
+                .map(stockMovementMapper::toResponse)
+                .collect(Collectors.toList());
+
         return DashboardSummaryResponse.builder()
                 .products(products)
                 .stockUnits(stockUnits)
@@ -49,6 +62,8 @@ public class DashboardServiceImpl implements DashboardService {
                 .suppliers(suppliers)
                 .customers(customers)
                 .recentOrders(recentOrders)
+                .lowStockItems(lowStockItems)
+                .pendingApprovals(pendingApprovals)
                 .build();
     }
 }

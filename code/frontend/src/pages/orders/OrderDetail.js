@@ -8,7 +8,7 @@ const transitions = {
   PENDING: ['CONFIRMED', 'CANCELLED'],
   CONFIRMED: ['SHIPPED', 'CANCELLED'],
   SHIPPED: ['COMPLETED'],
-  COMPLETED: [],
+  COMPLETED: ['CANCELLED'],
   CANCELLED: [],
 };
 
@@ -50,7 +50,9 @@ function OrderDetail() {
       <div className="line-items"><div className="panel-title"><h2>Order items</h2></div><div className="table-wrap"><table><thead><tr><th>Product</th><th>Quantity</th><th>Unit price</th><th>Subtotal</th></tr></thead>
         <tbody>{(order.items || []).map((item) => <tr key={item.id || item.productId}><td>{item.productName || `Product #${item.productId}`}</td><td>{item.quantity}</td><td>{formatMoney(item.unitPrice)}</td><td>{formatMoney(item.subtotal)}</td></tr>)}</tbody>
       </table></div><div className="total-row">Order total&nbsp; {formatMoney(order.totalAmount)}</div></div>
-      {(transitions[order.status] || []).length > 0 && <div className="form-actions"><div className="status-actions">{transitions[order.status].map((status) => <button key={status} className={`btn ${status === 'CANCELLED' ? 'btn-danger' : 'btn-primary'}`} disabled={updating} onClick={() => changeStatus(status)}>{updating ? 'Updating…' : status === 'CONFIRMED' ? 'Confirm order' : status === 'SHIPPED' ? 'Mark shipped' : status === 'COMPLETED' ? 'Complete order' : 'Cancel order'}</button>)}</div></div>}
+      {(transitions[order.status] || []).length > 0 && <div className="form-actions"><div className="status-actions">{transitions[order.status]
+        .filter(status => status !== 'CANCELLED' || localStorage.getItem('role') === 'OWNER')
+        .map((status) => <button key={status} className={`btn ${status === 'CANCELLED' ? 'btn-danger' : 'btn-primary'}`} disabled={updating} onClick={() => changeStatus(status)}>{updating ? 'Updating…' : status === 'CONFIRMED' ? 'Confirm order' : status === 'SHIPPED' ? 'Mark shipped' : status === 'COMPLETED' ? 'Complete order' : 'Cancel order'}</button>)}</div></div>}
     </>}</section>
   </>;
 }

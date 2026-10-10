@@ -9,4 +9,6 @@ import java.util.List;
 public interface StockMovementRepository extends JpaRepository<StockMovement, Long> {
 
     List<StockMovement> findByProductId(Long productId, Sort sort);
+
+    List<StockMovement> findByStatus(com.hardwarestore.domain.enums.StockMovementStatus status);
 }

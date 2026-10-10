@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getDashboardSummary } from '../api/dashboard';
+import { approveStockMovement, rejectStockMovement } from '../api/stockMovements';
+import { toast } from 'react-toastify';
 import { useAuth } from '../context/AuthContext';
-import { formatDate, formatMoney, PageHeader, Notice } from './ResourcePage';
+import { formatDate, formatMoney, PageHeader, Notice, getErrorMessage } from './ResourcePage';
 
 const shortcuts = [
   ['/products/new', 'PR', 'Add product', ['OWNER', 'STOCK_MANAGER']],
@@ -16,6 +18,13 @@ function DashboardPage() {
   const role = user?.role;
   const [summary, setSummary] = useState(null);
   const [error, setError] = useState('');
+  const [refresh, setRefresh] = useState(0);
+  const handleApprove = async (id) => {
+    try { await approveStockMovement(id); toast.success('Approved successfully'); setRefresh(r => r + 1); } catch (err) { setError(getErrorMessage(err)); }
+  };
+  const handleReject = async (id) => {
+    try { await rejectStockMovement(id); toast.success('Rejected successfully'); setRefresh(r => r + 1); } catch (err) { setError(getErrorMessage(err)); }
+  };
 
   useEffect(() => {
     let active = true;
@@ -27,7 +36,7 @@ function DashboardPage() {
         if (active) setError('Could not load dashboard data. Check that the backend is running and your account has access.');
       });
     return () => { active = false; };
-  }, []);
+  }, [refresh]);
 
   return (
     <>
@@ -48,13 +57,49 @@ function DashboardPage() {
         )}
       </section>
       <div className="dashboard-grid">
+        {(role === 'OWNER' || role === 'STOCK_MANAGER') && (
+        <section className="panel">
+          <div className="panel-title"><h2>Action required</h2><Link to="/stock-movements" className="btn btn-secondary btn-small">View all</Link></div>
+          {!summary ? <div className="loading">Loading…</div> : summary.pendingApprovals?.length === 0 && summary.lowStockItems?.length === 0 ? (
+            <div className="empty-state"><strong>All caught up!</strong>No pending approvals or low stock items.</div>
+          ) : <div>
+            {summary.lowStockItems?.length > 0 && <div className="table-wrap" style={{marginBottom: 16}}>
+              <h3 style={{fontSize: '0.9rem', color: 'var(--orange)', marginBottom: 8}}>Low stock alerts</h3>
+              <table>
+                <thead><tr><th>Product ID</th><th>Available</th><th>Status</th><th style={{textAlign: "right"}}>Action</th></tr></thead>
+                <tbody>{summary.lowStockItems.map((item) => <tr key={item.id}>
+                  <td>{item.productId}</td>
+                  <td>{item.availableQuantity}</td>
+                  <td><span className="badge badge-pending">Low</span></td>
+                </tr>)}</tbody>
+              </table>
+            </div>}
+            {summary.pendingApprovals?.length > 0 && <div className="table-wrap">
+              <h3 style={{fontSize: '0.9rem', color: 'var(--blue)', marginBottom: 8}}>Pending stock approvals</h3>
+              <table>
+                <thead><tr><th>Date</th><th>Product</th><th>Qty</th><th>Status</th><th style={{textAlign: "right"}}>Action</th></tr></thead>
+                <tbody>{summary.pendingApprovals.map((m) => <tr key={m.id}>
+                  <td>{formatDate(m.movementAt)}</td>
+                  <td>{m.productName}</td>
+                  <td>{m.movementType === 'OUT' ? '-' : '+'}{m.quantity}</td>
+                  <td><span className="badge badge-pending">Pending</span></td>
+                  <td style={{textAlign: 'right'}}>
+                    <button className="btn btn-sm btn-primary" style={{marginRight: 8}} onClick={() => handleApprove(m.id)}>Approve</button>
+                    <button className="btn btn-sm btn-secondary" onClick={() => handleReject(m.id)}>Reject</button>
+                  </td>
+                </tr>)}</tbody>
+              </table>
+            </div>}
+          </div>}
+        </section>
+        )}
         {(role === 'OWNER' || role === 'CASHIER') && (
         <section className="panel">
           <div className="panel-title"><h2>Recent sales orders</h2><Link to="/orders" className="btn btn-secondary btn-small">View all</Link></div>
           {!summary ? <div className="loading">Loading store activity…</div> : summary.recentOrders.length === 0 ? (
             <div className="empty-state"><strong>No sales orders yet</strong>New orders will appear here.</div>
           ) : <div className="table-wrap"><table>
-            <thead><tr><th>Order</th><th>Customer</th><th>Date</th><th>Total</th><th>Status</th></tr></thead>
+            <thead><tr><th>Order</th><th>Customer</th><th>Date</th><th>Total</th><th>Status</th><th style={{textAlign: "right"}}>Action</th></tr></thead>
             <tbody>{summary.recentOrders.map((order) => <tr key={order.id}>
               <td><Link to={`/orders/${order.id}`}>{order.orderNumber || `#${order.id}`}</Link></td>
               <td>{order.customerName || 'Walk-in'}</td><td>{formatDate(order.createdAt)}</td><td>{formatMoney(order.totalAmount)}</td>

@@ -56,4 +56,7 @@ public class Product {
 
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
+
+    @OneToOne(mappedBy = "product", fetch = FetchType.LAZY)
+    private InventoryStock inventoryStock;
 }

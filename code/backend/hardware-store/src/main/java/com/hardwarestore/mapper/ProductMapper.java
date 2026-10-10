@@ -22,9 +22,11 @@ public interface ProductMapper {
 
     @Mapping(source = "category.id", target = "categoryId")
     @Mapping(source = "supplier.id", target = "supplierId")
+    @Mapping(target = "quantity", expression = "java(product.getInventoryStock() != null ? product.getInventoryStock().getQuantity() : 0)")
     ProductResponse toResponse(Product product);
 
     @Mapping(source = "category.id", target = "categoryId")
     @Mapping(source = "supplier.id", target = "supplierId")
+    @Mapping(target = "quantity", expression = "java(product.getInventoryStock() != null ? product.getInventoryStock().getQuantity() : 0)")
     ProductAdminResponse toAdminResponse(Product product);
 }

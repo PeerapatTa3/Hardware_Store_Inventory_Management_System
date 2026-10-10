@@ -201,6 +201,9 @@ Query ของรายการสินค้า (Pagination & Sorting)
 | `InventoryStockRequest` | `quantity` จำเป็น ≥ 0 (ยอดใหม่ ไม่ใช่ส่วนต่าง); `reason` ไม่บังคับ |
 | `StockMovementRequest` | `productId` จำเป็น; `movementType` จำเป็น (`IN`/`OUT`/`ADJUSTMENT`); `quantity` จำเป็น > 0; `referenceNo`, `note` ไม่บังคับ |
 | `PurchaseOrderRequest` | `supplierId` จำเป็น > 0; `items[]` ห้ามว่าง — แต่ละรายการ `productId` > 0, `quantity` > 0, `unitCost` > 0 |
+| `PurchaseItemRequest` | `productId` จำเป็น > 0; `quantity` จำเป็น > 0; `unitCost` จำเป็น > 0 |
 | `ReceivePurchaseRequest` | `items[]` จำเป็น — แต่ละรายการ `productId` จำเป็น, `receivedQuantity` จำเป็น ≥ 0 |
+| `ReceiveItemRequest` | `productId` จำเป็น; `receivedQuantity` จำเป็น ≥ 0 |
 | `SalesOrderRequest` | `customerId` ไม่บังคับ; `shippingAddress`, `paymentMethod` ไม่บังคับ; `items[]` ห้ามว่าง — แต่ละรายการ `productId` > 0, `quantity` > 0 |
+| `SalesOrderItemRequest` | `productId` จำเป็น > 0; `quantity` จำเป็น > 0; `unitPrice` deprecated — เซิร์ฟเวอร์ไม่ใช้ค่านี้ ใช้ `products.price` แทน |
 | `SalesOrderStatusRequest` | `status` จำเป็น (`PENDING`, `CONFIRMED`, `SHIPPED`, `COMPLETED`, `CANCELLED`) |

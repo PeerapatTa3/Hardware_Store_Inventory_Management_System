@@ -12,7 +12,7 @@ public class CompletedState implements OrderState {
 
     @Override
     public void cancel(SalesOrder order) {
-        throw new InvalidSalesOrderStateException("Completed orders cannot be cancelled.");
+        order.setState(new com.hardwarestore.domain.state.CancelledState());
     }
 
     @Override
