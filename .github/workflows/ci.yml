@@ -38,7 +38,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: surefire-reports
-          path: code/backend/hardware-store/target/surefire-reports
+          path: test/surefire-reports
           if-no-files-found: ignore
 
   frontend:
