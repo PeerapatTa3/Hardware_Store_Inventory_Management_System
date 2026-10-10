@@ -153,23 +153,26 @@ REST API ของ **Hardware Store Inventory Management System** (Spring Boot 4
 
 ### 3.6 Stock Movements — `/api/v1/stock-movements` (`StockMovementController`)
 
-| Method | Path | คำอธิบาย | Request | Response |
-|--------|------|-----------|---------|----------|
-| POST | `/api/v1/stock-movements` | บันทึกการรับเข้า/จ่ายออก/ปรับยอด | `StockMovementRequest` | 201 `StockMovementResponse` |
-| GET | `/api/v1/stock-movements` | ประวัติทั้งหมด (ใหม่สุดก่อน) | — | 200 `StockMovementResponse[]` |
-| GET | `/api/v1/stock-movements/products/{productId}` | ประวัติของสินค้า (ใหม่สุดก่อน) | — | 200 `StockMovementResponse[]` |
+| Method | Path | คำอธิบาย | Request | Response | สิทธิ์ที่ประกาศ |
+|--------|------|-----------|---------|----------|----------------|
+| POST | `/api/v1/stock-movements` | บันทึกการรับเข้า/จ่ายออก/ปรับยอด | `StockMovementRequest` | 201 `StockMovementResponse` | — |
+| GET | `/api/v1/stock-movements` | ประวัติทั้งหมด (ใหม่สุดก่อน) | — | 200 `StockMovementResponse[]` | — |
+| GET | `/api/v1/stock-movements/products/{productId}` | ประวัติของสินค้า (ใหม่สุดก่อน) | — | 200 `StockMovementResponse[]` | — |
+| POST | `/api/v1/stock-movements/{id}/approve` | อนุมัติการเคลื่อนไหวสต็อก | — | 200 `StockMovementResponse` | OWNER |
+| POST | `/api/v1/stock-movements/{id}/reject` | ปฏิเสธการเคลื่อนไหวสต็อก | — | 200 `StockMovementResponse` | OWNER |
 
 หลังบันทึก หากสต็อก `available <= minimumStock` ระบบ log คำเตือน `LOW STOCK` (ไม่กระทบ response)
 
 ### 3.7 Purchase Orders — `/api/v1/purchases` (`PurchaseOrderController`)
 
-| Method | Path | คำอธิบาย | Request | Response |
-|--------|------|-----------|---------|----------|
-| POST | `/api/v1/purchases` | สร้างใบสั่งซื้อ (สถานะ `PENDING`, เลข `PO-<UUID>`) | `PurchaseOrderRequest` | 201 `PurchaseOrderResponse` |
-| GET | `/api/v1/purchases` | รายการทั้งหมด (ใหม่สุดก่อน) | — | 200 `PurchaseOrderResponse[]` |
-| GET | `/api/v1/purchases/{id}` | ดูรายตัว | — | 200 `PurchaseOrderResponse` |
-| PUT | `/api/v1/purchases/{id}` | แก้ไข — เฉพาะ `PENDING` | `PurchaseOrderRequest` | 200 `PurchaseOrderResponse` |
-| POST | `/api/v1/purchases/{id}/receive` | รับของ: เพิ่มสต็อก (`IN`) ทุกรายการ → สถานะ `COMPLETED` (เฉพาะ `PENDING`) | — | 200 `PurchaseOrderResponse` |
+| Method | Path | คำอธิบาย | Request | Response | สิทธิ์ที่ประกาศ |
+|--------|------|-----------|---------|----------|----------------|
+| POST | `/api/v1/purchases` | สร้างใบสั่งซื้อ (สถานะ `PENDING`, เลข `PO-<UUID>`) | `PurchaseOrderRequest` | 201 `PurchaseOrderResponse` | — |
+| GET | `/api/v1/purchases` | รายการทั้งหมด (ใหม่สุดก่อน) | — | 200 `PurchaseOrderResponse[]` | — |
+| GET | `/api/v1/purchases/{id}` | ดูรายตัว | — | 200 `PurchaseOrderResponse` | — |
+| PUT | `/api/v1/purchases/{id}` | แก้ไข — เฉพาะ `PENDING` | `PurchaseOrderRequest` | 200 `PurchaseOrderResponse` | — |
+| POST | `/api/v1/purchases/{id}/approve` | อนุมัติใบสั่งซื้อ | — | 200 `PurchaseOrderResponse` | OWNER |
+| POST | `/api/v1/purchases/{id}/receive` | รับของ: เพิ่มสต็อก (`IN`) ตามที่ระบุ → เปลี่ยนสถานะ | `ReceivePurchaseRequest` | 200 `PurchaseOrderResponse` | — |
 
 ### 3.8 Sales Orders — `/api/v1/orders` (`SalesOrderController`)
 
@@ -202,8 +205,7 @@ REST API ของ **Hardware Store Inventory Management System** (Spring Boot 4
 
 ## 4. สถานะการบังคับสิทธิ์ (ควรรู้ก่อนส่งงาน)
 
-`ProductController` มี `@PreAuthorize` (บรรทัด 21, 40, 58, 64, 70) แต่ใน `SecurityConfig` **ไม่มี `@EnableMethodSecurity`** ดังนั้นตอนนี้ annotation เหล่านี้ **ยังไม่ถูกบังคับใช้** — user ที่ login แล้ว role ใดก็เรียก endpoint ของ Product ได้ (รวมถึง `/admin` ที่เห็น `costPrice` และ DELETE)
-Controller อื่นทั้งหมดไม่มีการจำกัดตาม role เลย (ต้อง login เท่านั้น)
+`ProductController`, `StockMovementController`, และ `PurchaseOrderController` มี `@PreAuthorize` แต่ใน `SecurityConfig` **ไม่มี `@EnableMethodSecurity`** ดังนั้นตอนนี้ annotation เหล่านี้ **ยังไม่ถูกบังคับใช้** — user ที่ login แล้ว role ใดก็เรียก endpoint เหล่านี้ได้
 
 ถ้าต้องการให้สิทธิ์ทำงานตามที่ประกาศ ต้องเพิ่ม `@EnableMethodSecurity` บน `SecurityConfig` และแก้ `GlobalExceptionHandler` ให้ปล่อย `AccessDeniedException` ผ่าน (ไม่เช่นนั้นจะได้ 500 แทน 403)
 
@@ -273,6 +275,13 @@ Controller อื่นทั้งหมดไม่มีการจำกั
 
 `PurchaseItemRequest`: `productId` (จำเป็น, > 0), `quantity` (จำเป็น, > 0), `unitCost` (จำเป็น, > 0)
 
+### `ReceivePurchaseRequest`
+| ฟิลด์ | ชนิด | กฎ |
+|-------|------|-----|
+| `items` | `ReceiveItemRequest[]` | จำเป็น ห้ามว่าง |
+
+`ReceiveItemRequest`: `productId` (จำเป็น), `receivedQuantity` (จำเป็น, ≥ 0)
+
 ### `SalesOrderRequest`
 | ฟิลด์ | ชนิด | กฎ |
 |-------|------|-----|
@@ -341,12 +350,15 @@ POST /api/v1/orders/{id}/status    { "status": "COMPLETED" }
 ```
 → `totalAmount` เปลี่ยนเป็น `450.00` (สมาชิกลด 10%)
 
-**4) สั่งซื้อจากซัพพลายเออร์ แล้วรับของ**
+**4) สั่งซื้อจากซัพพลายเออร์, อนุมัติ, แล้วรับของ**
 ```http
 POST /api/v1/purchases
 { "supplierId": 1, "items": [ { "productId": 1, "quantity": 20, "unitCost": 150.00 } ] }
 
+POST /api/v1/purchases/{id}/approve
+
 POST /api/v1/purchases/{id}/receive
+{ "items": [ { "productId": 1, "receivedQuantity": 20 } ] }
 ```
 → `status: "COMPLETED"`, สต็อกสินค้า 1 เพิ่มขึ้น 20
 
@@ -360,4 +372,3 @@ POST /api/v1/orders  { "items": [ { "productId": 1, "quantity": 99999 } ] }
 POST /api/v1/orders/{id}/status   { "status": "CANCELLED" }   // เมื่อสถานะเป็น COMPLETED
 ```
 → 409 `INVALID_SALES_ORDER_STATE`
-

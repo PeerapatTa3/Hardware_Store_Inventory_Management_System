@@ -1,101 +1,42 @@
-﻿# SOLID Analysis
+# การวิเคราะห์หลักการ SOLID ในระบบ Hardware Store Inventory Management System
 
-เอกสารนี้วิเคราะห์การประยุกต์ใช้หลักการ SOLID ในโปรเจค **Hardware Store Inventory Management System**
-ทุกตัวอย่างอ้างอิงไฟล์และเลขบรรทัดจริงใน code/backend/hardware-store/src/main/java/com/hardwarestore/
-(path ด้านล่างย่อเป็น …/ แทน prefix นี้)
-
----
-
-## ภาพรวมสถาปัตยกรรม
-
-`
-Controller  →  Service (interface)  →  Repository (Spring Data JPA)  →  Entity
-   │                │
-   │                ├── Mapper (MapStruct)       แปลง Entity ⇄ DTO
-   │                ├── validation/ (Chain)      ตรวจสอบ Sales Order
-   │                ├── strategy/ (Strategy)     คำนวณส่วนลด
-   │                ├── state/ (State)           สถานะ Sales Order
-   │                └── event/ + listener/       แจ้งเตือน Low Stock (Observer)
-   └── exception/GlobalExceptionHandler          แปลง Exception → ErrorResponse
-`
-
----
+เอกสารนี้อธิบายถึงการนำหลักการ SOLID มาประยุกต์ใช้ในโครงสร้างโค้ด Backend ของระบบ (`code/backend/hardware-store/src/main/java/com/hardwarestore/`) พร้อมยกตัวอย่างจากโค้ดจริง
 
 ## 1. Single Responsibility Principle (SRP)
+**หลักการ:** คลาสควรมีหน้าที่รับผิดชอบเพียงอย่างเดียว (มีเพียงหนึ่งเหตุผลที่ทำให้ต้องแก้ไขคลาสนี้)
 
-> แต่ละคลาสควรมีเหตุผลเดียวที่ทำให้ต้องแก้ไข
-
-### สิ่งที่ทำได้ดี
-| คลาส | ไฟล์ | หน้าที่เดียวที่รับผิดชอบ |
-|------|---------------|---------------------------|
-| LowStockAlertListener | …/listener/LowStockAlertListener.java | ตอบสนองต่อ LowStockEvent อย่างเดียว |
-| StockAvailableHandler | …/validation/StockAvailableHandler.java | ตรวจ "สต็อกพอไหม" อย่างเดียว (แยกจากเช็คลูกค้าและสินค้า) |
-| CustomerExistsHandler | …/validation/CustomerExistsHandler.java | ตรวจ "ลูกค้ามีอยู่จริงไหม" เรื่องเดียว |
-| SalesOrderMapper | …/mapper/SalesOrderMapper.java | แปลง Entity <-> DTO (ปัจจุบันไม่มีลอจิกคิดราคาเจือปนแล้ว) |
-| GlobalExceptionHandler | …/exception/GlobalExceptionHandler.java | ดักจับ Error รวมศูนย์และปั้น Response |
-
-*(หมายเหตุ: ล่าสุดได้มีการ refactor ProductServiceImpl.java ยุบรวมโค้ดค้นหาซ้ำซ้อนไปรวมกันที่เมธอด getProductsPage ทำให้คลาสนี้สะอาดขึ้นมาก)*
-
----
+**ตัวอย่างในโค้ด:**
+การใช้ **Chain of Responsibility Pattern** ในส่วนของการตรวจสอบข้อมูล (Validation) สำหรับคำสั่งขาย (Sales Order)
+แทนที่จะมีเมธอดขนาดใหญ่ใน `SalesOrderServiceImpl` ที่ทำหน้าที่ตรวจสอบทุกอย่าง โค้ดได้ถูกแยกออกเป็นคลาสย่อยๆ ที่สืบทอดจาก `OrderValidationHandler` เช่น:
+- `CustomerExistsHandler`: มีหน้าที่เดียวคือตรวจสอบว่ามีลูกค้าในระบบหรือไม่
+- `ProductsExistHandler`: มีหน้าที่เดียวคือตรวจสอบว่าสินค้าที่สั่งซื้อมีอยู่ในระบบหรือไม่
+- `StockAvailableHandler`: มีหน้าที่เดียวคือคำนวณและตรวจสอบว่ามีสินค้าคงคลังเพียงพอหรือไม่
+การแยกคลาสแบบนี้ทำให้เมื่อมีเงื่อนไขการตรวจสอบใหม่ๆ ก็ไม่ต้องไปแก้ไขคลาสเดิม แต่เพิ่มคลาสใหม่แทน
 
 ## 2. Open/Closed Principle (OCP)
+**หลักการ:** ซอฟต์แวร์ควรเปิดให้ต่อเติมขยายความสามารถได้ แต่ปิดสำหรับการแก้ไข (Open for extension, closed for modification)
 
-> เปิดให้ขยาย แต่ปิดไม่ให้แก้ของเดิม
-
-### สิ่งที่ทำได้ดี
-**2.1 Strategy — กฎส่วนลด**
-- …/strategy/DiscountStrategy.java — Interface หลัก
-- มี 3 แบบ: NormalDiscount, BulkDiscount, MemberDiscount
-- SalesOrder.applyPricing() สามารถคำนวณส่วนลดได้โดยเรียกใช้ pply() จาก Strategy โดยไม่ต้องมีลอจิกคณิตศาสตร์ซับซ้อนในตัวมันเอง
-- **หากจะเพิ่มส่วนลดใหม่:** แค่สร้างคลาสใหม่มาสืบทอด DiscountStrategy ไม่ต้องแก้ลอจิกเดิม
-
-**2.2 Polymorphic enum — ประเภทความเคลื่อนไหวสต็อก**
-- …/domain/enums/StockMovementType.java (IN, OUT, ADJUSTMENT) แต่ละค่า override process() ด้วยตัวเอง
-- ใน Service สามารถเรียก equest.getMovementType().process(inventory, quantity) ตรงๆ ไม่มี if/switch เลย
-
-**2.3 Observer — แจ้งเตือนสต็อกต่ำ**
-- StockMovementServiceImpl publish LowStockEvent เฉยๆ หากวันหน้าต้องการส่ง LINE หรือ SMS ก็แค่เพิ่ม Listener ไม่ต้องแก้ Service
-
----
+**ตัวอย่างในโค้ด:**
+- **Strategy Pattern** สำหรับส่วนลด: ระบบมี Interface `DiscountStrategy` และมี Implementation เช่น `BulkDiscount`, `MemberDiscount`, และ `NormalDiscount` หากในอนาคตต้องการเพิ่มโปรโมชั่นใหม่ (เช่น `SeasonalDiscount`) ก็สามารถสร้างคลาสใหม่ที่ Implement `DiscountStrategy` ได้เลยโดยไม่ต้องไปแก้ไขโค้ดของคลาสลดราคาเดิมหรือโค้ดใน Service
+- **State Pattern** สำหรับสถานะคำสั่งซื้อ: Interface `OrderState` มี Implementation ต่างๆ เช่น `PendingState`, `ConfirmedState`, `ShippedState` ฯลฯ ทำให้การเพิ่มสถานะใหม่หรือเปลี่ยนกฎการเปลี่ยนสถานะทำได้โดยเพิ่มหรือแก้ที่คลาส State ที่เกี่ยวข้อง ไม่ต้องเขียน `if-else` หรือ `switch-case` ซ้อนกันมากมายใน Service
 
 ## 3. Liskov Substitution Principle (LSP)
+**หลักการ:** คลาสลูกต้องสามารถนำมาใช้งานแทนคลาสแม่ได้โดยไม่ทำให้โปรแกรมทำงานผิดพลาด
 
-> คลาสลูกต้องแทนที่คลาสแม่/interface ได้โดยไม่ทำให้พฤติกรรมของโปรแกรมผิดเพี้ยน
-
-### สิ่งที่ทำได้ดี
-**3.1 OrderState และ 5 implementation**
-- Interface: …/state/OrderState.java
-- Implementation: PendingState, ConfirmedState, ShippedState, CompletedState, CancelledState
-- SalesOrder สามารถทำงานร่วมกับสถานะใดๆ ก็ได้ผ่าน getCurrentState() หากผู้ใช้พยายามข้ามขั้นการจ่ายเงิน (เช่นพยายาม ship สินค้าที่ยกเลิกไปแล้ว) คลาสลูกจะจัดการพ่น InvalidSalesOrderStateException ตามกฎหมายของตัวเองอย่างถูกต้อง
-
-**3.2 OrderValidationHandler**
-- handle() ถูกออกแบบให้เป็น inal คลาสลูกบังคับ override แค่ alidate() จึงไม่มีใครทำลายลำดับห่วงโซ่ของ Chain of Responsibility ได้
-
----
+**ตัวอย่างในโค้ด:**
+คลาสที่ Implement `DiscountStrategy` (เช่น `BulkDiscount`) สามารถถูกเรียกใช้งานผ่าน Interface `DiscountStrategy` ได้ใน `SalesOrderServiceImpl` โดยระบบรับประกันว่ามันจะส่งคืนค่า `BigDecimal` กลับมาอย่างถูกต้องเสมอตาม Contract ที่กำหนดไว้ การส่งข้อมูลเข้าไปประมวลผล (เช่น `unitPrice`, `quantity`) จะไม่ทำให้เกิด Exception นอกเหนือจากความคาดหมาย (เช่น มีการตรวจสอบ null ใน `BulkDiscount` และส่งค่า 0 กลับ) ทำให้คลาสลูกเหล่านี้สามารถสับเปลี่ยนกันได้ 100%
 
 ## 4. Interface Segregation Principle (ISP)
+**หลักการ:** Client ไม่ควรถูกบังคับให้ขึ้นต่อ Interface ที่ไม่ได้ใช้งาน (ควรแยก Interface ใหญ่ๆ ออกเป็น Interface เล็กๆ ที่เฉพาะเจาะจง)
 
-> client ไม่ควรถูกบังคับให้พึ่งพาเมธอดที่ตัวเองไม่ใช้
-
-### สิ่งที่ทำได้ดี
-- บริการ Service ถูกแบ่งแยกส่วนอย่างชัดเจน:
-  - StockMovementService.java จัดการการปรับสต็อก (เช่น เข้า/ออก/ปรับปรุง)
-  - InventoryStockService.java เน้นการตรวจสอบยอดรวม
-  - SalesOrderService.java เน้นเรื่องบิลขาย
-- ไม่มี StoreService ขนาดยักษ์ที่รวมทุกสรรพสิ่งเข้าไว้ด้วยกัน ทำให้ SalesOrderController หยิบไปใช้แค่ SalesOrderService ได้โดยไม่ต้องถือโค้ดพะรุงพะรัง
-
----
+**ตัวอย่างในโค้ด:**
+- **Repository Layer**: โครงการใช้ Spring Data JPA ซึ่งมีการแยก Interface เป็นอิสระต่อกัน เช่น `ProductRepository`, `InventoryStockRepository`, และ `CustomerRepository` แทนที่จะมีคลาส Database Access ก้อนใหญ่เพียงคลาสเดียว
+- **Service Layer**: แยก Interface ของ Service แต่ละโดเมนอย่างชัดเจน เช่น `ProductService`, `SalesOrderService`, `StockMovementService` ทำให้คลาส Controller ที่เรียกใช้งาน (Client) อ้างอิงเฉพาะ Interface เท่าที่จำเป็นต้องใช้เท่านั้น
 
 ## 5. Dependency Inversion Principle (DIP)
+**หลักการ:** Module ระดับสูงไม่ควรขึ้นต่อ Module ระดับต่ำ แต่ควรขึ้นต่อ Abstraction (Interface/Abstract Class)
 
-> โมดูลระดับสูงควรพึ่งพา abstraction ไม่ใช่ concrete class
-
-### สิ่งที่ทำได้ดี
-- **Controller → Service interface:** 
-  - SalesOrderController.java ประกาศตัวแปร private final SalesOrderService salesOrderService; (เป็น Interface)
-- **Service → Repository interface:** 
-  - Service ทุกตัวถือ Repository ที่สืบทอดมาจาก Spring Data JpaRepository ไม่ผูกติดกับฐานข้อมูลตรงๆ
-- **Service → Service interface:** 
-  - การทำงานข้าม Domain เช่น SalesOrderServiceImpl จะเรียก StockMovementService (Interface) ไม่ใช่ไปเรียก Impl ตรงๆ
-- **Constructor Injection:** 
-  - ใช้งานผ่าน @RequiredArgsConstructor (Lombok) ฉีด Dependency อัตโนมัติ ปลอดภัยและเหมาะกับการเขียน Unit Test
+**ตัวอย่างในโค้ด:**
+- Controller ของระบบ (เช่น `ProductController`) ถูก Inject ด้วย `ProductService` (ซึ่งเป็น Interface) ไม่ใช่ตัว `ProductServiceImpl` (ซึ่งเป็นคลาส Implementation)
+- `SalesOrderServiceImpl` จำเป็นต้องใช้งานระบบฐานข้อมูล แต่ก็ไม่ได้ผูกติดกับคลาสการเชื่อมต่อฐานข้อมูลโดยตรง โดยจะพึ่งพา Interface `CustomerRepository`, `ProductRepository` เป็นต้น
+- ตัวของ Service เองก็พึ่งพา Abstraction เช่น `DiscountStrategy` และ `OrderValidationHandler` ทำให้สามารถทำ Unit Test โดยใช้ Mock Object แทนของจริงได้ง่าย และสามารถเปลี่ยน Implementation ภายหลังได้โดยที่ Module ระดับสูง (Service/Controller) ไม่ต้องเปลี่ยนแปลงโค้ด
