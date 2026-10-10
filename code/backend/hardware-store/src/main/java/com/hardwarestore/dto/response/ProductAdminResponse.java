@@ -22,4 +22,5 @@ public class ProductAdminResponse {
     private Integer minimumStock;
     private Long categoryId;
     private Long supplierId;
+    private Integer quantity;
 }

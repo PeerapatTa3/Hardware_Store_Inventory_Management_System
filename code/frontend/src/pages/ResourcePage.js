@@ -41,7 +41,14 @@ export const resourceConfig = {
   },
   products: {
     label: 'Products', singular: 'Product',
-    api: { list: productApi.getProductsAdmin, get: productApi.getProductAdmin, create: productApi.createProduct, update: productApi.updateProduct, delete: productApi.deleteProduct },
+    api: { 
+      list: localStorage.getItem('role') === 'CASHIER' ? productApi.getProducts : productApi.getProductsAdmin, 
+      get: localStorage.getItem('role') === 'CASHIER' ? productApi.getProduct : productApi.getProductAdmin, 
+      create: productApi.createProduct, 
+      update: productApi.updateProduct, 
+      delete: productApi.deleteProduct 
+    },
+    readOnly: localStorage.getItem('role') === 'CASHIER',
     paginated: true,
     fields: [
       { name: 'sku', label: 'SKU', required: true, maxLength: 100 },
@@ -54,7 +61,7 @@ export const resourceConfig = {
       { name: 'supplierId', label: 'Supplier', type: 'select', required: true, loadOptions: supplierApi.getSuppliers },
       { name: 'description', label: 'Description', type: 'textarea', maxLength: 500, wide: true },
     ],
-    columns: [['sku', 'SKU'], ['name', 'Product'], ['price', 'Price', (value) => formatMoney(value)], ['minimumStock', 'Min. stock'], ['categoryId', 'Category ID'], ['supplierId', 'Supplier ID']],
+    columns: [['sku', 'SKU'], ['name', 'Product'], ['price', 'Price', (value) => formatMoney(value)], ['quantity', 'In Stock']],
   },
 };
 
@@ -151,14 +158,14 @@ function ResourceListPage({ configKey }) {
           <div className="empty-state"><strong>No {config.label.toLowerCase()} found</strong>{query ? 'Try a different search.' : 'Create a record to get started.'}</div>
         ) : (
           <div className="table-wrap"><table>
-            <thead><tr>{config.columns.map(([, label]) => <th key={label}>{label}</th>)}<th>Actions</th></tr></thead>
+            <thead><tr>{config.columns.map(([, label]) => <th key={label}>{label}</th>)}{!config.readOnly && <th>Actions</th>}</tr></thead>
             <tbody>{visibleRows.map((row) => (
               <tr key={row.id}>
                 {config.columns.map(([key, label, render]) => <td key={label}>{render ? render(row[key], row) : (row[key] ?? '—')}</td>)}
-                <td><div className="row-actions">
+                {!config.readOnly && <td><div className="row-actions">
                   <Link className="btn btn-secondary btn-small" to={`/${configKey}/${row.id}/edit`} aria-label={`Edit ${row.name || row.sku}`}>Edit</Link>
                   <button className="btn btn-danger btn-small" onClick={() => remove(row)}>Delete</button>
-                </div></td>
+                </div></td>}
               </tr>
             ))}</tbody>
           </table></div>
@@ -257,3 +264,5 @@ export function ResourceFormPage({ configKey }) {
 }
 
 export default ResourceListPage;
+
+

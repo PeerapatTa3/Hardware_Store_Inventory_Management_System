@@ -15,4 +15,6 @@ public class DashboardSummaryResponse {
     private long suppliers;
     private long customers;
     private List<SalesOrderResponse> recentOrders;
+    private List<InventoryStockResponse> lowStockItems;
+    private List<com.hardwarestore.dto.response.StockMovementResponse> pendingApprovals;
 }

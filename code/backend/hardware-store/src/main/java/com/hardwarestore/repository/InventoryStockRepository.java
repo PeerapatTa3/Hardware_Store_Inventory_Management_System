@@ -14,4 +14,7 @@ public interface InventoryStockRepository extends JpaRepository<InventoryStock, 
 
     @org.springframework.data.jpa.repository.Query("SELECT COUNT(i) FROM InventoryStock i WHERE i.quantity <= i.product.minimumStock")
     Long countLowStockItems();
+
+    @org.springframework.data.jpa.repository.Query("SELECT i FROM InventoryStock i WHERE i.quantity <= i.product.minimumStock")
+    java.util.List<InventoryStock> findLowStockItems();
 }
