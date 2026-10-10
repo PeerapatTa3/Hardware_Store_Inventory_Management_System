@@ -24,7 +24,7 @@ public class ConfirmedState implements OrderState {
 
     @Override
     public void complete(SalesOrder order) {
-        order.applyPricing();
+        
         order.setStatus(SalesOrderStatus.COMPLETED);
         order.setState(new CompletedState());
     }
