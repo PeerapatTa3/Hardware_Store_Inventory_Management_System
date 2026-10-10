@@ -74,9 +74,8 @@ classDiagram
 3. นอกนั้น → `NormalDiscount`
 
 **ข้อควรรู้ (พฤติกรรมจริงของระบบ)**
-- ตอน **สร้าง/แก้** order, `SalesOrderMapper.updatePendingOrder` (`…/mapper/SalesOrderMapper.java` : 31-66) คิดยอดแบบราคาเต็ม (`unitPrice × quantity`) ยังไม่ใส่ส่วนลด
-- ส่วนลดจะถูกคำนวณและเขียนทับ `totalAmount` ตอนเปลี่ยนสถานะ `CONFIRMED → COMPLETED` เท่านั้น
-- `BulkDiscount` ตรวจ `quantity >= 10` ต่อรายการสินค้า (บรรทัด 18) ส่วน `resolveDiscountStrategy` ตรวจจำนวนรวมทั้งใบ (บรรทัด 169-176) — เกณฑ์ทั้งสองจึงไม่ใช่ตัวเดียวกัน
+- การสร้าง order สำหรับ POS หน้าร้าน, `SalesOrderMapper.updatePendingOrder` จะคัดลอกราคา `unitPrice` เท่านั้น จากนั้นจะส่งต่อให้ `order.applyPricing()` คำนวณราคาสุทธิและส่วนลดเบ็ดเสร็จในตัว Entity เอง และสถานะจะถูกเซ็ตเป็น `COMPLETED` ตั้งแต่แรก
+- `BulkDiscount` ตรวจ `quantity >= 10` ต่อรายการสินค้า ส่วน `resolveDiscountStrategy` ตรวจจำนวนรวมทั้งใบ — เกณฑ์ทั้งสองจึงไม่ใช่ตัวเดียวกัน
 - `resolveDiscountStrategy` ยัง `new` strategy เองและเป็น `if/else` — เพิ่มส่วนลดใหม่ต้องแก้เมธอดนี้ (ดู `solid-analysis.md` หัวข้อ OCP)
 
 **Test:** `src/test/java/com/hardwarestore/strategy/DiscountStrategyTest.java`, `SalesOrderStrategyStateTest.java`
@@ -91,7 +90,8 @@ classDiagram
 
 ```mermaid
 stateDiagram-v2
-    [*] --> PENDING : สร้าง order
+    [*] --> COMPLETED : สร้าง order หน้าร้าน (POS)
+    [*] --> PENDING : สร้าง order (ถ้ามีระบบ Online)
     PENDING --> CONFIRMED : confirm()
     PENDING --> CANCELLED : cancel()
     CONFIRMED --> SHIPPED : ship()
@@ -157,9 +157,9 @@ classDiagram
 | ผู้เรียกใช้ | `SalesOrderServiceImpl.updateStatus` : 105-164 |
 
 **ผลข้างเคียงทางธุรกิจ** (`SalesOrderServiceImpl`)
-- สร้าง order → ตัดสต็อกทันที (`applyStockOut`, บรรทัด 205-215)
-- ยกเลิก order → คืนสต็อก (`applyStockReturnOnCancel`, บรรทัด 217-227 เรียกที่บรรทัด 160-162)
-- แก้ order ที่ยัง PENDING → ปรับสต็อกเฉพาะส่วนต่าง (`applyPendingOrderStockAdjustment`, บรรทัด 174-203)
+- สร้าง order (POS) → สถานะเป็น COMPLETED และตัดสต็อกทันที (`applyStockOut`)
+- ยกเลิก order → คืนสต็อก (`applyStockReturnOnCancel`)
+- แก้ order ที่ยัง PENDING (ถ้ารองรับ) → ปรับสต็อกเฉพาะส่วนต่าง (`applyPendingOrderStockAdjustment`)
 
 **จุดเด่นของการออกแบบ (Fully Delegated)**
 - `SalesOrderServiceImpl.updateStatus` ได้รับการ Refactor ให้ส่งต่อ (Delegate) ผ่านคำสั่ง `order.confirm()`, `order.ship()`, `order.complete()`, และ `order.cancel()` ไปยัง State Class โดยตรงทั้งหมด ทำให้ State Pattern ทำหน้าที่เป็น Single Source of Truth ในการควบคุมสถานะอย่างแท้จริงตามหลัก Open/Closed Principle (OCP)
