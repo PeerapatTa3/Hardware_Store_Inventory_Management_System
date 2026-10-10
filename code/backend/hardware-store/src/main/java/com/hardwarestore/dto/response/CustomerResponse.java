@@ -15,4 +15,5 @@ public class CustomerResponse {
     private String phone;
     private String email;
     private String address;
+    private boolean member;
 }

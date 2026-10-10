@@ -86,15 +86,19 @@ class PurchaseOrderControllerTest extends BaseControllerTest {
 
     @Test
     void receiveShouldReturnCompletedPurchase() throws Exception {
-        when(purchaseOrderService.receive(17L)).thenReturn(
+        when(purchaseOrderService.receive(org.mockito.ArgumentMatchers.eq(17L), org.mockito.ArgumentMatchers.any())).thenReturn(
                 purchase(17L, PurchaseOrderStatus.COMPLETED));
 
-        mockMvc.perform(post("/api/v1/purchases/17/receive"))
+        mockMvc.perform(post("/api/v1/purchases/17/receive")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"items":[{"productId":4,"receivedQuantity":2}]}
+                                """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(17))
                 .andExpect(jsonPath("$.status").value("COMPLETED"));
 
-        verify(purchaseOrderService).receive(17L);
+        verify(purchaseOrderService).receive(org.mockito.ArgumentMatchers.eq(17L), org.mockito.ArgumentMatchers.any());
     }
 
     @Test
@@ -124,14 +128,18 @@ class PurchaseOrderControllerTest extends BaseControllerTest {
     void serviceErrorsShouldUseStandardNotFoundAndConflictResponses() throws Exception {
         when(purchaseOrderService.findById(99L))
                 .thenThrow(new ResourceNotFoundException("Purchase not found"));
-        when(purchaseOrderService.receive(17L))
+        when(purchaseOrderService.receive(org.mockito.ArgumentMatchers.eq(17L), org.mockito.ArgumentMatchers.any()))
                 .thenThrow(new InvalidPurchaseStateException("Only pending purchases can be received"));
 
         mockMvc.perform(get("/api/v1/purchases/99"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.error").value("RESOURCE_NOT_FOUND"));
 
-        mockMvc.perform(post("/api/v1/purchases/17/receive"))
+        mockMvc.perform(post("/api/v1/purchases/17/receive")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"items":[{"productId":4,"receivedQuantity":2}]}
+                                """))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error").value("INVALID_PURCHASE_STATE"));
     }

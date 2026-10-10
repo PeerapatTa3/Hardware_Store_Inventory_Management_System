@@ -11,7 +11,6 @@ function OrderForm() {
   const [customers, setCustomers] = useState([]);
   const [products, setProducts] = useState([]);
   const [customerId, setCustomerId] = useState('');
-  const [shippingAddress, setShippingAddress] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('CASH');
   const [lines, setLines] = useState([{ productId: '', quantity: 1 }]);
   const [loading, setLoading] = useState(true);
@@ -31,6 +30,18 @@ function OrderForm() {
     const product = products.find((item) => String(item.id) === String(line.productId));
     return sum + Number(product?.price || 0) * Number(line.quantity || 0);
   }, 0);
+  
+  const selectedCustomer = customers.find(c => String(c.id) === String(customerId));
+  const isMember = selectedCustomer?.member;
+  const totalQuantity = lines.reduce((sum, line) => sum + Number(line.quantity || 0), 0);
+  
+  // Apply frontend discount preview matching backend logic
+  let finalTotal = total;
+  if (isMember) {
+      finalTotal = total * 0.9;
+  } else if (totalQuantity >= 10) {
+      finalTotal = total * 0.95;
+  }
 
   const submit = async (event) => {
     event.preventDefault();
@@ -38,14 +49,13 @@ function OrderForm() {
     setError('');
     const payload = {
       customerId: customerId ? Number(customerId) : null,
-      shippingAddress: shippingAddress.trim() || null,
       paymentMethod,
       items: lines.map((line) => ({ productId: Number(line.productId), quantity: Number(line.quantity) })),
     };
     try {
-      await createOrder(payload);
+      const response = await createOrder(payload);
       toast.success('Sales order created');
-      navigate('/orders');
+      navigate('/orders', { state: { receiptOrder: response.data } });
     } catch (requestError) {
       setError(getErrorMessage(requestError));
     } finally {
@@ -58,9 +68,8 @@ function OrderForm() {
     <section className="panel"><Notice>{error}</Notice>{loading ? <div className="loading">Loading customers and products…</div> : (
       <form onSubmit={submit}>
         <div className="form-grid">
-          <div className="form-group"><label htmlFor="customer">Customer</label><select id="customer" className="form-control" value={customerId} onChange={(event) => setCustomerId(event.target.value)}><option value="">Walk-in customer</option>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.name} · {customer.phone}</option>)}</select></div>
+          <div className="form-group"><label htmlFor="customer">Customer</label><select id="customer" className="form-control" value={customerId} onChange={(event) => setCustomerId(event.target.value)}><option value="">Walk-in customer</option>{customers.map((customer) => <option key={customer.id} value={customer.id}>{customer.name} · {customer.phone}{customer.member ? ' ⭐ Member' : ''}</option>)}</select></div>
           <div className="form-group"><label htmlFor="payment">Payment method</label><select id="payment" className="form-control" value={paymentMethod} onChange={(event) => setPaymentMethod(event.target.value)}><option value="CASH">Cash</option><option value="TRANSFER">Transfer</option><option value="CARD">Card</option></select></div>
-          <div className="form-group span-2"><label htmlFor="shipping">Shipping address</label><textarea id="shipping" className="form-control" value={shippingAddress} onChange={(event) => setShippingAddress(event.target.value)} /></div>
         </div>
         <div className="line-items"><div className="panel-title"><h2>Items</h2><button type="button" className="btn btn-secondary btn-small" onClick={() => setLines((current) => [...current, { productId: '', quantity: 1 }])}>＋ Add line</button></div>
           {lines.map((line, index) => <div className="line-item" key={index}>
@@ -69,7 +78,7 @@ function OrderForm() {
             <div className="form-group"><label>Unit price</label><input className="form-control" readOnly value={formatMoney(products.find((item) => String(item.id) === String(line.productId))?.price)} /></div>
             <button type="button" className="btn btn-danger btn-small" disabled={lines.length === 1} onClick={() => setLines((current) => current.filter((_, itemIndex) => itemIndex !== index))} aria-label="Remove line">Remove</button>
           </div>)}
-          <div className="total-row">Estimated total&nbsp; {formatMoney(total)}</div>
+          <div className="total-row">Estimated total&nbsp; {formatMoney(finalTotal)}</div>
         </div>
         <div className="form-actions"><Link to="/orders" className="btn btn-secondary">Cancel</Link><button className="btn btn-primary" disabled={saving || products.length === 0}>{saving ? 'Creating…' : 'Create order'}</button></div>
       </form>

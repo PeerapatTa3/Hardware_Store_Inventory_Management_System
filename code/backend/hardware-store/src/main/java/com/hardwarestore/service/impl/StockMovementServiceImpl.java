@@ -4,6 +4,8 @@ import com.hardwarestore.domain.entity.InventoryStock;
 import com.hardwarestore.domain.entity.Product;
 import com.hardwarestore.domain.entity.StockMovement;
 import com.hardwarestore.domain.enums.StockMovementType;
+import com.hardwarestore.domain.enums.StockMovementStatus;
+import com.hardwarestore.exception.InvalidPurchaseStateException;
 import com.hardwarestore.dto.request.StockMovementRequest;
 import com.hardwarestore.dto.response.StockMovementResponse;
 import com.hardwarestore.event.LowStockEvent;
@@ -51,20 +53,25 @@ public class StockMovementServiceImpl implements StockMovementService {
         }
 
                 int quantity = request.getQuantity();
-        request.getMovementType().process(inventory, quantity);
-
-        inventoryStockRepository.save(inventory);
-
         StockMovement movement = new StockMovement();
         movement.setProduct(product);
         movement.setMovementType(request.getMovementType());
         movement.setQuantity(quantity);
         movement.setReferenceNo(request.getReferenceNo());
         movement.setNote(request.getNote());
+
+        if (request.getMovementType() == StockMovementType.ADJUSTMENT) {
+            movement.setStatus(StockMovementStatus.PENDING);
+        } else {
+            request.getMovementType().process(inventory, quantity);
+            inventoryStockRepository.save(inventory);
+            movement.setStatus(StockMovementStatus.APPROVED);
+        }
+
         StockMovement saved = stockMovementRepository.save(movement);
-
-        publishLowStockEventIfNeeded(product, inventory);
-
+        if (movement.getStatus() == StockMovementStatus.APPROVED) {
+            publishLowStockEventIfNeeded(product, inventory);
+        }
         return stockMovementMapper.toResponse(saved);
     }
 
@@ -98,5 +105,37 @@ public class StockMovementServiceImpl implements StockMovementService {
                 .map(stockMovementMapper::toResponse)
                 .toList();
     }
-}
 
+    @Override
+    @Transactional
+    public StockMovementResponse approve(Long id) {
+        StockMovement movement = stockMovementRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Stock movement not found with id: " + id));
+        if (movement.getStatus() != StockMovementStatus.PENDING) {
+            throw new InvalidPurchaseStateException("Only PENDING stock movements can be approved.");
+        }
+        
+        InventoryStock inventory = inventoryStockRepository.findByProductId(movement.getProduct().getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Inventory not found"));
+                
+        movement.getMovementType().process(inventory, movement.getQuantity());
+        inventoryStockRepository.save(inventory);
+        
+        movement.setStatus(StockMovementStatus.APPROVED);
+        StockMovement saved = stockMovementRepository.save(movement);
+        publishLowStockEventIfNeeded(movement.getProduct(), inventory);
+        return stockMovementMapper.toResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public StockMovementResponse reject(Long id) {
+        StockMovement movement = stockMovementRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Stock movement not found with id: " + id));
+        if (movement.getStatus() != StockMovementStatus.PENDING) {
+            throw new InvalidPurchaseStateException("Only PENDING stock movements can be rejected.");
+        }
+        movement.setStatus(StockMovementStatus.REJECTED);
+        return stockMovementMapper.toResponse(stockMovementRepository.save(movement));
+    }
+}

@@ -10,6 +10,8 @@ import com.hardwarestore.domain.enums.StockMovementType;
 import com.hardwarestore.domain.entity.Supplier;
 import com.hardwarestore.dto.request.PurchaseItemRequest;
 import com.hardwarestore.dto.request.PurchaseOrderRequest;
+import com.hardwarestore.dto.request.ReceivePurchaseRequest;
+import java.util.ArrayList;
 import com.hardwarestore.exception.InvalidPurchaseStateException;
 import com.hardwarestore.mapper.PurchaseOrderMapper;
 import com.hardwarestore.mapper.StockMovementMapper;
@@ -101,7 +103,7 @@ class PurchasePersistenceTest {
         item.setSubtotal(new BigDecimal("30.00"));
         order.getItems().add(item);
 
-        PurchaseOrder saved = purchaseOrderRepository.saveAndFlush(order);
+        order.setCreatedAt(java.time.LocalDateTime.now()); PurchaseOrder saved = purchaseOrderRepository.saveAndFlush(order);
         PurchaseOrder loaded = purchaseOrderRepository.findById(saved.getId()).orElseThrow();
 
         assertEquals(PurchaseOrderStatus.PENDING, loaded.getStatus());
@@ -140,7 +142,7 @@ class PurchasePersistenceTest {
         oldItem.setUnitCost(new BigDecimal("10.00"));
         oldItem.setSubtotal(new BigDecimal("10.00"));
         order.getItems().add(oldItem);
-        PurchaseOrder saved = purchaseOrderRepository.saveAndFlush(order);
+        order.setCreatedAt(java.time.LocalDateTime.now()); PurchaseOrder saved = purchaseOrderRepository.saveAndFlush(order);
 
         PurchaseOrderRequest request = new PurchaseOrderRequest();
         request.setSupplierId(updatedSupplier.getId());
@@ -197,16 +199,24 @@ class PurchasePersistenceTest {
         order.setTotalAmount(new BigDecimal("3.00"));
         order.getItems().add(purchaseItem(order, firstProduct, 2));
         order.getItems().add(purchaseItem(order, overflowProduct, 1));
-        PurchaseOrder savedOrder = purchaseOrderRepository.saveAndFlush(order);
+        order.setCreatedAt(java.time.LocalDateTime.now()); PurchaseOrder savedOrder = purchaseOrderRepository.saveAndFlush(order);
+        savedOrder.setStatus(com.hardwarestore.domain.enums.PurchaseOrderStatus.APPROVED);
+        purchaseOrderRepository.saveAndFlush(savedOrder);
 
-        assertThrows(IllegalArgumentException.class, () -> purchaseOrderService.receive(savedOrder.getId()));
+        ReceivePurchaseRequest reqRoll = new ReceivePurchaseRequest();
+        ReceivePurchaseRequest.ReceiveItemRequest r1 = new ReceivePurchaseRequest.ReceiveItemRequest();
+        r1.setProductId(firstProduct.getId()); r1.setReceivedQuantity(2);
+        ReceivePurchaseRequest.ReceiveItemRequest r2 = new ReceivePurchaseRequest.ReceiveItemRequest();
+        r2.setProductId(overflowProduct.getId()); r2.setReceivedQuantity(1);
+        reqRoll.setItems(java.util.List.of(r1, r2));
+        assertThrows(IllegalArgumentException.class, () -> purchaseOrderService.receive(savedOrder.getId(), reqRoll));
 
         assertEquals(10, inventoryStockRepository.findByProductId(firstProduct.getId())
                 .orElseThrow().getQuantity());
         assertEquals(Integer.MAX_VALUE, inventoryStockRepository.findByProductId(overflowProduct.getId())
                 .orElseThrow().getQuantity());
         assertEquals(0, countMovementsForPurchase(savedOrder.getPurchaseNumber()));
-        assertEquals(PurchaseOrderStatus.PENDING,
+        assertEquals(PurchaseOrderStatus.APPROVED,
                 purchaseOrderRepository.findById(savedOrder.getId()).orElseThrow().getStatus());
     }
 
@@ -233,9 +243,17 @@ class PurchasePersistenceTest {
         order.setTotalAmount(new BigDecimal("5.00"));
         order.getItems().add(purchaseItem(order, firstProduct, 3));
         order.getItems().add(purchaseItem(order, secondProduct, 2));
-        PurchaseOrder savedOrder = purchaseOrderRepository.saveAndFlush(order);
+        order.setCreatedAt(java.time.LocalDateTime.now()); PurchaseOrder savedOrder = purchaseOrderRepository.saveAndFlush(order);
+        savedOrder.setStatus(com.hardwarestore.domain.enums.PurchaseOrderStatus.APPROVED);
+        purchaseOrderRepository.saveAndFlush(savedOrder);
 
-        var response = purchaseOrderService.receive(savedOrder.getId());
+        ReceivePurchaseRequest req = new ReceivePurchaseRequest();
+        ReceivePurchaseRequest.ReceiveItemRequest i1 = new ReceivePurchaseRequest.ReceiveItemRequest();
+        i1.setProductId(firstProduct.getId()); i1.setReceivedQuantity(3);
+        ReceivePurchaseRequest.ReceiveItemRequest i2 = new ReceivePurchaseRequest.ReceiveItemRequest();
+        i2.setProductId(secondProduct.getId()); i2.setReceivedQuantity(2);
+        req.setItems(java.util.List.of(i1, i2));
+        var response = purchaseOrderService.receive(savedOrder.getId(), req);
 
         assertEquals(PurchaseOrderStatus.COMPLETED, response.getStatus());
         assertEquals(11, inventoryStockRepository.findByProductId(firstProduct.getId())
@@ -251,7 +269,7 @@ class PurchasePersistenceTest {
                         && savedOrder.getPurchaseNumber().equals(movement.getReferenceNo())));
 
         assertThrows(InvalidPurchaseStateException.class,
-                () -> purchaseOrderService.receive(savedOrder.getId()));
+                () -> purchaseOrderService.receive(savedOrder.getId(), new ReceivePurchaseRequest()));
         assertEquals(11, inventoryStockRepository.findByProductId(firstProduct.getId())
                 .orElseThrow().getQuantity());
         assertEquals(6, inventoryStockRepository.findByProductId(secondProduct.getId())

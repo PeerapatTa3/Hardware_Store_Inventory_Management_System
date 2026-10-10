@@ -34,7 +34,7 @@ class SalesOrderMapperTest {
 
         assertEquals(2, order.getItems().size());
         assertSame(customer, order.getCustomer());
-        assertEquals(SalesOrderStatus.PENDING, order.getStatus());
+        assertEquals(SalesOrderStatus.COMPLETED, order.getStatus());
         assertSame(order, order.getItems().get(0).getSalesOrder());
         assertSame(hammer, order.getItems().get(0).getProduct());
         assertEquals(0, new BigDecimal("30.75").compareTo(order.getItems().get(0).getSubtotal()));

@@ -1,6 +1,7 @@
 package com.hardwarestore.domain.entity;
 
 import com.hardwarestore.domain.enums.StockMovementType;
+import com.hardwarestore.domain.enums.StockMovementStatus;
 import jakarta.persistence.*;
 import jakarta.persistence.EntityListeners;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
@@ -58,8 +59,9 @@ public class StockMovement {
     @org.springframework.data.annotation.LastModifiedBy
     private String updatedBy;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    private String status = "APPROVED";
+    private StockMovementStatus status = StockMovementStatus.APPROVED;
 
     @Column(name = "approved_by")
     private String approvedBy;
@@ -71,4 +73,3 @@ public class StockMovement {
         }
     }
 }
-

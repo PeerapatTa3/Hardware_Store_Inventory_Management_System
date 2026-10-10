@@ -6,6 +6,8 @@ import com.hardwarestore.domain.enums.PurchaseOrderStatus;
 import com.hardwarestore.domain.entity.Supplier;
 import com.hardwarestore.dto.request.PurchaseItemRequest;
 import com.hardwarestore.dto.request.PurchaseOrderRequest;
+import com.hardwarestore.dto.request.ReceivePurchaseRequest;
+import java.util.ArrayList;
 import com.hardwarestore.dto.request.StockMovementRequest;
 import com.hardwarestore.dto.response.PurchaseOrderResponse;
 import com.hardwarestore.exception.InvalidPurchaseStateException;
@@ -195,7 +197,7 @@ class PurchaseOrderServiceImplTest {
         PurchaseOrder order = new PurchaseOrder();
         order.setId(18L);
         order.setPurchaseNumber("PO-RECEIVE");
-        order.setStatus(PurchaseOrderStatus.PENDING);
+        order.setStatus(PurchaseOrderStatus.APPROVED);
         Product hammer = product(1L, "Hammer");
         Product wrench = product(2L, "Wrench");
         order.getItems().add(item(order, hammer, 3));
@@ -208,7 +210,13 @@ class PurchaseOrderServiceImplTest {
         when(purchaseOrderRepository.save(order)).thenReturn(order);
         when(purchaseOrderMapper.toResponse(order)).thenReturn(response);
 
-        PurchaseOrderResponse result = purchaseOrderService.receive(18L);
+        ReceivePurchaseRequest req = new ReceivePurchaseRequest();
+        ReceivePurchaseRequest.ReceiveItemRequest i1 = new ReceivePurchaseRequest.ReceiveItemRequest();
+        i1.setProductId(1L); i1.setReceivedQuantity(3);
+        ReceivePurchaseRequest.ReceiveItemRequest i2 = new ReceivePurchaseRequest.ReceiveItemRequest();
+        i2.setProductId(2L); i2.setReceivedQuantity(2);
+        req.setItems(java.util.List.of(i1, i2));
+        PurchaseOrderResponse result = purchaseOrderService.receive(18L, req);
 
         assertSame(response, result);
         assertEquals(PurchaseOrderStatus.COMPLETED, order.getStatus());
@@ -233,7 +241,7 @@ class PurchaseOrderServiceImplTest {
         order.setStatus(PurchaseOrderStatus.COMPLETED);
         when(purchaseOrderRepository.findById(18L)).thenReturn(Optional.of(order));
 
-        assertThrows(InvalidPurchaseStateException.class, () -> purchaseOrderService.receive(18L));
+        assertThrows(InvalidPurchaseStateException.class, () -> purchaseOrderService.receive(18L, new ReceivePurchaseRequest()));
 
         verifyNoInteractions(stockMovementService, purchaseOrderMapper);
         verify(purchaseOrderRepository, never()).save(any(PurchaseOrder.class));
@@ -243,7 +251,7 @@ class PurchaseOrderServiceImplTest {
     void receiveShouldFailWhenPurchaseDoesNotExist() {
         when(purchaseOrderRepository.findById(404L)).thenReturn(Optional.empty());
 
-        assertThrows(ResourceNotFoundException.class, () -> purchaseOrderService.receive(404L));
+        assertThrows(ResourceNotFoundException.class, () -> purchaseOrderService.receive(404L, new ReceivePurchaseRequest()));
 
         verifyNoInteractions(stockMovementService, purchaseOrderMapper);
     }

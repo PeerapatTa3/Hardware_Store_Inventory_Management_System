@@ -6,6 +6,7 @@ import com.hardwarestore.domain.enums.PurchaseOrderStatus;
 import com.hardwarestore.domain.enums.StockMovementType;
 import com.hardwarestore.domain.entity.Supplier;
 import com.hardwarestore.dto.request.PurchaseOrderRequest;
+import com.hardwarestore.dto.request.ReceivePurchaseRequest;
 import com.hardwarestore.dto.request.StockMovementRequest;
 import com.hardwarestore.dto.response.PurchaseOrderResponse;
 import com.hardwarestore.exception.InvalidPurchaseStateException;
@@ -84,30 +85,66 @@ public class PurchaseOrderServiceImpl implements PurchaseOrderService {
         return purchaseOrderMapper.toResponse(purchaseOrderRepository.save(order));
     }
 
+    
     @Override
     @Transactional
-    public PurchaseOrderResponse receive(Long id) {
+    public PurchaseOrderResponse approve(Long id) {
         PurchaseOrder order = purchaseOrderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Purchase not found with id: " + id));
         if (order.getStatus() != PurchaseOrderStatus.PENDING) {
+            throw new InvalidPurchaseStateException("Only PENDING purchases can be approved.");
+        }
+        order.setStatus(PurchaseOrderStatus.APPROVED);
+        return purchaseOrderMapper.toResponse(purchaseOrderRepository.save(order));
+    }
+
+
+    @Override
+    @Transactional
+    public PurchaseOrderResponse receive(Long id, ReceivePurchaseRequest request) {
+        PurchaseOrder order = purchaseOrderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Purchase not found with id: " + id));
+        
+        if (order.getStatus() != PurchaseOrderStatus.APPROVED && order.getStatus() != PurchaseOrderStatus.PARTIAL) {
             throw new InvalidPurchaseStateException(
-                    "Only pending purchases can be received; purchase id " + id
+                    "Only APPROVED or PARTIAL purchases can be received; purchase id " + id
                             + " has status " + order.getStatus());
         }
 
-        for (var item : order.getItems()) {
-            StockMovementRequest movementRequest = new StockMovementRequest();
-            movementRequest.setProductId(item.getProduct().getId());
-            movementRequest.setMovementType(StockMovementType.IN);
-            movementRequest.setQuantity(item.getQuantity());
-            movementRequest.setReferenceNo(order.getPurchaseNumber());
-            movementRequest.setNote("Received purchase " + order.getPurchaseNumber());
-            stockMovementService.create(movementRequest);
+        boolean allFullyReceived = true;
+
+        for (var reqItem : request.getItems()) {
+            var itemOpt = order.getItems().stream()
+                    .filter(i -> i.getProduct().getId().equals(reqItem.getProductId()))
+                    .findFirst();
+            
+            if (itemOpt.isPresent()) {
+                var item = itemOpt.get();
+                if (reqItem.getReceivedQuantity() > 0) {
+                    item.setReceivedQuantity(item.getReceivedQuantity() + reqItem.getReceivedQuantity());
+                    
+                    StockMovementRequest movementRequest = new StockMovementRequest();
+                    movementRequest.setProductId(item.getProduct().getId());
+                    movementRequest.setMovementType(StockMovementType.IN);
+                    movementRequest.setQuantity(reqItem.getReceivedQuantity());
+                    movementRequest.setReferenceNo(order.getPurchaseNumber());
+                    movementRequest.setNote("Received purchase " + order.getPurchaseNumber());
+                    stockMovementService.create(movementRequest);
+                }
+                if (item.getReceivedQuantity() < item.getQuantity()) {
+                    allFullyReceived = false;
+                }
+            }
         }
 
-        order.setStatus(PurchaseOrderStatus.COMPLETED);
+        if (allFullyReceived) {
+            order.setStatus(PurchaseOrderStatus.COMPLETED);
+        } else {
+            order.setStatus(PurchaseOrderStatus.PARTIAL);
+        }
         return purchaseOrderMapper.toResponse(purchaseOrderRepository.save(order));
     }
+
 
     private Map<Long, Product> resolveProducts(PurchaseOrderRequest request) {
         Map<Long, Product> productsById = new HashMap<>();

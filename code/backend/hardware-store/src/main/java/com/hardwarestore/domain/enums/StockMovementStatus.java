@@ -1,8 +1,7 @@
 package com.hardwarestore.domain.enums;
 
-public enum PurchaseOrderStatus {
+public enum StockMovementStatus {
     PENDING,
     APPROVED,
-    PARTIAL,
-    COMPLETED
+    REJECTED
 }

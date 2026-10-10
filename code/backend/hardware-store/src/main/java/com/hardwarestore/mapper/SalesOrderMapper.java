@@ -23,7 +23,7 @@ public abstract class SalesOrderMapper {
     public SalesOrder toEntity(SalesOrderRequest request, Customer customer, Map<Long, Product> productsById) {
         SalesOrder order = new SalesOrder();
         order.setOrderNumber("SO-" + UUID.randomUUID());
-        order.setStatus(SalesOrderStatus.PENDING);
+        order.setStatus(SalesOrderStatus.COMPLETED);
         updatePendingOrder(order, request, customer, productsById);
         return order;
     }
@@ -37,8 +37,6 @@ public abstract class SalesOrderMapper {
         order.setShippingAddress(request.getShippingAddress());
         order.setPaymentMethod(request.getPaymentMethod());
         order.getItems().clear();
-
-        BigDecimal totalAmount = BigDecimal.ZERO;
         for (SalesOrderItemRequest itemRequest : request.getItems()) {
             Product product = productsById.get(itemRequest.getProductId());
             if (product == null) {
@@ -48,21 +46,17 @@ public abstract class SalesOrderMapper {
 
             BigDecimal unitPrice = product.getPrice() != null ? product.getPrice() : BigDecimal.ZERO;
 
-            BigDecimal subtotal = unitPrice
-                    .multiply(BigDecimal.valueOf(itemRequest.getQuantity()))
-                    .setScale(2, RoundingMode.HALF_UP);
-
             SalesOrderItems item = new SalesOrderItems();
             item.setSalesOrder(order);
             item.setProduct(product);
             item.setQuantity(itemRequest.getQuantity());
             item.setUnitPrice(unitPrice.setScale(2, RoundingMode.HALF_UP));
-            item.setSubtotal(subtotal);
+            
             order.getItems().add(item);
-            totalAmount = totalAmount.add(subtotal);
         }
 
-        order.setTotalAmount(totalAmount.setScale(2, RoundingMode.HALF_UP));
+        // Delegate all calculations (subtotal, totalAmount, discounts) to the Domain Entity
+        order.applyPricing();
     }
 
     @Mapping(target = "customerId", source = "customer.id")

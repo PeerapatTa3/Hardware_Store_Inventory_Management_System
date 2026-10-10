@@ -189,7 +189,9 @@ public class SalesOrder {
                 .map(item -> {
                     BigDecimal unitPrice = item.getUnitPrice() == null ? BigDecimal.ZERO : item.getUnitPrice();
                     int quantity = item.getQuantity() == null ? 0 : item.getQuantity();
-                    return strategy.apply(unitPrice, quantity);
+                    BigDecimal itemTotal = strategy.apply(unitPrice, quantity);
+                    item.setSubtotal(itemTotal);
+                    return itemTotal;
                 })
                 .reduce(BigDecimal.ZERO, BigDecimal::add)
                 .setScale(2, RoundingMode.HALF_UP);
