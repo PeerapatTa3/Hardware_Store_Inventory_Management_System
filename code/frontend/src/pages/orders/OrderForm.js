@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { getCustomers } from '../../api/customers';
 import { createOrder } from '../../api/orders';
-import { getProductsAdmin } from '../../api/products';
+import { getProducts } from '../../api/products';
 import { formatMoney, getErrorMessage, Notice, PageHeader } from '../ResourcePage';
 
 function OrderForm() {
@@ -19,7 +19,7 @@ function OrderForm() {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    Promise.all([getCustomers(), getProductsAdmin({ page: 0, size: 100, sortBy: 'name', direction: 'asc' })])
+    Promise.all([getCustomers(), getProducts({ page: 0, size: 100, sortBy: 'name', direction: 'asc' })])
       .then(([customerResponse, productResponse]) => {
         setCustomers(customerResponse.data || []);
         setProducts(productResponse.data.content || []);
