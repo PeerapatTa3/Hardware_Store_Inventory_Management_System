@@ -1,4 +1,4 @@
-package com.hardwarestore.domain.state;
+package com.hardwarestore.state;
 
 import com.hardwarestore.domain.entity.SalesOrder;
 import com.hardwarestore.domain.enums.SalesOrderStatus;
@@ -32,6 +32,5 @@ public class PendingState implements OrderState {
         return SalesOrderStatus.PENDING;
     }
 }
-
 
 

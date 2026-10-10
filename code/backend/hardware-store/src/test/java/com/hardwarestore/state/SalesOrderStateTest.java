@@ -1,4 +1,4 @@
-package com.hardwarestore.domain.state;
+package com.hardwarestore.state;
 
 import com.hardwarestore.domain.entity.SalesOrder;
 import com.hardwarestore.exception.InvalidSalesOrderStateException;
@@ -55,5 +55,4 @@ class SalesOrderStateTest {
         assertThrows(InvalidSalesOrderStateException.class, completedOrder::complete);
     }
 }
-
 

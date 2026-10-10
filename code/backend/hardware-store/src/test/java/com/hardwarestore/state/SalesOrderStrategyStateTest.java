@@ -1,4 +1,4 @@
-package com.hardwarestore.domain.state;
+package com.hardwarestore.state;
 
 import com.hardwarestore.domain.entity.Customer;
 import com.hardwarestore.domain.entity.SalesOrder;

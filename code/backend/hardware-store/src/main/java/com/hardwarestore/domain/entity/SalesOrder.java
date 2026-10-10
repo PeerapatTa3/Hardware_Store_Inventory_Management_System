@@ -7,12 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.hardwarestore.domain.enums.SalesOrderStatus;
-import com.hardwarestore.domain.state.CancelledState;
-import com.hardwarestore.domain.state.CompletedState;
-import com.hardwarestore.domain.state.ConfirmedState;
-import com.hardwarestore.domain.state.ShippedState;
-import com.hardwarestore.domain.state.OrderState;
-import com.hardwarestore.domain.state.PendingState;
+import com.hardwarestore.state.CancelledState;
+import com.hardwarestore.state.CompletedState;
+import com.hardwarestore.state.ConfirmedState;
+import com.hardwarestore.state.ShippedState;
+import com.hardwarestore.state.OrderState;
+import com.hardwarestore.state.PendingState;
 import com.hardwarestore.strategy.BulkDiscount;
 import com.hardwarestore.strategy.DiscountStrategy;
 import com.hardwarestore.strategy.MemberDiscount;
@@ -233,5 +233,4 @@ public class SalesOrder {
     }
 
 }
-
 

@@ -1,4 +1,4 @@
-package com.hardwarestore.domain.state;
+package com.hardwarestore.state;
 
 import com.hardwarestore.domain.entity.SalesOrder;
 import com.hardwarestore.domain.enums.SalesOrderStatus;
@@ -12,7 +12,7 @@ public class CompletedState implements OrderState {
 
     @Override
     public void cancel(SalesOrder order) {
-        order.setState(new com.hardwarestore.domain.state.CancelledState());
+        order.setState(new CancelledState());
     }
 
     @Override
@@ -30,6 +30,5 @@ public class CompletedState implements OrderState {
         return SalesOrderStatus.COMPLETED;
     }
 }
-
 
 
