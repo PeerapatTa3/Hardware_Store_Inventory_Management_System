@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { getCustomers } from '../../api/customers';
 import { createOrder } from '../../api/orders';
@@ -99,7 +99,7 @@ function OrderForm() {
       items: lines.map((line) => ({ productId: line.productId, quantity: line.quantity })),
     };
     try {
-      const response = await createOrder(payload);
+      await createOrder(payload);
       toast.success('Sales order completed');
       navigate('/orders');
     } catch (requestError) {
