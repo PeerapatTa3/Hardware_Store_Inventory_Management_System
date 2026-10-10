@@ -1,71 +1,163 @@
-# Design Patterns in Hardware Store Inventory Management System (รูปแบบการออกแบบในระบบจัดการคลังสินค้าฮาร์ดแวร์)
+# Design Patterns — Hardware Store Inventory Management System
 
-เอกสารฉบับนี้อธิบายถึง Software Design Patterns ที่นำมาประยุกต์ใช้ในโครงสร้างสถาปัตยกรรม Backend ของระบบ Hardware Store Inventory Management System โดยการนำรูปแบบเหล่านี้มาใช้มีจุดประสงค์เพื่อให้โค้ดสามารถดูแลรักษาได้ง่าย (Maintainability) มีความยืดหยุ่น (Flexibility) และสอดคล้องกับหลักการ SOLID
+path ของไฟล์ทั้งหมดอ้างอิงจาก `code/backend/hardware-store/src/main/java/com/hardwarestore/`
 
-## 1. State Pattern
-**Package:** `com.hardwarestore.state` / `com.hardwarestore.domain.state`
+## 1. Enterprise / Architectural Patterns
 
-**จุดประสงค์:** จัดการ Lifecycle และการเปลี่ยนสถานะ (State transitions) ของ `SalesOrder` โดยหลีกเลี่ยงการใช้เงื่อนไขตรวจสอบที่ซับซ้อน (เช่น if-else หรือ switch-case ขนาดใหญ่)
+| Pattern | ปัญหาที่แก้ | ไฟล์/คลาสที่ใช้ | Class Diagram |
+|---|---|---|---|
+| Layered Architecture | แยกหน้าที่ของโค้ดเป็นชั้น เพื่อให้แก้ชั้นหนึ่งโดยไม่กระทบชั้นอื่น | `controller/api/*Controller`, `service/*Service` + `service/impl/*ServiceImpl`, `repository/*Repository`, `domain/entity/*` เช่น `ProductController.java:19` → `ProductService` → `ProductRepository.java:8` | [Enterprise class diagram](diagrams/03a-class-diagram-enterprise-patterns.png) |
+| MVC | แยกการรับ request, ข้อมูล และหน้าจอออกจากกัน | Controller = `controller/api/*Controller.java`; Model = `domain/entity/*` + `dto/*`; View = React ใน `code/frontend/src` | [Enterprise class diagram](diagrams/03a-class-diagram-enterprise-patterns.png) |
+| Repository | ซ่อนรายละเอียดการเข้าถึงฐานข้อมูลไว้หลัง interface | `repository/*Repository.java` (extends `JpaRepository`) เช่น `ProductRepository.java:8-17` | [Enterprise class diagram](diagrams/03a-class-diagram-enterprise-patterns.png) |
+| Service Layer | รวม business logic และ transaction ไว้ที่เดียว ไม่ปนใน Controller | `service/impl/*ServiceImpl.java` เช่น `SalesOrderServiceImpl.java:34-57` (`@Service`, `@Transactional`) | [Enterprise class diagram](diagrams/03a-class-diagram-enterprise-patterns.png) |
+| DTO + Mapper | ไม่เปิด Entity ออก API โดยตรง และคุมรูปแบบ request/response | `dto/request/*`, `dto/response/*`, `mapper/*Mapper.java` (MapStruct) เช่น `SalesOrderMapper.java:19-69` | [Enterprise class diagram](diagrams/03a-class-diagram-enterprise-patterns.png) |
+| Dependency Injection | ลดการผูกคลาสเข้าด้วยกัน และ mock ตอนเทสได้ | Constructor Injection ผ่าน `@RequiredArgsConstructor` + `final` field เช่น `SalesOrderServiceImpl.java:34-43` | [Enterprise class diagram](diagrams/03a-class-diagram-enterprise-patterns.png) |
 
-**รายละเอียดการนำไปใช้งาน (Implementation Details):**
-- **`OrderState` (Interface):** กำหนดพฤติกรรมเฉพาะสำหรับแต่ละสถานะ ได้แก่ `confirm`, `cancel`, `ship`, และ `complete`
-- **Concrete States (สถานะที่เป็นรูปธรรม):** 
-  - `PendingState` (รอดำเนินการ)
-  - `ConfirmedState` (ยืนยันแล้ว)
-  - `ShippedState` (จัดส่งแล้ว)
-  - `CompletedState` (เสร็จสมบูรณ์)
-  - `CancelledState` (ยกเลิก)
-- **บริบท (Context):** Entity `SalesOrder` จะเก็บ Reference ของ `OrderState` ปัจจุบันไว้ และส่งมอบ (Delegate) การกระทำต่างๆ ไปยัง Object ของสถานะนั้นๆ หากมีความพยายามที่จะเปลี่ยนสถานะแบบไม่ถูกต้อง (เช่น การจัดส่งออเดอร์ที่ถูกยกเลิกไปแล้ว) ระบบจะทำการโยน Exception ตามที่ถูกกำหนดไว้ใน Object ของสถานะนั้นๆ
+### 1.1 โครงสร้างชั้นและการพึ่งพา
 
-## 2. Strategy Pattern
-**Package:** `com.hardwarestore.strategy`
+```mermaid
+classDiagram
+    class ProductController {
+        -ProductService productService
+    }
+    class ProductService {
+        <<interface>>
+    }
+    class ProductServiceImpl {
+        -ProductRepository productRepository
+        -ProductMapper productMapper
+    }
+    class ProductRepository {
+        <<interface>>
+    }
+    class ProductMapper {
+        <<MapStruct>>
+    }
+    class Product {
+        <<Entity>>
+    }
+    class ProductRequest {
+        <<DTO>>
+    }
+    class ProductResponse {
+        <<DTO>>
+    }
+    ProductController --> ProductService
+    ProductService <|.. ProductServiceImpl
+    ProductServiceImpl --> ProductRepository
+    ProductServiceImpl --> ProductMapper
+    ProductRepository ..> Product
+    ProductMapper ..> Product
+    ProductMapper ..> ProductRequest
+    ProductMapper ..> ProductResponse
+```
 
-**จุดประสงค์:** ห่อหุ้ม (Encapsulate) อัลกอริทึมในการคำนวณราคาและส่วนลดที่แตกต่างกัน ทำให้สามารถสลับการใช้งานได้ง่ายขึ้นอยู่กับประเภทของลูกค้าหรือรายละเอียดของคำสั่งซื้อ
+## 2. GoF Patterns — กลุ่ม Behavioral (4 แบบ)
 
-**รายละเอียดการนำไปใช้งาน (Implementation Details):**
-- **`DiscountStrategy` (Interface):** กำหนด Contract พื้นฐานสำหรับการคำนวณส่วนลด ผ่านเมธอด `BigDecimal apply(BigDecimal unitPrice, int quantity)`
-- **Concrete Strategies:**
-  - `NormalDiscount`: การคิดราคามาตรฐานที่ไม่มีการหักส่วนลดพิเศษ
-  - `BulkDiscount`: ใช้ส่วนลดเป็นเปอร์เซ็นต์เมื่อจำนวนสินค้าที่สั่งซื้อถึงเกณฑ์ที่กำหนด
-  - `MemberDiscount`: ใช้ส่วนลดคงที่ หรือเป็นเปอร์เซ็นต์สำหรับลูกค้าที่เป็นสมาชิกของร้าน
-- **บริบท (Context):** กลยุทธ์ (Strategies) เหล่านี้จะถูกกำหนดและเรียกใช้งานแบบไดนามิกภายใน Entity `SalesOrder` หรือ Service ด้านการตั้งราคา เพื่อคำนวณยอดรวมสุทธิของออเดอร์
+| Pattern | ปัญหาที่แก้ | ไฟล์/คลาสที่ใช้ | Class Diagram |
+|---|---|---|---|
+| State | ใบสั่งขายมี 5 สถานะ แต่ละสถานะอนุญาตให้ทำต่างกัน ถ้าใช้ if-else ใน Service จะยาวและแก้ยาก | `state/OrderState.java:6-16`, `PendingState`, `ConfirmedState`, `ShippedState`, `CompletedState`, `CancelledState`; Context = `domain/entity/SalesOrder.java:101-147`; ผู้เรียก = `SalesOrderServiceImpl.java:110-121` | [State class diagram](diagrams/03b-class-diagram-gof-patterns.png) |
+| Strategy | วิธีคิดราคาต่างกันตามลูกค้า/จำนวน ต้องสลับได้โดยไม่ใช้ if-else ตอนคำนวณ | `strategy/DiscountStrategy.java:5-7`, `NormalDiscount`, `MemberDiscount`, `BulkDiscount`; เลือก strategy ที่ `SalesOrder.java:164-179`; ใช้คำนวณที่ `SalesOrder.java:181-201` | [Strategy class diagram](diagrams/03b-class-diagram-gof-patterns.png) |
+| Chain of Responsibility | ตรวจใบสั่งขายหลายขั้น (ลูกค้า → สินค้า → สต็อก) โดยแต่ละขั้นเป็นคลาสเดียว และหยุดทันทีเมื่อขั้นใดไม่ผ่าน | `validation/OrderValidationHandler.java:7-26`, `CustomerExistsHandler.java:7`, `ProductsExistHandler.java:12`, `StockAvailableHandler.java:16-53`, `OrderValidationContext.java:14`; ประกอบสายที่ `SalesOrderServiceImpl.java:131-136` และเรียกใช้ที่ `:48-49`, `:90-91` | [Chain class diagram](diagrams/03b-class-diagram-gof-patterns.png) |
+| Observer | เมื่อสต็อกต่ำต้องแจ้งเตือน โดยไม่ให้ Service ต้องรู้ว่าใครรับแจ้ง | `event/LowStockEvent.java:7-12`; ผู้ส่ง = `StockMovementServiceImpl.java:34,72-74,78-88` (`ApplicationEventPublisher`); ผู้รับ = `listener/LowStockAlertListener.java:13-22` (`@EventListener`) | [Observer class diagram](diagrams/03b-class-diagram-gof-patterns.png) |
 
-## 3. Chain of Responsibility Pattern
-**Package:** `com.hardwarestore.validation`
+### 2.1 State
 
-**จุดประสงค์:** ลดการยึดติด (Decouple) ของลอจิกการตรวจสอบคำสั่งซื้อ (Order Validation) โดยแบ่งออกเป็นลำดับขั้นตอนย่อยๆ ที่ทำงานแยกส่วนกัน 
+```mermaid
+classDiagram
+    class SalesOrder {
+        -OrderState state
+        +confirm()
+        +cancel()
+        +ship()
+        +complete()
+        +setState(OrderState)
+    }
+    class OrderState {
+        <<interface>>
+        +confirm(order)
+        +cancel(order)
+        +ship(order)
+        +complete(order)
+        +getStatus()
+    }
+    SalesOrder o-- OrderState
+    OrderState <|.. PendingState
+    OrderState <|.. ConfirmedState
+    OrderState <|.. ShippedState
+    OrderState <|.. CompletedState
+    OrderState <|.. CancelledState
+```
 
-**รายละเอียดการนำไปใช้งาน (Implementation Details):**
-- **`OrderValidationHandler` (Abstract Base Class):** เก็บ Reference ของ Handler ตัวถัดไป (`next`) ในห่วงโซ่ โดยมีเมธอด `setNext()` สำหรับการตั้งค่าให้ร้อยเรียงต่อกันได้อย่างเป็นธรรมชาติ (Fluent Configuration) และมีเมธอด `handle(OrderValidationContext context)` ซึ่งจะเรียกทำงานเมธอด `validate()` ก่อนที่จะส่งต่อไปยัง Handler ตัวถัดไป
-- **Concrete Handlers:**
-  - `CustomerExistsHandler`: ตรวจสอบว่ารหัสลูกค้า (Customer ID) ที่เชื่อมโยงกับคำสั่งซื้อนั้นมีอยู่ในระบบจริง
-  - `ProductsExistHandler`: ตรวจสอบว่าสินค้าทั้งหมดที่ร้องขอมีอยู่ในแคตตาล็อก
-  - `StockAvailableHandler`: ยืนยันว่ามีสินค้าคงคลังเพียงพอที่จะตอบสนองจำนวนที่สั่งซื้อ
-- **บริบท (Context):** เมื่อมีคำขอสั่งซื้อใหม่เข้ามา ตัว `OrderValidationContext` จะถูกส่งผ่านห่วงโซ่ที่ถูกกำหนดไว้ล่วงหน้า หาก Handler ใดๆ ทำงานล้มเหลว มันจะตัดวงจรห่วงโซ่นี้โดยการโยน Validation Exception ออกมา เพื่อให้มั่นใจว่าออเดอร์ที่ไม่ถูกต้องจะถูกปฏิเสธตั้งแต่เนิ่นๆ
+ถ้าทำรายการที่สถานะนั้นไม่อนุญาต State จะโยน `InvalidSalesOrderStateException` ซึ่ง `GlobalExceptionHandler` แปลงเป็น HTTP 409
 
-## 4. Mapper (Data Transfer Object) Pattern
-**Package:** `com.hardwarestore.mapper`
+### 2.2 Strategy
 
-**จุดประสงค์:** แยก (Isolate) ตัว Domain Entities ภายใน ออกจากชั้น API ภายนอก โดยการแปลงข้อมูลไปมาระหว่าง Entities กับ Data Transfer Objects (DTOs)
+```mermaid
+classDiagram
+    class SalesOrder {
+        -DiscountStrategy discountStrategy
+        +resolveDiscountStrategy() DiscountStrategy
+        +calculateTotal() BigDecimal
+    }
+    class DiscountStrategy {
+        <<interface>>
+        +apply(unitPrice, quantity) BigDecimal
+    }
+    SalesOrder --> DiscountStrategy
+    DiscountStrategy <|.. NormalDiscount
+    DiscountStrategy <|.. MemberDiscount
+    DiscountStrategy <|.. BulkDiscount
+```
 
-**รายละเอียดการนำไปใช้งาน (Implementation Details):**
-- นำ **MapStruct** มาประยุกต์ใช้งาน ผ่าน Interface ต่างๆ เช่น `ProductMapper`, `SalesOrderMapper`, และ `PurchaseOrderMapper` เพื่อกำหนดกฎเกณฑ์ในการทำ Mapping
-- MapStruct ทำหน้าที่เป็น Code Generator ในช่วง Compile-time โดยจะสร้างคลาส Implementation สำหรับแปลงฟิลด์ข้อมูล (ตัวอย่างเช่น การแปลง Object `Category` ที่อยู่ใน Entity ไปเป็น `categoryId` บน Response DTO)
+กติกา (`SalesOrder.java:164-179`): ลูกค้าสมาชิก → `MemberDiscount` (ลด 10%); ไม่ใช่สมาชิกแต่ซื้อรวม ≥ 10 ชิ้น → `BulkDiscount` (ลด 10%); นอกนั้น → `NormalDiscount` (ราคาเต็ม)
 
-## 5. Dependency Injection / Inversion of Control
-**Scope:** ใช้งานครอบคลุมทั้งแอปพลิเคชัน (`com.hardwarestore.*`)
+### 2.3 Chain of Responsibility
 
-**จุดประสงค์:** ส่งเสริมให้เกิด Loose Coupling และทำให้การทดสอบ (Testing) ง่ายขึ้น โดยมอบหมายหน้าที่จัดการ Lifecycle ของ Object และ Dependencies ให้กับ Spring IoC Container
+```mermaid
+classDiagram
+    class OrderValidationHandler {
+        <<abstract>>
+        -OrderValidationHandler next
+        +setNext(handler) OrderValidationHandler
+        +handle(context) void
+        #validate(context)* void
+    }
+    class CustomerExistsHandler
+    class ProductsExistHandler
+    class StockAvailableHandler
+    class OrderValidationContext
+    class SalesOrderServiceImpl {
+        -buildValidationChain() OrderValidationHandler
+    }
+    OrderValidationHandler <|-- CustomerExistsHandler
+    OrderValidationHandler <|-- ProductsExistHandler
+    OrderValidationHandler <|-- StockAvailableHandler
+    OrderValidationHandler ..> OrderValidationContext
+    SalesOrderServiceImpl ..> OrderValidationHandler
+```
 
-**รายละเอียดการนำไปใช้งาน (Implementation Details):**
-- มีการใช้งาน Spring Stereotypes มาตรฐาน (เช่น `@Service`, `@Repository`, `@RestController`, `@Component`) อย่างแพร่หลาย
-- คลาสฝั่ง Service (เช่น `ProductServiceImpl`, `SalesOrderServiceImpl`) จะขึ้นตรงต่อ Abstractions (เช่น `ProductRepository`, `SalesOrderRepository`) ซึ่งถูกฉีด (Injected) เข้ามาผ่าน Constructor วิธีนี้ช่วยหลีกเลี่ยงการ Hard-code ค่า Dependencies และอำนวยความสะดวกในการทำ Unit Testing ผ่านการใช้ Mock
+ลำดับในสาย: `CustomerExistsHandler` → `ProductsExistHandler` → `StockAvailableHandler` (`SalesOrderServiceImpl.java:131-135`)
 
-## 6. Facade Pattern
-**Package:** `com.hardwarestore.service.impl`
+### 2.4 Observer
 
-**จุดประสงค์:** ซ่อนความซับซ้อนของระบบย่อย (Subsystems) ไว้หลัง Interface เดียวที่ใช้งานง่าย (ในที่นี้คือลดภาระจากหน้าเว็บที่จะต้องเรียก API หลายๆ เส้นเพื่อดึงข้อมูลสรุปยอด)
-
-**รายละเอียดการนำไปใช้งาน (Implementation Details):**
-- **`DashboardServiceImpl`:** ทำหน้าที่เป็น Facade ชั้นดี โดยการฉีด (Inject) Repository หลายๆ ตัวพร้อมกัน ได้แก่ `ProductRepository`, `InventoryStockRepository`, `PurchaseOrderRepository`, `SalesOrderRepository`, `SupplierRepository`, และ `CustomerRepository`
-- **การทำงาน:** หน้าเว็บจะเรียกมาที่เมธอด `getDashboardSummary()` เพียงครั้งเดียว จากนั้นคลาสนี้จะไปทำการดึงข้อมูลและคำนวณสรุปผลจากทุกๆ Repository มารวมเป็น `DashboardSummaryResponse` ก้อนเดียวคืนให้ ทำให้ Client (หน้าเว็บ React) ไม่ต้องรู้รายละเอียดหรือยิง API เพื่อดึงข้อมูลแยกส่วนหลายๆ รอบ (แก้ปัญหา N+1 Query ทางฝั่ง Client ได้อย่างมีประสิทธิภาพ)
+```mermaid
+classDiagram
+    class StockMovementServiceImpl {
+        -ApplicationEventPublisher eventPublisher
+        -publishLowStockEventIfNeeded()
+    }
+    class LowStockEvent {
+        <<record>>
+        productId
+        sku
+        productName
+        availableQuantity
+        minimumStock
+    }
+    class LowStockAlertListener {
+        +onLowStock(event)
+    }
+    StockMovementServiceImpl ..> LowStockEvent : publish
+    LowStockAlertListener ..> LowStockEvent : @EventListener
+```

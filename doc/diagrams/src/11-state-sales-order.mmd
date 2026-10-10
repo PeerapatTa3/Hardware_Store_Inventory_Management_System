@@ -1,0 +1,17 @@
+stateDiagram-v2
+    [*] --> PENDING : entity default
+    [*] --> COMPLETED : POST /api/v1/orders
+    PENDING --> CONFIRMED : confirm()
+    PENDING --> CANCELLED : cancel()
+    CONFIRMED --> SHIPPED : ship()
+    CONFIRMED --> COMPLETED : complete()
+    CONFIRMED --> CANCELLED : cancel()
+    SHIPPED --> COMPLETED : complete()
+    COMPLETED --> [*]
+    CANCELLED --> [*]
+    note right of SHIPPED
+        cancel() not allowed (409)
+    end note
+    note right of PENDING
+        Only PENDING orders can be edited
+    end note

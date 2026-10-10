@@ -1,6 +1,9 @@
 # Hardware Store Inventory Management System
 
-ระบบจัดการคลังสินค้าของร้านอุปกรณ์การช่าง พัฒนาด้วย **Spring Boot (Backend)** และ **React (Frontend)** โดยมีฟังก์ชันสำหรับจัดการสินค้า หมวดหมู่ ผู้จำหน่าย ลูกค้า คลังสินค้า การเคลื่อนไหวของสินค้า การสั่งซื้อ การขายสินค้า และระบบรักษาความปลอดภัยด้วย **JWT Authentication**
+ระบบจัดการคลังสินค้าของร้านอุปกรณ์การช่าง พัฒนาด้วย **Spring Boot (Backend)** และ **React (Frontend)**
+รองรับการจัดการสินค้า หมวดหมู่ ผู้จำหน่าย ลูกค้า สต็อก การจัดซื้อ และคำสั่งขายผ่าน REST API
+ใช้ PostgreSQL สำหรับ production และ H2 สำหรับการพัฒนาและทดสอบ พร้อมยืนยันตัวตนด้วย JWT
+โครงสร้าง Backend แบ่งเป็น Controller, Service, Repository, Domain, DTO และ Mapper ตาม Layered Architecture
 
 โครงสร้างระบบออกแบบตามหลัก **Layered Architecture**, **SOLID Principles**, **Enterprise / Architectural Design Patterns** และ **Behavioral Design Patterns** เพื่อให้สอดคล้องกับข้อกำหนดของรายวิชา **CP353002 Principles of Software Design and Development**
 
@@ -28,7 +31,7 @@
 * ตรวจสอบจำนวนสินค้าคงเหลือ ปรับปรุงจำนวนสินค้า
 * ตรวจสอบสินค้าที่มีจำนวนต่ำกว่าจุดสั่งซื้อขั้นต่ำ (Low Stock)
 * บันทึกการเคลื่อนไหวของสินค้า (รับเข้า `IN`, จ่ายออก `OUT`, ปรับยอด `ADJUSTMENT`)
-* ดูประวัติการเปลี่ยนแปลงของสินค้าและค้นหาตามช่วงเวลา
+* ดูประวัติการเคลื่อนไหวทั้งหมดหรือกรองตามสินค้า
 
 ### 3. การจัดซื้อสินค้า (Purchase Order)
 * สร้างใบสั่งซื้อสินค้าและเพิ่มรายการสินค้า
@@ -48,9 +51,9 @@
 
 ### Backend
 * **Language:** Java 17
-* **Framework:** Spring Boot 3.x
+* **Framework:** Spring Boot 4.1.1
 * **Security:** Spring Security & JWT (`jjwt`)
-* **Database & ORM:** Spring Data JPA, Hibernate, PostgreSQL (Production), H2 (Development/Testing)
+* **Database & ORM:** Spring Data JPA, Hibernate, H2 (Development/Testing), PostgreSQL (Production)
 * **Tools/Libraries:** Maven, Lombok, MapStruct (Data Mapper)
 * **API Docs:** Springdoc OpenAPI / Swagger UI
 
@@ -100,7 +103,17 @@ Database (H2 / PostgreSQL)
 
 ---
 
-## การติดตั้งและใช้งาน (How to Run)
+## Database Design (ER Diagram)
+
+ระบบมีตารางหลักสำหรับสินค้า สต็อก การเคลื่อนไหว การขาย การจัดซื้อ ลูกค้า และผู้ใช้ รวมความสัมพันธ์ One-to-One และ One-to-Many
+
+![Hardware Store ER Diagram](doc/diagrams/08-er-diagram.png)
+
+รายละเอียดตาราง, key, index, relationship, cascade และ fetch type อยู่ใน [Data Dictionary](doc/data-dictionary.md)
+
+---
+
+## Installation & Setup
 
 ### Requirements
 * **Java 17** และ **Maven**
@@ -108,88 +121,98 @@ Database (H2 / PostgreSQL)
 * **Docker** และ **Docker Compose** (หากต้องการรันผ่าน Container)
 * **PostgreSQL** (สำหรับรัน Production mode)
 
-### 1. การรัน Backend (Development Mode - H2 Database)
+### Backend (Development / H2)
 ด้วยโหมดนี้ ระบบจะใช้ In-memory Database (H2) ซึ่งข้อมูลจะหายไปเมื่อปิดโปรแกรม เหมาะสำหรับการพัฒนา
 
-```bash
-# 1. เข้าไปที่โฟลเดอร์ backend
+```powershell
 cd code/backend/hardware-store
-
-# 2. Build และติดตั้ง dependencies
-./mvnw clean install    # (บน Windows ให้ใช้ mvnw.cmd clean install)
-
-# 3. รัน Spring Boot Application
-./mvnw spring-boot:run  # (บน Windows ให้ใช้ mvnw.cmd spring-boot:run)
+.\mvnw.cmd spring-boot:run
 ```
 * Backend รันอยู่ที่พอร์ต: `http://localhost:8080`
 * Swagger UI (API Docs): `http://localhost:8080/swagger-ui.html`
 
-### 2. การรัน Frontend
-```bash
-# 1. เข้าไปที่โฟลเดอร์ frontend
+### Frontend
+```powershell
 cd code/frontend
-
-# 2. ติดตั้ง Dependencies
 npm install
-
-# 3. รัน React Application
 npm start
 ```
 * Frontend รันอยู่ที่พอร์ต: `http://localhost:3000`
+* กำหนด `REACT_APP_API_URL` ได้เมื่อต้องการชี้ไปยัง backend คนละ origin; ค่าเริ่มต้นคือ `http://localhost:8080`
 
-### 3. การรันด้วย Docker Compose (Production Mode)
-ใช้สำหรับการ Deploy โดยจะรัน Backend ร่วมกับฐานข้อมูลที่เป็น PostgreSQL หากกำหนด Environment Variable ให้ครบถ้วน
+### Docker Compose
+Compose เริ่ม Backend ใน production profile และต้องเชื่อมต่อ PostgreSQL ที่เตรียมไว้แยกต่างหาก โดยกำหนดค่าต่อไปนี้ใน `.env` ที่ root:
 
-```bash
-# 1. อยู่ที่ Root directory ของโปรเจกต์
-# 2. ตั้งค่า Environment Variables ก่อน (หรือกำหนดใน .env)
-# ตัวอย่าง:
-# export DB_URL=jdbc:postgresql://<host>:5432/hardware_store
-# export DB_USERNAME=postgres
-# export DB_PASSWORD=your_password
-
-# 3. รัน Docker Compose
-docker-compose up -d --build
+```dotenv
+DB_URL=jdbc:postgresql://<host>:5432/hardware_store
+DB_USERNAME=<username>
+DB_PASSWORD=<password>
 ```
-ระบบ Backend จะสตาร์ทที่ `http://localhost:8080`
+
+จากนั้นรัน:
+
+```powershell
+docker compose up --build
+```
+Backend จะให้บริการที่ `http://localhost:8080`
 
 ---
 
-## การรัน Test (How to Run Tests)
+## API Documentation
+
+* Swagger UI: `http://localhost:8080/swagger-ui.html`
+* OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+* API endpoint, authentication, validation และ response: [API Documentation](doc/api-documentation.md)
+
+---
+
+## How to Run Tests
 ระบบมีการทดสอบด้วย JUnit 5 และ Mockito
 
-```bash
+```powershell
 cd code/backend/hardware-store
-./mvnw test       # (บน Windows ให้ใช้ mvnw.cmd test)
+.\mvnw.cmd test
 ```
+
+Maven Surefire สร้างรายงานต่อ test class ไว้ที่ `code/backend/hardware-store/target/surefire-reports/` หลังรันทดสอบ
 
 การทดสอบครอบคลุมถึง:
 * Unit Test, Service Test, Controller Test (MockMvc)
 * Validation Test และ Exception Test
-* Security (JWT) Test
+* Persistence/API Integration Test สำหรับการรับ Purchase และปรับปรุง Stock Movement
+* State, Strategy, Validation Chain และ Low Stock Event
 
 ---
 
 ## Design Patterns & SOLID Principles
 
-ระบบถูกพัฒนาภายใต้แนวคิด **SOLID Principles** เช่น Single Responsibility (การแบ่งแยก Controller, Service, DTO) และ Dependency Inversion (การใช้งาน Interface สำหรับ Service และ Repository)
-
-การนำ **Design Patterns** มาปรับใช้:
-* **Enterprise Patterns:** Layered Architecture, MVC, DTO, Repository
-* **Behavioral Patterns:**
-  * **State Pattern:** ใช้จัดการสถานะของ Order (Pending -> Confirmed -> Shipped -> Completed/Cancelled)
-  * **Strategy Pattern:** (ถ้ามีการประยุกต์) เช่น ระบบคิดส่วนลด (Member, Bulk)
-  * **Observer Pattern:** ติดตาม Event สินค้าเข้า-ออก เพื่อประเมินยอดคงเหลือ (Low Stock Warning)
-
-*(รายละเอียดการวิเคราะห์ SOLID และ Patterns อยู่ในโฟลเดอร์ `doc/`)*
+ระบบใช้ Enterprise patterns และ Behavioral GoF patterns ที่ระบุพร้อมเหตุผลและ class diagrams ใน [Design Patterns](doc/design-patterns.md) ส่วนการวิเคราะห์หลักการทั้งห้าข้อพร้อมตำแหน่งในโค้ดอยู่ใน [SOLID Analysis](doc/solid-analysis.md)
 
 ---
 
 ## เอกสารเพิ่มเติม (Documentation)
 
-สามารถดูรายละเอียดเจาะลึกได้ในโฟลเดอร์ `doc/`:
-* [Data Dictionary & Database Schema](doc/data-dictionary.md)
-* [Design Patterns & Architecture](doc/design-patterns.md)
-* [SOLID Analysis](doc/solid-analysis.md)
+เอกสารและ diagram สำหรับการตรวจตามใบงาน:
+* [Assignment Brief](doc/assignment.md)
 * [API Documentation](doc/api-documentation.md)
-* ไดอะแกรมเพิ่มเติมเช่น ER Diagram, Sequence Diagram, Use Case จะอยู่ที่ [doc/diagrams/](doc/diagrams/)
+* [Data Dictionary](doc/data-dictionary.md)
+* [Design Patterns](doc/design-patterns.md)
+* [SOLID Analysis](doc/solid-analysis.md)
+* [Diagram Index](doc/diagrams/README.md)
+
+---
+
+## Deployment URL
+
+https://frontendhardwarestore-production.up.railway.app/login
+
+---
+
+## Project Structure
+
+```text
+code/        Backend Spring Boot และ React frontend
+test/        คู่มือรันชุดทดสอบและตำแหน่งรายงาน
+doc/         API, Data Dictionary, SOLID, Design Patterns และ diagrams
+img/         สื่อประกอบโครงการ
+```

@@ -1,0 +1,13 @@
+stateDiagram-v2
+    [*] --> PENDING : create (POST /purchases)
+    PENDING --> PENDING : update items / supplier
+    PENDING --> APPROVED : approve (OWNER)
+    APPROVED --> PARTIAL : receive (some items missing)
+    APPROVED --> COMPLETED : receive (all items received)
+    PARTIAL --> PARTIAL : receive (still missing)
+    PARTIAL --> COMPLETED : receive (all items received)
+    COMPLETED --> [*]
+    note right of PENDING
+        Receive is rejected with 409
+        unless status is APPROVED or PARTIAL
+    end note
