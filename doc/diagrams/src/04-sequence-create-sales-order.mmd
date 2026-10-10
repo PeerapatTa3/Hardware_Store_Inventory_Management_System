@@ -1,0 +1,32 @@
+sequenceDiagram
+    actor Cashier
+    participant C as SalesOrderController
+    participant S as SalesOrderServiceImpl
+    participant V as Validation Chain
+    participant M as SalesOrderMapper
+    participant R as SalesOrderRepository
+    participant SM as StockMovementService
+    participant L as LowStockAlertListener
+
+    Cashier->>C: POST /api/v1/orders
+    C->>S: create(request) [@Valid]
+    S->>V: handle(context)
+    Note over V: CustomerExists -> ProductsExist -> StockAvailable
+    alt any check fails
+        V-->>C: 404 / 400 (GlobalExceptionHandler)
+        C-->>Cashier: error response
+    else all checks pass
+        S->>M: toEntity(request, customer, products)
+        Note over M: unit price from product.price,<br/>apply discount strategy, status = COMPLETED
+        M-->>S: SalesOrder
+        S->>R: save(order)
+        loop each item
+            S->>SM: create(OUT, quantity, ref = SO-...)
+            SM->>SM: movementType.process(inventory, quantity)
+            opt available <= minimumStock
+                SM-)L: publishEvent(LowStockEvent)
+            end
+        end
+        S-->>C: SalesOrderResponse
+        C-->>Cashier: 201 Created
+    end

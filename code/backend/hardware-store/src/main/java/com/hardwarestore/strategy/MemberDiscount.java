@@ -1,0 +1,19 @@
+package com.hardwarestore.strategy;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
+public class MemberDiscount implements DiscountStrategy {
+
+    private static final BigDecimal MEMBER_DISCOUNT_RATE = new BigDecimal("0.90");
+
+    @Override
+    public BigDecimal apply(BigDecimal unitPrice, int quantity) {
+        if (unitPrice == null) {
+            return BigDecimal.ZERO;
+        }
+        BigDecimal subtotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
+        return subtotal.multiply(MEMBER_DISCOUNT_RATE).setScale(2, RoundingMode.HALF_UP);
+    }
+}
+

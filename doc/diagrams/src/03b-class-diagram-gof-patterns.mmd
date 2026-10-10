@@ -1,0 +1,69 @@
+classDiagram
+    direction TB
+    class SalesOrder {
+        -OrderState state
+        -DiscountStrategy discountStrategy
+        +confirm()
+        +cancel()
+        +ship()
+        +complete()
+        +resolveDiscountStrategy() DiscountStrategy
+        +calculateTotal() BigDecimal
+    }
+
+    class OrderState {
+        <<interface - State>>
+        +confirm(order)
+        +cancel(order)
+        +ship(order)
+        +complete(order)
+        +getStatus()
+    }
+    OrderState <|.. PendingState
+    OrderState <|.. ConfirmedState
+    OrderState <|.. ShippedState
+    OrderState <|.. CompletedState
+    OrderState <|.. CancelledState
+    SalesOrder o-- OrderState : state
+
+    class DiscountStrategy {
+        <<interface - Strategy>>
+        +apply(unitPrice, quantity) BigDecimal
+    }
+    DiscountStrategy <|.. NormalDiscount
+    DiscountStrategy <|.. MemberDiscount
+    DiscountStrategy <|.. BulkDiscount
+    SalesOrder o-- DiscountStrategy : strategy
+
+    class SalesOrderServiceImpl {
+        -buildValidationChain() OrderValidationHandler
+    }
+    class OrderValidationHandler {
+        <<abstract - Chain of Responsibility>>
+        -OrderValidationHandler next
+        +setNext(handler) OrderValidationHandler
+        +handle(context)$ void
+        #validate(context)* void
+    }
+    OrderValidationHandler <|-- CustomerExistsHandler
+    OrderValidationHandler <|-- ProductsExistHandler
+    OrderValidationHandler <|-- StockAvailableHandler
+    SalesOrderServiceImpl ..> OrderValidationHandler : builds chain
+
+    class StockMovementServiceImpl {
+        -ApplicationEventPublisher eventPublisher
+    }
+    class LowStockEvent {
+        <<record - Observer event>>
+        productId
+        sku
+        productName
+        availableQuantity
+        minimumStock
+    }
+    class LowStockAlertListener {
+        <<Observer>>
+        +onLowStock(event)
+    }
+    StockMovementServiceImpl ..> LowStockEvent : publishes
+    LowStockAlertListener ..> LowStockEvent : listens

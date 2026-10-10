@@ -1,0 +1,35 @@
+package com.hardwarestore.domain.state;
+
+import com.hardwarestore.domain.entity.SalesOrder;
+import com.hardwarestore.domain.enums.SalesOrderStatus;
+import com.hardwarestore.exception.InvalidSalesOrderStateException;
+
+public class CancelledState implements OrderState {
+    @Override
+    public void confirm(SalesOrder order) {
+        throw new InvalidSalesOrderStateException("Cancelled orders cannot be confirmed.");
+    }
+
+    @Override
+    public void cancel(SalesOrder order) {
+        throw new InvalidSalesOrderStateException("Order is already cancelled.");
+    }
+
+    @Override
+    public void ship(SalesOrder order) {
+        throw new InvalidSalesOrderStateException("Cannot ship order from status " + getStatus());
+    }
+
+    @Override
+    public void complete(SalesOrder order) {
+        throw new InvalidSalesOrderStateException("Cancelled orders cannot be completed.");
+    }
+
+    @Override
+    public SalesOrderStatus getStatus() {
+        return SalesOrderStatus.CANCELLED;
+    }
+}
+
+
+

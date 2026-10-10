@@ -1,0 +1,24 @@
+flowchart TB
+    Browser["User's Browser"]
+
+    subgraph RW["Cloud - Railway (railway.toml)"]
+        subgraph FE["Frontend service (Railpack)"]
+            FEA["React app - code/frontend<br/>npm install && npm run build<br/>npm run start:prod"]
+        end
+        subgraph BE["Backend service (Docker, eclipse-temurin:17)"]
+            BEA["hardware-store-0.0.1-SNAPSHOT.jar<br/>Spring Boot :PORT, profile prod"]
+        end
+        PG[("PostgreSQL")]
+    end
+
+    subgraph DEV["Local development"]
+        NPM["npm start :3000"]
+        SB["Spring Boot :8080 (default profile)"]
+        H2[("H2 in-memory<br/>schema.sql + data.sql")]
+        NPM -->|"REST + JWT"| SB
+        SB -->|JDBC| H2
+    end
+
+    Browser -->|HTTPS| FEA
+    Browser -->|"REST /api/v1 + Bearer JWT<br/>(REACT_APP_API_URL)"| BEA
+    BEA -->|"JDBC<br/>DB_URL / DB_USERNAME / DB_PASSWORD"| PG
