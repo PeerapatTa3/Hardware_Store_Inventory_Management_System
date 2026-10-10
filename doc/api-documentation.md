@@ -372,3 +372,34 @@ POST /api/v1/orders  { "items": [ { "productId": 1, "quantity": 99999 } ] }
 POST /api/v1/orders/{id}/status   { "status": "CANCELLED" }   // เมื่อสถานะเป็น COMPLETED
 ```
 → 409 `INVALID_SALES_ORDER_STATE`
+
+---
+
+## 9. Dashboard (ภาพรวม)
+
+### GET `/api/v1/dashboard/summary`
+**หน้าที่:** สรุปตัวเลขสถิติต่างๆ ในระบบสำหรับแสดงผลบนหน้า Dashboard เพื่อลดปัญหา N+1 Query จากหน้าเว็บ
+**สิทธิ์:** ผู้ใช้ที่ล็อกอินเข้าระบบ (OWNER, STOCK_MANAGER, CASHIER)
+
+**Response `200 OK` (DashboardSummaryResponse)**
+```json
+{
+  "products": 42,
+  "stockUnits": 1500,
+  "lowStock": 3,
+  "purchases": 12,
+  "orders": 85,
+  "suppliers": 5,
+  "customers": 150,
+  "recentOrders": [
+    {
+      "id": 1,
+      "orderNumber": "SO-20261010-001",
+      "customerName": "John Doe",
+      "totalAmount": 1500.00,
+      "status": "COMPLETED",
+      "createdAt": "2026-10-10T14:30:00"
+    }
+  ]
+}
+```
