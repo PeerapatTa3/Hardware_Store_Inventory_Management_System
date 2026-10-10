@@ -98,6 +98,7 @@ CREATE TABLE purchase_items (
     purchase_order_id BIGINT NOT NULL,
     product_id BIGINT NOT NULL,
     quantity INT NOT NULL,
+    received_quantity INT NOT NULL DEFAULT 0,
     unit_cost DECIMAL(19,2) NOT NULL,
     subtotal DECIMAL(19,2) NOT NULL,
     CONSTRAINT fk_pi_po FOREIGN KEY (purchase_order_id) REFERENCES purchase_orders(id),
