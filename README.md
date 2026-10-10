@@ -138,8 +138,6 @@ cd code/backend/hardware-store
 .\mvnw.cmd test
 ```
 
-Maven Surefire สร้างรายงานต่อ test class ไว้ที่ `code/backend/hardware-store/target/surefire-reports/` หลังรันทดสอบ
-
 การทดสอบครอบคลุมถึง:
 * Unit Test, Service Test, Controller Test (MockMvc)
 * Validation Test และ Exception Test
