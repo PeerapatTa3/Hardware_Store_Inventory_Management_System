@@ -1,0 +1,31 @@
+sequenceDiagram
+    actor User as Cashier / Owner
+    participant C as SalesOrderController
+    participant S as SalesOrderServiceImpl
+    participant O as SalesOrder (context)
+    participant ST as OrderState
+    participant SM as StockMovementService
+
+    User->>C: POST /api/v1/orders/{id}/status {status}
+    C->>S: updateStatus(id, status)
+    S->>S: find order (404 if not found)
+    alt status = PENDING
+        S-->>C: 409 INVALID_SALES_ORDER_STATE
+    else status = CONFIRMED / SHIPPED / COMPLETED / CANCELLED
+        S->>O: confirm() / ship() / complete() / cancel()
+        O->>ST: delegate to current state
+        alt illegal transition
+            ST-->>S: InvalidSalesOrderStateException
+            S-->>C: 409 INVALID_SALES_ORDER_STATE
+        else allowed
+            ST->>O: setState(next state)
+            S->>S: save(order)
+            opt new status = CANCELLED
+                loop each item
+                    S->>SM: create(IN, quantity) - return stock
+                end
+            end
+            S-->>C: SalesOrderResponse
+            C-->>User: 200 OK
+        end
+    end

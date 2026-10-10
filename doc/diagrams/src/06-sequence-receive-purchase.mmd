@@ -1,0 +1,30 @@
+sequenceDiagram
+    actor Stock as Stock Manager
+    participant C as PurchaseOrderController
+    participant S as PurchaseOrderServiceImpl
+    participant SM as StockMovementService
+    participant DB as Database
+
+    Stock->>C: POST /api/v1/purchases/{id}/receive
+    C->>S: receive(id, request) [@Transactional]
+    S->>DB: find PurchaseOrder
+    alt not found
+        S-->>C: 404 RESOURCE_NOT_FOUND
+    else status is not APPROVED or PARTIAL
+        S-->>C: 409 INVALID_PURCHASE_STATE
+    else APPROVED or PARTIAL
+        loop each received item
+            Note over S: receivedQuantity += received
+            S->>SM: create(IN, quantity, ref = PO-...)
+            SM->>DB: update inventory + insert movement
+        end
+        alt every item fully received
+            S->>S: status = COMPLETED
+        else some items still missing
+            S->>S: status = PARTIAL
+        end
+        S->>DB: save(order)
+        S-->>C: PurchaseOrderResponse
+        C-->>Stock: 200 OK
+    end
+    Note over S,DB: Any exception rolls back stock, movements and status

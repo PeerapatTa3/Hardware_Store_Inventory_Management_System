@@ -1,43 +1,23 @@
-# การวิเคราะห์หลักการ SOLID ในระบบ Hardware Store Inventory Management System
+# SOLID Analysis — Hardware Store Inventory Management System
 
-เอกสารนี้อธิบายถึงการนำหลักการ SOLID มาประยุกต์ใช้ในโครงสร้างโค้ด Backend ของระบบ (`code/backend/hardware-store/src/main/java/com/hardwarestore/`) พร้อมยกตัวอย่างจากโค้ดจริง
+path ของไฟล์ทั้งหมดอ้างอิงจาก `code/backend/hardware-store/src/main/java/com/hardwarestore/`
 
-## 1. Single Responsibility Principle (SRP)
-**หลักการ:** คลาสควรมีหน้าที่รับผิดชอบเพียงอย่างเดียว (มีเพียงหนึ่งเหตุผลที่ทำให้ต้องแก้ไขคลาสนี้)
-
-**ตัวอย่างในโค้ด:**
-การใช้ **Chain of Responsibility Pattern** ในส่วนของการตรวจสอบข้อมูล (Validation) สำหรับคำสั่งขาย (Sales Order)
-แทนที่จะมีเมธอดขนาดใหญ่ใน `SalesOrderServiceImpl` ที่ทำหน้าที่ตรวจสอบทุกอย่าง โค้ดได้ถูกแยกออกเป็นคลาสย่อยๆ ที่สืบทอดจาก `OrderValidationHandler` เช่น:
-- `CustomerExistsHandler`: มีหน้าที่เดียวคือตรวจสอบว่ามีลูกค้าในระบบหรือไม่
-- `ProductsExistHandler`: มีหน้าที่เดียวคือตรวจสอบว่าสินค้าที่สั่งซื้อมีอยู่ในระบบหรือไม่
-- `StockAvailableHandler`: มีหน้าที่เดียวคือคำนวณและตรวจสอบว่ามีสินค้าคงคลังเพียงพอหรือไม่
-การแยกคลาสแบบนี้ทำให้เมื่อมีเงื่อนไขการตรวจสอบใหม่ๆ ก็ไม่ต้องไปแก้ไขคลาสเดิม แต่เพิ่มคลาสใหม่แทน
-- **Dashboard Refactoring (Separation of Concerns):** การสร้าง `DashboardService` และเปิด API `/api/v1/dashboard/summary` แยกต่างหาก เพื่อให้ Backend เป็นคนรับผิดชอบในการรวมข้อมูล (Aggregation) ตัวเลขสรุปทั้งหมด แทนที่จะปล่อยให้หน้าเว็บ (Frontend) ต้องมารับหน้าที่คิดเลข Business Logic และดึงข้อมูลหลายรอบ ซึ่งช่วยรักษากฎ SRP ของทั้งฝั่งหน้าเว็บ (รับผิดชอบแค่โชว์ผล) และฝั่ง Backend (รับผิดชอบสรุปข้อมูล) อย่างเด็ดขาด
-
-## 2. Open/Closed Principle (OCP)
-**หลักการ:** ซอฟต์แวร์ควรเปิดให้ต่อเติมขยายความสามารถได้ แต่ปิดสำหรับการแก้ไข (Open for extension, closed for modification)
-
-**ตัวอย่างในโค้ด:**
-- **Strategy Pattern** สำหรับส่วนลด: ระบบมี Interface `DiscountStrategy` และมี Implementation เช่น `BulkDiscount`, `MemberDiscount`, และ `NormalDiscount` หากในอนาคตต้องการเพิ่มโปรโมชั่นใหม่ (เช่น `SeasonalDiscount`) ก็สามารถสร้างคลาสใหม่ที่ Implement `DiscountStrategy` ได้เลยโดยไม่ต้องไปแก้ไขโค้ดของคลาสลดราคาเดิมหรือโค้ดใน Service
-- **State Pattern** สำหรับสถานะคำสั่งซื้อ: Interface `OrderState` มี Implementation ต่างๆ เช่น `PendingState`, `ConfirmedState`, `ShippedState` ฯลฯ ทำให้การเพิ่มสถานะใหม่หรือเปลี่ยนกฎการเปลี่ยนสถานะทำได้โดยเพิ่มหรือแก้ที่คลาส State ที่เกี่ยวข้อง ไม่ต้องเขียน `if-else` หรือ `switch-case` ซ้อนกันมากมายใน Service
-
-## 3. Liskov Substitution Principle (LSP)
-**หลักการ:** คลาสลูกต้องสามารถนำมาใช้งานแทนคลาสแม่ได้โดยไม่ทำให้โปรแกรมทำงานผิดพลาด
-
-**ตัวอย่างในโค้ด:**
-คลาสที่ Implement `DiscountStrategy` (เช่น `BulkDiscount`) สามารถถูกเรียกใช้งานผ่าน Interface `DiscountStrategy` ได้ใน `SalesOrderServiceImpl` โดยระบบรับประกันว่ามันจะส่งคืนค่า `BigDecimal` กลับมาอย่างถูกต้องเสมอตาม Contract ที่กำหนดไว้ การส่งข้อมูลเข้าไปประมวลผล (เช่น `unitPrice`, `quantity`) จะไม่ทำให้เกิด Exception นอกเหนือจากความคาดหมาย (เช่น มีการตรวจสอบ null ใน `BulkDiscount` และส่งค่า 0 กลับ) ทำให้คลาสลูกเหล่านี้สามารถสับเปลี่ยนกันได้ 100%
-
-## 4. Interface Segregation Principle (ISP)
-**หลักการ:** Client ไม่ควรถูกบังคับให้ขึ้นต่อ Interface ที่ไม่ได้ใช้งาน (ควรแยก Interface ใหญ่ๆ ออกเป็น Interface เล็กๆ ที่เฉพาะเจาะจง)
-
-**ตัวอย่างในโค้ด:**
-- **Repository Layer**: โครงการใช้ Spring Data JPA ซึ่งมีการแยก Interface เป็นอิสระต่อกัน เช่น `ProductRepository`, `InventoryStockRepository`, และ `CustomerRepository` แทนที่จะมีคลาส Database Access ก้อนใหญ่เพียงคลาสเดียว
-- **Service Layer**: แยก Interface ของ Service แต่ละโดเมนอย่างชัดเจน เช่น `ProductService`, `SalesOrderService`, `StockMovementService` ทำให้คลาส Controller ที่เรียกใช้งาน (Client) อ้างอิงเฉพาะ Interface เท่าที่จำเป็นต้องใช้เท่านั้น
-
-## 5. Dependency Inversion Principle (DIP)
-**หลักการ:** Module ระดับสูงไม่ควรขึ้นต่อ Module ระดับต่ำ แต่ควรขึ้นต่อ Abstraction (Interface/Abstract Class)
-
-**ตัวอย่างในโค้ด:**
-- Controller ของระบบ (เช่น `ProductController`) ถูก Inject ด้วย `ProductService` (ซึ่งเป็น Interface) ไม่ใช่ตัว `ProductServiceImpl` (ซึ่งเป็นคลาส Implementation)
-- `SalesOrderServiceImpl` จำเป็นต้องใช้งานระบบฐานข้อมูล แต่ก็ไม่ได้ผูกติดกับคลาสการเชื่อมต่อฐานข้อมูลโดยตรง โดยจะพึ่งพา Interface `CustomerRepository`, `ProductRepository` เป็นต้น
-- ตัวของ Service เองก็พึ่งพา Abstraction เช่น `DiscountStrategy` และ `OrderValidationHandler` ทำให้สามารถทำ Unit Test โดยใช้ Mock Object แทนของจริงได้ง่าย และสามารถเปลี่ยน Implementation ภายหลังได้โดยที่ Module ระดับสูง (Service/Controller) ไม่ต้องเปลี่ยนแปลงโค้ด
+| หลักการ | ไฟล์ : บรรทัด | เหตุผลสั้นๆ |
+|---|---|---|
+| **S** — Single Responsibility | `validation/CustomerExistsHandler.java:7` | ตรวจอย่างเดียวว่าลูกค้ามีอยู่จริง |
+| | `validation/ProductsExistHandler.java:12` | ตรวจอย่างเดียวว่าสินค้ามีอยู่จริง |
+| | `validation/StockAvailableHandler.java:16-53` | ตรวจอย่างเดียวว่าสต็อกพอ |
+| | `mapper/SalesOrderMapper.java:19-69` | แปลง DTO ↔ Entity อย่างเดียว ไม่มี business rule อื่น |
+| | `exception/GlobalExceptionHandler.java:18` | รวมการแปลง exception เป็น HTTP response ไว้ที่เดียว Controller ไม่ต้อง try/catch |
+| **O** — Open/Closed | `strategy/DiscountStrategy.java:5-7`, `domain/entity/SalesOrder.java:186-192` | `calculateTotal()` เรียก `strategy.apply(...)` โดยไม่เช็กชนิดส่วนลด เพิ่มส่วนลดชนิดใหม่ด้วยการเพิ่มคลาสที่ implement `DiscountStrategy` (จุดเลือก strategy คือ `SalesOrder.java:164-179`) |
+| | `domain/enums/StockMovementType.java` (ทั้งไฟล์), `service/impl/StockMovementServiceImpl.java:66` | แต่ละชนิด (`IN`/`OUT`/`ADJUSTMENT`) มี `process()` ของตัวเอง Service เรียก `getMovementType().process(...)` โดยไม่ใช้ if-else แยกตามชนิด |
+| | `state/OrderState.java:6-16` | เพิ่มพฤติกรรมของสถานะใหม่ด้วยคลาส State ใหม่ ไม่ต้องแก้ if-else ใน Service |
+| **L** — Liskov Substitution | `strategy/NormalDiscount.java:9-14`, `MemberDiscount.java:11-17`, `BulkDiscount.java:11-22` | ทุกตัวรับ `(unitPrice, quantity)` คืน `BigDecimal` ทศนิยม 2 ตำแหน่ง และจัดการ `unitPrice == null` เหมือนกัน (คืน 0) `SalesOrder.java:192` เรียกผ่าน interface ได้โดยไม่รู้ชนิดจริง |
+| | `state/PendingState.java:7`, `ConfirmedState.java:7`, `ShippedState.java:7`, `CompletedState.java:7`, `CancelledState.java:7` | ทั้ง 5 คลาส implement ครบทั้ง 4 เมธอด การทำรายการที่ไม่อนุญาตจะโยน `InvalidSalesOrderStateException` ชนิดเดียวกันเสมอ ไม่มีคลาสไหนโยน `UnsupportedOperationException` |
+| | `validation/OrderValidationHandler.java:17-25` | `handle()` เป็น `final` และเรียก `validate()` ที่ subclass ทั้ง 3 ตัว override ใช้แทนกันในสายได้ |
+| **I** — Interface Segregation | `service/DashboardService.java` (ทั้งไฟล์ 6 บรรทัด), `service/InventoryStockService.java` (ทั้งไฟล์ 11 บรรทัด) | Service แยก interface ตามโดเมน แต่ละตัวมีเฉพาะเมธอดของโดเมนนั้น |
+| | `strategy/DiscountStrategy.java:5-7` | interface มีเมธอดเดียว implementation ไม่ต้องมีเมธอดที่ไม่ใช้ |
+| | `repository/ProductRepository.java:8-17` | แยก Repository ตาม Entity (9 ตัวใน `repository/`) และเพิ่มเฉพาะ query ที่ Entity นั้นใช้ |
+| **D** — Dependency Inversion | `controller/api/ProductController.java:19` | Controller ถือ `ProductService` (interface) ไม่ใช่ `ProductServiceImpl` |
+| | `service/impl/SalesOrderServiceImpl.java:34-43` | Service ถือ `SalesOrderRepository`, `CustomerRepository`, `ProductRepository`, `InventoryStockRepository` (interface) และ `StockMovementService` (interface) |
+| | `service/impl/SalesOrderServiceImpl.java:35` และ `StockMovementServiceImpl.java:27` | Constructor Injection ด้วย `@RequiredArgsConstructor` + `final` field ไม่มี `@Autowired` ทั้งโปรเจค |
