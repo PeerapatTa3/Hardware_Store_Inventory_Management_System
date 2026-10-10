@@ -8,4 +8,10 @@ import java.util.Optional;
 public interface InventoryStockRepository extends JpaRepository<InventoryStock, Long> {
 
     Optional<InventoryStock> findByProductId(Long productId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT COALESCE(SUM(i.quantity), 0) FROM InventoryStock i")
+    Long sumTotalStockUnits();
+
+    @org.springframework.data.jpa.repository.Query("SELECT COUNT(i) FROM InventoryStock i WHERE i.quantity <= i.product.minimumStock")
+    Long countLowStockItems();
 }
