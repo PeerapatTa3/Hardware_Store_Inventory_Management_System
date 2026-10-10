@@ -5,14 +5,17 @@ import com.hardwarestore.domain.entity.Category;
 import com.hardwarestore.domain.entity.InventoryStock;
 import com.hardwarestore.domain.entity.Product;
 import com.hardwarestore.domain.enums.PurchaseOrderStatus;
+import com.hardwarestore.domain.enums.StockMovementStatus;
 import com.hardwarestore.domain.enums.StockMovementType;
 import com.hardwarestore.domain.entity.Supplier;
+import com.hardwarestore.dto.request.StockMovementRequest;
 import com.hardwarestore.repository.CategoryRepository;
 import com.hardwarestore.repository.InventoryStockRepository;
 import com.hardwarestore.repository.ProductRepository;
 import com.hardwarestore.repository.PurchaseOrderRepository;
 import com.hardwarestore.repository.StockMovementRepository;
 import com.hardwarestore.repository.SupplierRepository;
+import com.hardwarestore.service.StockMovementService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -52,6 +55,9 @@ class InventoryPurchaseApiIntegrationTest {
 
     @Autowired
     private PurchaseOrderRepository purchaseOrderRepository;
+
+    @Autowired
+    private StockMovementService stockMovementService;
 
     @Test
     @org.springframework.security.test.context.support.WithMockUser(roles = "OWNER")
@@ -142,6 +148,60 @@ class InventoryPurchaseApiIntegrationTest {
                         .getResponse()
                         .getContentAsString(),
                 purchaseNumber);
+    }
+
+    @Test
+    @org.springframework.security.test.context.support.WithMockUser(roles = "OWNER")
+    void approvingAdjustmentAfterStockMovementShouldReturnStaleWarningWithoutOverwritingStock() throws Exception {
+        String unique = UUID.randomUUID().toString();
+        Category category = new Category();
+        category.setName("Stale adjustment category " + unique);
+        categoryRepository.save(category);
+
+        Supplier supplier = new Supplier();
+        supplier.setName("Stale adjustment supplier " + unique);
+        supplierRepository.save(supplier);
+
+        Product product = new Product();
+        product.setSku("STALE-" + unique);
+        product.setName("Stale adjustment product");
+        product.setUnit("piece");
+        product.setPrice(new BigDecimal("15.00"));
+        product.setCostPrice(new BigDecimal("8.00"));
+        product.setMinimumStock(0);
+        product.setCategory(category);
+        product.setSupplier(supplier);
+        productRepository.save(product);
+
+        InventoryStock stock = new InventoryStock();
+        stock.setProduct(product);
+        stock.setQuantity(10);
+        stock.setReservedQuantity(0);
+        inventoryStockRepository.save(stock);
+
+        StockMovementRequest adjustmentRequest = new StockMovementRequest();
+        adjustmentRequest.setProductId(product.getId());
+        adjustmentRequest.setMovementType(StockMovementType.ADJUSTMENT);
+        adjustmentRequest.setQuantity(7);
+        adjustmentRequest.setNote("Physical count");
+        var adjustment = stockMovementService.create(adjustmentRequest);
+
+        StockMovementRequest outboundRequest = new StockMovementRequest();
+        outboundRequest.setProductId(product.getId());
+        outboundRequest.setMovementType(StockMovementType.OUT);
+        outboundRequest.setQuantity(2);
+        outboundRequest.setReferenceNo("SO-" + unique);
+        outboundRequest.setNote("Sale after adjustment request");
+        stockMovementService.create(outboundRequest);
+
+        mockMvc.perform(post("/api/v1/stock-movements/{id}/approve", adjustment.getId()))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error").value("STALE_STOCK_ADJUSTMENT"));
+
+        assertEquals(8, inventoryStockRepository.findByProductId(product.getId())
+                .orElseThrow().getQuantity());
+        assertEquals(StockMovementStatus.PENDING,
+                stockMovementRepository.findById(adjustment.getId()).orElseThrow().getStatus());
     }
 
     private void assertMovementAppearsInApi(String response, String purchaseNumber) throws Exception {

@@ -7,6 +7,7 @@ import com.hardwarestore.domain.enums.StockMovementType;
 import com.hardwarestore.dto.request.StockMovementRequest;
 import com.hardwarestore.dto.response.StockMovementResponse;
 import com.hardwarestore.exception.ResourceNotFoundException;
+import com.hardwarestore.exception.StaleStockAdjustmentException;
 import com.hardwarestore.mapper.StockMovementMapper;
 import com.hardwarestore.repository.InventoryStockRepository;
 import com.hardwarestore.repository.ProductRepository;
@@ -22,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 import java.util.List;
+import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -82,7 +84,7 @@ class StockMovementServiceImplTest {
         savedMovement.setNote("Receive stock");
 
         when(productRepository.findById(10L)).thenReturn(Optional.of(product));
-        when(inventoryStockRepository.findByProductId(10L)).thenReturn(Optional.of(stock));
+        when(inventoryStockRepository.findByProductIdForUpdate(10L)).thenReturn(Optional.of(stock));
         when(stockMovementRepository.save(any(StockMovement.class))).thenReturn(savedMovement);
         when(stockMovementMapper.toResponse(savedMovement)).thenReturn(StockMovementResponse.builder()
                 .id(99L)
@@ -119,7 +121,7 @@ class StockMovementServiceImplTest {
         stock.setReservedQuantity(2);
 
         when(productRepository.findById(10L)).thenReturn(Optional.of(product));
-        when(inventoryStockRepository.findByProductId(10L)).thenReturn(Optional.of(stock));
+        when(inventoryStockRepository.findByProductIdForUpdate(10L)).thenReturn(Optional.of(stock));
         when(stockMovementRepository.save(any(StockMovement.class))).thenReturn(new StockMovement());
         when(stockMovementMapper.toResponse(any(StockMovement.class))).thenReturn(StockMovementResponse.builder()
                 .productId(10L)
@@ -153,7 +155,7 @@ class StockMovementServiceImplTest {
         stock.setReservedQuantity(2);
 
         when(productRepository.findById(10L)).thenReturn(Optional.of(product));
-        when(inventoryStockRepository.findByProductId(10L)).thenReturn(Optional.of(stock));
+        when(inventoryStockRepository.findByProductIdForUpdate(10L)).thenReturn(Optional.of(stock));
         when(stockMovementRepository.save(any(StockMovement.class)))
                 .thenAnswer(invocation -> invocation.getArgument(0));
         when(stockMovementMapper.toResponse(any(StockMovement.class)))
@@ -193,12 +195,46 @@ class StockMovementServiceImplTest {
         stock.setReservedQuantity(2);
 
         when(stockMovementRepository.findById(1L)).thenReturn(Optional.of(movement));
-        when(inventoryStockRepository.findByProductId(10L)).thenReturn(Optional.of(stock));
+        when(inventoryStockRepository.findByProductIdForUpdate(10L)).thenReturn(Optional.of(stock));
 
         assertThrows(IllegalArgumentException.class, () -> stockMovementService.approve(1L));
 
         assertEquals(12, stock.getQuantity());
         verify(inventoryStockRepository, never()).save(any(InventoryStock.class));
+    }
+
+    @Test
+    void approve_shouldRejectStaleAdjustmentWhenAnotherApprovedMovementExists() {
+        LocalDateTime requestedAt = LocalDateTime.now().minusMinutes(5);
+        StockMovement movement = new StockMovement();
+        movement.setId(10L);
+        movement.setProduct(product);
+        movement.setMovementType(StockMovementType.ADJUSTMENT);
+        movement.setQuantity(7);
+        movement.setMovementAt(requestedAt);
+        movement.setStatus(com.hardwarestore.domain.enums.StockMovementStatus.PENDING);
+
+        InventoryStock stock = new InventoryStock();
+        stock.setId(1L);
+        stock.setProduct(product);
+        stock.setQuantity(15);
+        stock.setReservedQuantity(0);
+
+        when(stockMovementRepository.findById(10L)).thenReturn(Optional.of(movement));
+        when(inventoryStockRepository.findByProductIdForUpdate(10L)).thenReturn(Optional.of(stock));
+        when(stockMovementRepository.existsApprovedMovementAfterAdjustment(
+                10L,
+                10L,
+                requestedAt,
+                com.hardwarestore.domain.enums.StockMovementStatus.APPROVED,
+                StockMovementType.ADJUSTMENT)).thenReturn(true);
+
+        assertThrows(StaleStockAdjustmentException.class, () -> stockMovementService.approve(10L));
+
+        assertEquals(15, stock.getQuantity());
+        assertEquals(com.hardwarestore.domain.enums.StockMovementStatus.PENDING, movement.getStatus());
+        verify(inventoryStockRepository, never()).save(any(InventoryStock.class));
+        verify(stockMovementRepository, never()).save(any(StockMovement.class));
     }
 
     @Test

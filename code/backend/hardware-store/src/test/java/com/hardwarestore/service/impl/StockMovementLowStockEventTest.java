@@ -62,7 +62,7 @@ class StockMovementLowStockEventTest {
         stock.setReservedQuantity(0);
 
         when(productRepository.findById(10L)).thenReturn(Optional.of(product));
-        when(inventoryStockRepository.findByProductId(10L)).thenReturn(Optional.of(stock));
+        when(inventoryStockRepository.findByProductIdForUpdate(10L)).thenReturn(Optional.of(stock));
         when(stockMovementRepository.save(any(StockMovement.class))).thenAnswer(i -> i.getArgument(0));
     }
 

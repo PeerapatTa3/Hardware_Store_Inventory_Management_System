@@ -33,6 +33,12 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, "INVALID_PURCHASE_STATE", ex.getMessage(), request);
     }
 
+    @ExceptionHandler(StaleStockAdjustmentException.class)
+    public ResponseEntity<ErrorResponse> handleStaleStockAdjustment(
+            StaleStockAdjustmentException ex, HttpServletRequest request) {
+        return build(HttpStatus.CONFLICT, "STALE_STOCK_ADJUSTMENT", ex.getMessage(), request);
+    }
+
     @ExceptionHandler(InvalidSalesOrderStateException.class)
     public ResponseEntity<ErrorResponse> handleInvalidSalesOrderState(
             InvalidSalesOrderStateException ex, HttpServletRequest request) {
@@ -103,6 +109,5 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(body);
     }
 }
-
 
 

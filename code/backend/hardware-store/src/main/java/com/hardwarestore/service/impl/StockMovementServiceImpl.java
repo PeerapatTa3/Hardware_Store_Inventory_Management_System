@@ -10,6 +10,7 @@ import com.hardwarestore.dto.request.StockMovementRequest;
 import com.hardwarestore.dto.response.StockMovementResponse;
 import com.hardwarestore.event.LowStockEvent;
 import com.hardwarestore.exception.ResourceNotFoundException;
+import com.hardwarestore.exception.StaleStockAdjustmentException;
 import com.hardwarestore.mapper.StockMovementMapper;
 import com.hardwarestore.repository.InventoryStockRepository;
 import com.hardwarestore.repository.ProductRepository;
@@ -39,7 +40,7 @@ public class StockMovementServiceImpl implements StockMovementService {
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() -> new ResourceNotFoundException("Product not found with id: " + request.getProductId()));
 
-        InventoryStock inventory = inventoryStockRepository.findByProductId(product.getId())
+        InventoryStock inventory = inventoryStockRepository.findByProductIdForUpdate(product.getId())
                 .orElseGet(() -> {
                     InventoryStock newStock = new InventoryStock();
                     newStock.setProduct(product);
@@ -52,7 +53,7 @@ public class StockMovementServiceImpl implements StockMovementService {
             inventory.setProduct(product);
         }
 
-                int quantity = request.getQuantity();
+        int quantity = request.getQuantity();
         StockMovement movement = new StockMovement();
         movement.setProduct(product);
         movement.setMovementType(request.getMovementType());
@@ -115,8 +116,20 @@ public class StockMovementServiceImpl implements StockMovementService {
             throw new InvalidPurchaseStateException("Only PENDING stock movements can be approved.");
         }
         
-        InventoryStock inventory = inventoryStockRepository.findByProductId(movement.getProduct().getId())
+        InventoryStock inventory = inventoryStockRepository.findByProductIdForUpdate(movement.getProduct().getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Inventory not found"));
+
+        if (movement.getMovementType() == StockMovementType.ADJUSTMENT
+                && stockMovementRepository.existsApprovedMovementAfterAdjustment(
+                        movement.getProduct().getId(),
+                        movement.getId(),
+                        movement.getMovementAt(),
+                        StockMovementStatus.APPROVED,
+                        StockMovementType.ADJUSTMENT)) {
+            throw new StaleStockAdjustmentException(
+                    "Stock changed after this adjustment request was created. The request remains pending. "
+                            + "Recount the current stock, reject this request, and create a new adjustment if needed.");
+        }
                 
         movement.getMovementType().process(inventory, movement.getQuantity());
         inventoryStockRepository.save(inventory);
