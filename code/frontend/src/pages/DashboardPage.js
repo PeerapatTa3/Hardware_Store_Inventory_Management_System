@@ -6,13 +6,14 @@ import { getOrders } from '../api/orders';
 import { getProductsAdmin } from '../api/products';
 import { getPurchases } from '../api/purchases';
 import { getSuppliers } from '../api/suppliers';
+import { useAuth } from '../context/AuthContext';
 import { formatDate, formatMoney, PageHeader, Notice } from './ResourcePage';
 
 const shortcuts = [
-  ['/products/new', 'PR', 'Add product'],
-  ['/purchases/new', 'PU', 'Receive stock'],
-  ['/orders/new', 'SO', 'Create sales order'],
-  ['/inventory', 'IN', 'Review inventory'],
+  ['/products/new', 'PR', 'Add product', ['OWNER', 'STOCK_MANAGER']],
+  ['/purchases/new', 'PU', 'Receive stock', ['OWNER', 'STOCK_MANAGER']],
+  ['/orders/new', 'SO', 'Create sales order', ['OWNER', 'CASHIER']],
+  ['/inventory', 'IN', 'Review inventory', ['OWNER', 'STOCK_MANAGER']],
 ];
 
 function dataOf(result, fallback = []) {
@@ -20,6 +21,8 @@ function dataOf(result, fallback = []) {
 }
 
 function DashboardPage() {
+  const { user } = useAuth();
+  const role = user?.role;
   const [summary, setSummary] = useState(null);
   const [error, setError] = useState('');
 
@@ -62,12 +65,21 @@ function DashboardPage() {
       <PageHeader eyebrow="Store operations" title="Overview" subtitle="A clear view of stock and activity across your store." />
       <Notice>{error}</Notice>
       <section className="stats-grid">
-        <article className="stat-card" style={{ '--stat-accent': 'var(--green)' }}><div className="stat-label">Products</div><div className="stat-value">{summary?.products ?? '—'}</div><div className="stat-foot">Catalog items</div></article>
-        <article className="stat-card" style={{ '--stat-accent': 'var(--blue)' }}><div className="stat-label">Available stock</div><div className="stat-value">{summary?.stockUnits ?? '—'}</div><div className="stat-foot">Units across loaded products</div></article>
-        <article className="stat-card" style={{ '--stat-accent': 'var(--orange)' }}><div className="stat-label">Low stock</div><div className="stat-value">{summary?.lowStock ?? '—'}</div><div className="stat-foot">At or below minimum level</div></article>
-        <article className="stat-card" style={{ '--stat-accent': 'var(--yellow)' }}><div className="stat-label">Sales orders</div><div className="stat-value">{summary?.orders ?? '—'}</div><div className="stat-foot">{summary?.purchases ?? '—'} purchase orders</div></article>
+        {(role === 'OWNER' || role === 'STOCK_MANAGER' || role === 'CASHIER') && (
+          <article className="stat-card" style={{ '--stat-accent': 'var(--green)' }}><div className="stat-label">Products</div><div className="stat-value">{summary?.products ?? '—'}</div><div className="stat-foot">Catalog items</div></article>
+        )}
+        {(role === 'OWNER' || role === 'STOCK_MANAGER') && (
+          <article className="stat-card" style={{ '--stat-accent': 'var(--blue)' }}><div className="stat-label">Available stock</div><div className="stat-value">{summary?.stockUnits ?? '—'}</div><div className="stat-foot">Units across loaded products</div></article>
+        )}
+        {(role === 'OWNER' || role === 'STOCK_MANAGER') && (
+          <article className="stat-card" style={{ '--stat-accent': 'var(--orange)' }}><div className="stat-label">Low stock</div><div className="stat-value">{summary?.lowStock ?? '—'}</div><div className="stat-foot">At or below minimum level</div></article>
+        )}
+        {(role === 'OWNER' || role === 'CASHIER') && (
+          <article className="stat-card" style={{ '--stat-accent': 'var(--yellow)' }}><div className="stat-label">Sales orders</div><div className="stat-value">{summary?.orders ?? '—'}</div><div className="stat-foot">{summary?.purchases ?? '—'} purchase orders</div></article>
+        )}
       </section>
       <div className="dashboard-grid">
+        {(role === 'OWNER' || role === 'CASHIER') && (
         <section className="panel">
           <div className="panel-title"><h2>Recent sales orders</h2><Link to="/orders" className="btn btn-secondary btn-small">View all</Link></div>
           {!summary ? <div className="loading">Loading store activity…</div> : summary.recentOrders.length === 0 ? (
@@ -81,12 +93,13 @@ function DashboardPage() {
             </tr>)}</tbody>
           </table></div>}
         </section>
+        )}
         <section className="panel">
           <div className="panel-title"><h2>Quick actions</h2></div>
-          <div className="quick-links">{shortcuts.map(([path, code, label]) => <Link className="quick-link" to={path} key={path}>
+          <div className="quick-links">{shortcuts.filter(s => s[3].includes(role)).map(([path, code, label]) => <Link className="quick-link" to={path} key={path}>
             <span className="quick-key">{code}</span><strong>{label}</strong>
           </Link>)}</div>
-          {summary && <p className="page-subtitle" style={{ marginTop: 18 }}>{summary.customers} customers · {summary.suppliers} suppliers</p>}
+          {summary && <p className="page-subtitle" style={{ marginTop: 18 }}>{(role === 'OWNER' || role === 'CASHIER') ? `${summary.customers} customers` : ''} {(role === 'OWNER') ? '·' : ''} {(role === 'OWNER' || role === 'STOCK_MANAGER') ? `${summary.suppliers} suppliers` : ''}</p>}
         </section>
       </div>
     </>

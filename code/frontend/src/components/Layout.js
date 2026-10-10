@@ -2,21 +2,38 @@ import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-const navItems = [
-  { section: 'Workspace' },
-  { path: '/', label: 'Overview', icon: 'OV', end: true },
-  { section: 'Catalog' },
-  { path: '/products', label: 'Products', icon: 'PR' },
-  { path: '/categories', label: 'Categories', icon: 'CA' },
-  { path: '/suppliers', label: 'Suppliers', icon: 'SU' },
-  { path: '/customers', label: 'Customers', icon: 'CU' },
-  { section: 'Stockroom' },
-  { path: '/inventory', label: 'Inventory', icon: 'IN' },
-  { path: '/stock-movements', label: 'Movements', icon: 'MV' },
-  { section: 'Operations' },
-  { path: '/purchases', label: 'Purchases', icon: 'PU' },
-  { path: '/orders', label: 'Sales orders', icon: 'SO' },
-];
+const getNavItems = (role) => {
+  const allItems = [
+    { section: 'Workspace', roles: ['OWNER', 'STOCK_MANAGER', 'CASHIER'] },
+    { path: '/', label: 'Overview', icon: 'OV', end: true, roles: ['OWNER', 'STOCK_MANAGER', 'CASHIER'] },
+    { section: 'Catalog', roles: ['OWNER', 'STOCK_MANAGER', 'CASHIER'] },
+    { path: '/products', label: 'Products', icon: 'PR', roles: ['OWNER', 'STOCK_MANAGER', 'CASHIER'] },
+    { path: '/categories', label: 'Categories', icon: 'CA', roles: ['OWNER', 'STOCK_MANAGER'] },
+    { path: '/suppliers', label: 'Suppliers', icon: 'SU', roles: ['OWNER', 'STOCK_MANAGER'] },
+    { path: '/customers', label: 'Customers', icon: 'CU', roles: ['OWNER', 'CASHIER'] },
+    { section: 'Stockroom', roles: ['OWNER', 'STOCK_MANAGER'] },
+    { path: '/inventory', label: 'Inventory', icon: 'IN', roles: ['OWNER', 'STOCK_MANAGER'] },
+    { path: '/stock-movements', label: 'Movements', icon: 'MV', roles: ['OWNER', 'STOCK_MANAGER'] },
+    { section: 'Operations', roles: ['OWNER', 'STOCK_MANAGER', 'CASHIER'] },
+    { path: '/purchases', label: 'Purchases', icon: 'PU', roles: ['OWNER', 'STOCK_MANAGER'] },
+    { path: '/orders', label: 'Sales orders', icon: 'SO', roles: ['OWNER', 'CASHIER'] },
+  ];
+
+  const userRole = role;
+  
+  // Filter items by role
+  const filtered = allItems.filter(item => item.roles.includes(userRole));
+  
+  // Remove empty sections
+  return filtered.filter((item, index, array) => {
+    if (item.section) {
+      // Keep section only if the NEXT item is NOT a section (meaning it has items)
+      const nextItem = array[index + 1];
+      return nextItem && !nextItem.section;
+    }
+    return true;
+  });
+};
 
 function Layout() {
   const { user, logout } = useAuth();
@@ -39,7 +56,7 @@ function Layout() {
           <p className="brand-caption">Inventory workspace</p>
         </div>
         <nav className="sidebar-nav">
-          {navItems.map((item, i) =>
+          {getNavItems(user?.role).map((item, i) =>
             item.section ? (
               <div key={i} className="nav-section">{item.section}</div>
             ) : (
