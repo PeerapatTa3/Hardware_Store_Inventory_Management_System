@@ -31,6 +31,9 @@ public class PurchaseItem {
     @Column(nullable = false)
     private Integer quantity;
 
+    @Column(name = "received_quantity", nullable = false)
+    private Integer receivedQuantity = 0;
+
     @Column(name = "unit_cost", nullable = false, precision = 19, scale = 2)
     private BigDecimal unitCost;
 
@@ -45,4 +48,3 @@ public class PurchaseItem {
         }
     }
 }
-
