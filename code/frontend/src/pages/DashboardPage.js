@@ -18,14 +18,21 @@ function DashboardPage() {
   const role = user?.role;
   const [summary, setSummary] = useState(null);
   const [error, setError] = useState('');
+  const [warning, setWarning] = useState('');
   const [refresh, setRefresh] = useState(0);
   const handleApprove = async (id) => {
-    try { await approveStockMovement(id); toast.success('Approved successfully'); setRefresh(r => r + 1); } catch (err) { setError(getErrorMessage(err)); }
+    setError('');
+    setWarning('');
+    try { await approveStockMovement(id); setWarning(''); toast.success('Approved successfully'); setRefresh(r => r + 1); } catch (err) {
+      if (err.response?.data?.error === 'STALE_STOCK_ADJUSTMENT') setWarning(getErrorMessage(err));
+      else setError(getErrorMessage(err));
+    }
   };
   const handleReject = async (id) => {
+    setError('');
+    setWarning('');
     try { await rejectStockMovement(id); toast.success('Rejected successfully'); setRefresh(r => r + 1); } catch (err) { setError(getErrorMessage(err)); }
   };
-
   useEffect(() => {
     let active = true;
     getDashboardSummary()
@@ -42,6 +49,13 @@ function DashboardPage() {
     <>
       <PageHeader eyebrow="Store operations" title="Overview" subtitle="A clear view of stock and activity across your store." />
       <Notice>{error}</Notice>
+      <Notice type="warning">{warning}</Notice>
+      {(role === 'OWNER' || role === 'STOCK_MANAGER') && summary?.pendingPurchases?.length > 0 && (
+        <div className="notice" style={{ alignItems: 'center', display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+          <span>มีใบสั่งซื้อรอดำเนินการ {summary.pendingPurchases.length} รายการ</span>
+          <Link to="/purchases" className="btn btn-secondary btn-small">ไปยัง Purchases</Link>
+        </div>
+      )}
       <section className="stats-grid">
         {(role === 'OWNER' || role === 'STOCK_MANAGER' || role === 'CASHIER') && (
           <article className="stat-card" style={{ '--stat-accent': 'var(--green)' }}><div className="stat-label">Products</div><div className="stat-value">{summary?.products ?? '—'}</div><div className="stat-foot">Catalog items</div></article>
@@ -59,8 +73,8 @@ function DashboardPage() {
       <div className="dashboard-grid">
         {(role === 'OWNER' || role === 'STOCK_MANAGER') && (
         <section className="panel">
-          <div className="panel-title"><h2>Action required</h2><Link to="/stock-movements" className="btn btn-secondary btn-small">View all</Link></div>
-          {!summary ? <div className="loading">Loading…</div> : summary.pendingApprovals?.length === 0 && summary.lowStockItems?.length === 0 ? (
+          <div className="panel-title"><h2>Request history</h2><Link to="/stock-movements" className="btn btn-secondary btn-small">View history</Link></div>
+          {!summary ? <div className="loading">Loading…</div> : summary.pendingApprovals?.length === 0 && summary.pendingPurchases?.length === 0 && summary.lowStockItems?.length === 0 ? (
             <div className="empty-state"><strong>All caught up!</strong>No pending approvals or low stock items.</div>
           ) : <div>
             {summary.lowStockItems?.length > 0 && <div className="table-wrap" style={{marginBottom: 16}}>
@@ -74,18 +88,37 @@ function DashboardPage() {
                 </tr>)}</tbody>
               </table>
             </div>}
-            {summary.pendingApprovals?.length > 0 && <div className="table-wrap">
-              <h3 style={{fontSize: '0.9rem', color: 'var(--blue)', marginBottom: 8}}>Pending stock approvals</h3>
+            {summary.pendingPurchases?.length > 0 && <div className="table-wrap" style={{marginBottom: 16}}>
+              <h3 style={{fontSize: '0.9rem', color: 'var(--blue)', marginBottom: 8}}>Pending purchase approvals</h3>
               <table>
-                <thead><tr><th>Date</th><th>Product</th><th>Qty</th><th>Status</th><th style={{textAlign: "right"}}>Action</th></tr></thead>
+                <thead><tr><th>Date</th><th>Purchase</th><th>Supplier</th><th>Items</th><th>Status</th><th style={{textAlign: "right"}}>Action</th></tr></thead>
+                <tbody>{summary.pendingPurchases.map((purchase) => <tr key={purchase.id}>
+                  <td>{formatDate(purchase.createdAt)}</td>
+                  <td>{purchase.purchaseNumber}</td>
+                  <td>{purchase.supplierName}</td>
+                  <td>{purchase.items?.map((item) => `${item.productName} × ${item.quantity}`).join(', ')}</td>
+                  <td><span className="badge badge-pending">Pending</span></td>
+                  <td style={{textAlign: 'right'}}>
+                    <Link to={`/purchases/${purchase.id}`} className="btn btn-sm btn-secondary">View detail</Link>
+                  </td>
+                </tr>)}</tbody>
+              </table>
+            </div>}
+            {summary.pendingApprovals?.length > 0 && <div className="table-wrap">
+              <h3 style={{fontSize: '0.9rem', color: 'var(--orange)', marginBottom: 8}}>Pending stock adjustments</h3>
+              <table>
+                <thead><tr><th>Date</th><th>Product</th><th>New quantity</th><th>Reason</th><th>Status</th><th style={{textAlign: "right"}}>Action</th></tr></thead>
                 <tbody>{summary.pendingApprovals.map((m) => <tr key={m.id}>
                   <td>{formatDate(m.movementAt)}</td>
                   <td>{m.productName}</td>
-                  <td>{m.movementType === 'OUT' ? '-' : '+'}{m.quantity}</td>
+                  <td>{m.quantity}</td>
+                  <td>{m.note || '—'}</td>
                   <td><span className="badge badge-pending">Pending</span></td>
                   <td style={{textAlign: 'right'}}>
-                    <button className="btn btn-sm btn-primary" style={{marginRight: 8}} onClick={() => handleApprove(m.id)}>Approve</button>
-                    <button className="btn btn-sm btn-secondary" onClick={() => handleReject(m.id)}>Reject</button>
+                    {role === 'OWNER' && <>
+                      <button className="btn btn-sm btn-primary" style={{marginRight: 8}} onClick={() => handleApprove(m.id)}>Approve</button>
+                      <button className="btn btn-sm btn-secondary" onClick={() => handleReject(m.id)}>Reject</button>
+                    </>}
                   </td>
                 </tr>)}</tbody>
               </table>

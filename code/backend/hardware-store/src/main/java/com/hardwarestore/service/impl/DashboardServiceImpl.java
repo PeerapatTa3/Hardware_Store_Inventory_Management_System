@@ -1,7 +1,10 @@
 package com.hardwarestore.service.impl;
 
 import com.hardwarestore.dto.response.DashboardSummaryResponse;
+import com.hardwarestore.dto.response.PurchaseOrderResponse;
 import com.hardwarestore.dto.response.SalesOrderResponse;
+import com.hardwarestore.domain.enums.PurchaseOrderStatus;
+import com.hardwarestore.mapper.PurchaseOrderMapper;
 import com.hardwarestore.mapper.SalesOrderMapper;
 import com.hardwarestore.repository.*;
 import com.hardwarestore.service.DashboardService;
@@ -23,6 +26,7 @@ public class DashboardServiceImpl implements DashboardService {
     private final SupplierRepository supplierRepository;
     private final CustomerRepository customerRepository;
     private final StockMovementRepository stockMovementRepository;
+    private final PurchaseOrderMapper purchaseOrderMapper;
     private final SalesOrderMapper salesOrderMapper;
     private final com.hardwarestore.mapper.InventoryStockMapper inventoryStockMapper;
     private final com.hardwarestore.mapper.StockMovementMapper stockMovementMapper;
@@ -53,6 +57,11 @@ public class DashboardServiceImpl implements DashboardService {
                 .map(stockMovementMapper::toResponse)
                 .collect(Collectors.toList());
 
+        List<PurchaseOrderResponse> pendingPurchases = purchaseOrderRepository.findByStatus(PurchaseOrderStatus.PENDING)
+                .stream()
+                .map(purchaseOrderMapper::toResponse)
+                .collect(Collectors.toList());
+
         return DashboardSummaryResponse.builder()
                 .products(products)
                 .stockUnits(stockUnits)
@@ -64,6 +73,7 @@ public class DashboardServiceImpl implements DashboardService {
                 .recentOrders(recentOrders)
                 .lowStockItems(lowStockItems)
                 .pendingApprovals(pendingApprovals)
+                .pendingPurchases(pendingPurchases)
                 .build();
     }
 }
