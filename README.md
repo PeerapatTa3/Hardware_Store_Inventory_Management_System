@@ -121,47 +121,11 @@ Database (H2 / PostgreSQL)
 * **Docker** และ **Docker Compose** (หากต้องการรันผ่าน Container)
 * **PostgreSQL** (สำหรับรัน Production mode)
 
-### Backend (Development / H2)
-ด้วยโหมดนี้ ระบบจะใช้ In-memory Database (H2) ซึ่งข้อมูลจะหายไปเมื่อปิดโปรแกรม เหมาะสำหรับการพัฒนา
-
-```powershell
-cd code/backend/hardware-store
-.\mvnw.cmd spring-boot:run
-```
-* Backend (Local) รันอยู่ที่พอร์ต: `http://localhost:8080`
-* Swagger UI (Local) (API Docs): `http://localhost:8080/swagger-ui.html`
-
-### Frontend
-```powershell
-cd code/frontend
-npm install
-npm start
-```
-* Frontend รันอยู่ที่พอร์ต: `http://localhost:3000`
-* กำหนด `REACT_APP_API_URL` ได้เมื่อต้องการชี้ไปยัง backend คนละ origin; ค่าเริ่มต้นคือ `http://localhost:8080`
-
-### Docker Compose
-Compose เริ่ม Backend ใน production profile และต้องเชื่อมต่อ PostgreSQL ที่เตรียมไว้แยกต่างหาก โดยกำหนดค่าต่อไปนี้ใน `.env` ที่ root:
-
-```dotenv
-DB_URL=jdbc:postgresql://<host>:5432/hardware_store
-DB_USERNAME=<username>
-DB_PASSWORD=<password>
-```
-
-จากนั้นรัน:
-
-```powershell
-docker compose up --build
-```
-Backend จะให้บริการที่ `http://localhost:8080`
 
 ---
 
 ## API Documentation
-* Swagger UI (Production): https://hardwarestoreinventorymanagementsystem-production.up.railway.app/swagger-ui/index.html
-* Swagger UI(Local): `http://localhost:8080/swagger-ui.html`
-* OpenAPI JSON(Local): `http://localhost:8080/v3/api-docs`
+* Swagger UI : https://hardwarestoreinventorymanagementsystem-production.up.railway.app/swagger-ui/index.html
 * API endpoint, authentication, validation และ response: [API Documentation](doc/api-documentation.md)
 
 ---
