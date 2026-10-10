@@ -22,7 +22,7 @@ function dataOf(result, fallback = []) {
 
 function DashboardPage() {
   const { user } = useAuth();
-  const role = user?.role || 'OWNER';
+  const role = user?.role;
   const [summary, setSummary] = useState(null);
   const [error, setError] = useState('');
 

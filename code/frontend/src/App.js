@@ -30,6 +30,15 @@ function PrivateRoute({ children }) {
   return user || token ? children : <Navigate to="/login" />;
 }
 
+function RoleRoute({ roles, children }) {
+  const { user } = useAuth();
+  const role = user?.role || localStorage.getItem('role');
+  if (!role || !roles.includes(role)) {
+    return <Navigate to="/" />;
+  }
+  return children;
+}
+
 function App() {
   return (
     <AuthProvider>
@@ -45,26 +54,37 @@ function App() {
             }
           >
             <Route index element={<DashboardPage />} />
-            <Route path="categories" element={<CategoryList />} />
-            <Route path="categories/new" element={<CategoryForm />} />
-            <Route path="categories/:id/edit" element={<CategoryForm />} />
-            <Route path="suppliers" element={<SupplierList />} />
-            <Route path="suppliers/new" element={<SupplierForm />} />
-            <Route path="suppliers/:id/edit" element={<SupplierForm />} />
-            <Route path="customers" element={<CustomerList />} />
-            <Route path="customers/new" element={<CustomerForm />} />
-            <Route path="customers/:id/edit" element={<CustomerForm />} />
+            
+            {/* Categories & Suppliers: OWNER, STOCK_MANAGER */}
+            <Route path="categories" element={<RoleRoute roles={['OWNER', 'STOCK_MANAGER']}><CategoryList /></RoleRoute>} />
+            <Route path="categories/new" element={<RoleRoute roles={['OWNER', 'STOCK_MANAGER']}><CategoryForm /></RoleRoute>} />
+            <Route path="categories/:id/edit" element={<RoleRoute roles={['OWNER', 'STOCK_MANAGER']}><CategoryForm /></RoleRoute>} />
+            
+            <Route path="suppliers" element={<RoleRoute roles={['OWNER', 'STOCK_MANAGER']}><SupplierList /></RoleRoute>} />
+            <Route path="suppliers/new" element={<RoleRoute roles={['OWNER', 'STOCK_MANAGER']}><SupplierForm /></RoleRoute>} />
+            <Route path="suppliers/:id/edit" element={<RoleRoute roles={['OWNER', 'STOCK_MANAGER']}><SupplierForm /></RoleRoute>} />
+            
+            {/* Customers: OWNER, CASHIER */}
+            <Route path="customers" element={<RoleRoute roles={['OWNER', 'CASHIER']}><CustomerList /></RoleRoute>} />
+            <Route path="customers/new" element={<RoleRoute roles={['OWNER', 'CASHIER']}><CustomerForm /></RoleRoute>} />
+            <Route path="customers/:id/edit" element={<RoleRoute roles={['OWNER', 'CASHIER']}><CustomerForm /></RoleRoute>} />
+            
+            {/* Products: All roles for view, OWNER/STOCK_MANAGER for edit */}
             <Route path="products" element={<ProductList />} />
-                        <Route path="products/new" element={<ProductForm />} />
-                        <Route path="products/:id/edit" element={<ProductForm />} />
-            <Route path="inventory" element={<InventoryPage />} />
-            <Route path="stock-movements" element={<StockMovementList />} />
-                        <Route path="purchases" element={<PurchaseList />} />
-            <Route path="purchases/new" element={<PurchaseForm />} />
-            <Route path="purchases/:id" element={<PurchaseDetail />} />
-            <Route path="orders" element={<OrderList />} />
-            <Route path="orders/new" element={<OrderForm />} />
-            <Route path="orders/:id" element={<OrderDetail />} />
+            <Route path="products/new" element={<RoleRoute roles={['OWNER', 'STOCK_MANAGER']}><ProductForm /></RoleRoute>} />
+            <Route path="products/:id/edit" element={<RoleRoute roles={['OWNER', 'STOCK_MANAGER']}><ProductForm /></RoleRoute>} />
+            
+            {/* Inventory & Stock: OWNER, STOCK_MANAGER */}
+            <Route path="inventory" element={<RoleRoute roles={['OWNER', 'STOCK_MANAGER']}><InventoryPage /></RoleRoute>} />
+            <Route path="stock-movements" element={<RoleRoute roles={['OWNER', 'STOCK_MANAGER']}><StockMovementList /></RoleRoute>} />
+            <Route path="purchases" element={<RoleRoute roles={['OWNER', 'STOCK_MANAGER']}><PurchaseList /></RoleRoute>} />
+            <Route path="purchases/new" element={<RoleRoute roles={['OWNER', 'STOCK_MANAGER']}><PurchaseForm /></RoleRoute>} />
+            <Route path="purchases/:id" element={<RoleRoute roles={['OWNER', 'STOCK_MANAGER']}><PurchaseDetail /></RoleRoute>} />
+            
+            {/* Orders: OWNER, CASHIER */}
+            <Route path="orders" element={<RoleRoute roles={['OWNER', 'CASHIER']}><OrderList /></RoleRoute>} />
+            <Route path="orders/new" element={<RoleRoute roles={['OWNER', 'CASHIER']}><OrderForm /></RoleRoute>} />
+            <Route path="orders/:id" element={<RoleRoute roles={['OWNER', 'CASHIER']}><OrderDetail /></RoleRoute>} />
           </Route>
         </Routes>
       </BrowserRouter>

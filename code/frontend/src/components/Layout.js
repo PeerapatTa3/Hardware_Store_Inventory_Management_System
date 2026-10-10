@@ -19,7 +19,7 @@ const getNavItems = (role) => {
     { path: '/orders', label: 'Sales orders', icon: 'SO', roles: ['OWNER', 'CASHIER'] },
   ];
 
-  const userRole = role || 'OWNER';
+  const userRole = role;
   
   // Filter items by role
   const filtered = allItems.filter(item => item.roles.includes(userRole));
