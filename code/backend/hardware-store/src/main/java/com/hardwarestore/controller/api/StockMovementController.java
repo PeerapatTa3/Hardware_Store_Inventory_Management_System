@@ -6,7 +6,9 @@ import com.hardwarestore.service.StockMovementService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -31,5 +33,17 @@ public class StockMovementController {
     @GetMapping("/products/{productId}")
     public List<StockMovementResponse> findByProductId(@PathVariable Long productId) {
         return stockMovementService.findByProductId(productId);
+    }
+
+    @PostMapping("/{id}/approve")
+    @PreAuthorize("hasRole('OWNER')")
+    public ResponseEntity<StockMovementResponse> approve(@PathVariable Long id) {
+        return ResponseEntity.ok(stockMovementService.approve(id));
+    }
+
+    @PostMapping("/{id}/reject")
+    @PreAuthorize("hasRole('OWNER')")
+    public ResponseEntity<StockMovementResponse> reject(@PathVariable Long id) {
+        return ResponseEntity.ok(stockMovementService.reject(id));
     }
 }

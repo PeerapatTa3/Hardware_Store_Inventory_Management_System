@@ -166,22 +166,25 @@ class StockMovementServiceImplTest {
 
         StockMovementResponse result = stockMovementService.create(request);
 
-        assertEquals(6, stock.getQuantity());
+        assertEquals(12, stock.getQuantity());
         assertEquals(StockMovementType.ADJUSTMENT, result.getMovementType());
         assertEquals(6, result.getQuantity());
-        verify(inventoryStockRepository).save(stock);
+        verify(inventoryStockRepository, never()).save(stock);
         verify(stockMovementRepository).save(argThat(movement ->
                 movement.getMovementType() == StockMovementType.ADJUSTMENT
                         && movement.getQuantity() == 6
+                        && movement.getStatus() == com.hardwarestore.domain.enums.StockMovementStatus.PENDING
                         && "Stock count correction".equals(movement.getNote())));
     }
 
     @Test
-    void create_shouldRejectAdjustmentBelowReservedQuantity() {
-        StockMovementRequest request = new StockMovementRequest();
-        request.setProductId(10L);
-        request.setMovementType(StockMovementType.ADJUSTMENT);
-        request.setQuantity(1);
+    void approve_shouldRejectAdjustmentBelowReservedQuantity() {
+        StockMovement movement = new StockMovement();
+        movement.setId(1L);
+        movement.setProduct(product);
+        movement.setMovementType(StockMovementType.ADJUSTMENT);
+        movement.setQuantity(1);
+        movement.setStatus(com.hardwarestore.domain.enums.StockMovementStatus.PENDING);
 
         InventoryStock stock = new InventoryStock();
         stock.setId(1L);
@@ -189,14 +192,13 @@ class StockMovementServiceImplTest {
         stock.setQuantity(12);
         stock.setReservedQuantity(2);
 
-        when(productRepository.findById(10L)).thenReturn(Optional.of(product));
+        when(stockMovementRepository.findById(1L)).thenReturn(Optional.of(movement));
         when(inventoryStockRepository.findByProductId(10L)).thenReturn(Optional.of(stock));
 
-        assertThrows(IllegalArgumentException.class, () -> stockMovementService.create(request));
+        assertThrows(IllegalArgumentException.class, () -> stockMovementService.approve(1L));
 
         assertEquals(12, stock.getQuantity());
         verify(inventoryStockRepository, never()).save(any(InventoryStock.class));
-        verify(stockMovementRepository, never()).save(any(StockMovement.class));
     }
 
     @Test
