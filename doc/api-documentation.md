@@ -1,59 +1,51 @@
-# API Documentation
+# API Documentation — Hardware Store Inventory Management System
 
-REST API ของ **Hardware Store Inventory Management System** (Spring Boot 4.1.1, Java 17)
-เอกสารนี้จัดทำจาก controller/DTO จริงใน `code/backend/hardware-store/src/main/java/com/hardwarestore/`
+REST API (Spring Boot, Java 17) จัดทำจาก controller และ DTO จริงใน `code/backend/hardware-store/src/main/java/com/hardwarestore/`
 
 | รายการ | ค่า |
-|--------|-----|
+|---|---|
 | Base URL (local) | `http://localhost:8080` |
-| Prefix ทุก endpoint (ยกเว้น auth) | `/api/v1` |
-| Swagger UI | `http://localhost:8080/swagger-ui.html` (หรือ `/swagger-ui/index.html`) |
-| OpenAPI JSON | `http://localhost:8080/v3/api-docs` |
-| H2 Console (dev) | `http://localhost:8080/h2-console` — JDBC URL `jdbc:h2:mem:hardwaredb`, user `sa`, รหัสผ่านว่าง |
+| Prefix | `/api/v1` (ยกเว้น `/api/auth`) |
+| Swagger UI | `/swagger-ui.html` |
+| OpenAPI JSON | `/v3/api-docs` |
 | Content-Type | `application/json` |
-| การยืนยันตัวตน | JWT Bearer (`Authorization: Bearer <token>`) |
+| Authentication | JWT Bearer (`Authorization: Bearer <token>`) |
 
-> **หมายเหตุ:** ทุก endpoint ต้องส่ง HTTP method ให้ถูก — เปิด URL ใน browser (GET) กับ endpoint ที่เป็น POST จะได้ error ไม่ใช่หน้าข้อมูล ให้ทดสอบผ่าน Swagger UI หรือ Postman
+## 1. Authentication
 
----
-
-## 1. การยืนยันตัวตน (Authentication)
-
-`SecurityConfig` (`…/config/SecurityConfig.java` : 27-42) ตั้งค่า:
-- `/api/auth/**` เปิดให้เรียกได้โดยไม่ต้อง login
-- `/v3/api-docs/**`, `/swagger-ui/**`, `/swagger-ui.html`, `/h2-console/**` เปิดให้เข้าได้
-- **ทุก path อื่นต้องมี JWT** (`anyRequest().authenticated()`)
-- Session แบบ `STATELESS`, ปิด CSRF
+ทุก endpoint ต้องมี JWT ยกเว้น `/api/auth/**`, Swagger UI และ `/v3/api-docs` (`config/SecurityConfig.java:36-40`)
 
 ### POST `/api/auth/login`
 
-**Request**
+Request
+
 ```json
-{ "username": "admin", "password": "<รหัสผ่าน>" }
+{ "username": "admin", "password": "<password>" }
 ```
 
-**Response 200**
+Response `200`
+
 ```json
-{ "token": "eyJhbGciOiJIUzI1NiJ9...", "username": "admin", "role": "OWNER" }
+{ "token": "<jwt>", "username": "admin", "role": "OWNER" }
 ```
 
-**Response 401** — body เป็นข้อความธรรมดา `Invalid username or password` (ไม่ใช่ `ErrorResponse`)
+Response `401` — username หรือ password ไม่ถูกต้อง
 
-**วิธีใช้ token ใน Swagger UI:** เรียก `/api/auth/login` → คัดลอก `token` → กดปุ่ม **Authorize** → วาง token (ไม่ต้องพิมพ์คำว่า `Bearer`) → Authorize
+ใน Swagger UI: เรียก login → คัดลอก `token` → กด **Authorize** → วาง token
 
-**ข้อมูลผู้ใช้ตั้งต้น:** `data.sql` มี user `admin` (role `OWNER`) เก็บรหัสผ่านแบบ BCrypt เท่านั้น — ถ้าไม่ทราบรหัสผ่านเดิม ให้สร้าง hash ใหม่ด้วย `BCryptPasswordEncoder` แล้วแทนค่าในคอลัมน์ `password` ของ `data.sql`
+### Roles
 
-**รายละเอียด token** (`…/config/JwtUtil.java`): HS256, หมดอายุ 10 ชั่วโมง, `subject` = username
-> คีย์ลงนามถูกสร้างสุ่มใหม่ทุกครั้งที่แอปสตาร์ท (`Keys.secretKeyFor`, บรรทัด 20) — **รีสตาร์ทแอปแล้ว token เก่าใช้ไม่ได้ ต้อง login ใหม่**
+`CASHIER`, `STOCK_MANAGER`, `OWNER` ใช้ `@PreAuthorize` ร่วมกับ `@EnableMethodSecurity` (`SecurityConfig.java:19`) ทำให้บังคับสิทธิ์จริง
 
-### สิทธิ์ (Roles)
-`CASHIER`, `STOCK_MANAGER`, `OWNER` — ดูหัวข้อ 4 สำหรับสถานะการบังคับใช้จริง
+| สิทธิ์ที่ต้องมี | Endpoint |
+|---|---|
+| `OWNER` หรือ `STOCK_MANAGER` | `POST /products`, `PUT /products/{id}`, `GET /products/admin`, `GET /products/admin/{id}` |
+| `OWNER` | `DELETE /products/{id}`, `POST /stock-movements/{id}/approve`, `POST /stock-movements/{id}/reject`, `POST /purchases/{id}/approve` |
+| ผู้ที่ login แล้ว | endpoint อื่นทั้งหมด |
 
----
+## 2. รูปแบบ Error
 
-## 2. รูปแบบ Error (`ErrorResponse`)
-
-ทุก exception ที่ผ่าน `GlobalExceptionHandler` (`…/exception/GlobalExceptionHandler.java`) จะตอบรูปแบบเดียวกัน:
+ทุก error ผ่าน `GlobalExceptionHandler` (`@RestControllerAdvice`) และตอบรูปแบบเดียวกัน
 
 ```json
 {
@@ -65,341 +57,153 @@ REST API ของ **Hardware Store Inventory Management System** (Spring Boot 4
 }
 ```
 
-| HTTP | `error` | เกิดเมื่อ | Exception |
-|------|---------|-----------|-----------|
-| 400 | `VALIDATION_FAILED` | body ไม่ผ่าน `@Valid` — `message` = `field: ข้อความ` คั่นด้วย `, ` | `MethodArgumentNotValidException` |
-| 400 | `INVALID_OPERATION` | สต็อกไม่พอ, ค่าไม่ถูกต้อง | `IllegalArgumentException` |
-| 404 | `RESOURCE_NOT_FOUND` | ไม่พบข้อมูล (id ไม่มี หรือถูก soft-delete) | `ResourceNotFoundException` |
-| 409 | `DUPLICATE_RESOURCE` | SKU/ชื่อ/อีเมล/เบอร์ซ้ำ | `DuplicateResourceException` |
-| 409 | `INVALID_PURCHASE_STATE` | แก้/รับของใบสั่งซื้อที่ไม่ใช่ `PENDING` | `InvalidPurchaseStateException` |
-| 409 | `INVALID_SALES_ORDER_STATE` | เปลี่ยนสถานะ/แก้ใบสั่งขายผิดเงื่อนไข | `InvalidSalesOrderStateException`, `IllegalStateException` |
-| 500 | `INTERNAL_SERVER_ERROR` | exception อื่นทั้งหมด (`message` คงที่ `Unexpected error occurred`) | `Exception` |
-
-### ข้อควรระวัง: handler `Exception.class` (บรรทัด 60-65) กลืน error ของ Spring ไว้
-เพราะจับ `Exception` ทุกชนิด error ต่อไปนี้จึงถูกแปลงเป็น **500** แทนที่จะเป็นรหัสที่ถูกต้อง:
-- เรียก endpoint ผิด HTTP method (เช่น เปิด `/api/auth/login` ใน browser) → ควรเป็น 405
-- body JSON พัง / enum ผิดค่า (เช่น `status: "XYZ"`) → ควรเป็น 400
-- `AccessDeniedException` จาก `@PreAuthorize` (ถ้าเปิดใช้) → ควรเป็น 403
-
-ถ้าเจอ 500 กับ `Unexpected error occurred` ให้ตรวจสอบสามกรณีนี้ก่อน
-
----
+| HTTP | `error` | เกิดเมื่อ |
+|---|---|---|
+| 400 | `VALIDATION_FAILED` | body ไม่ผ่าน `@Valid` (`message` = `field: ข้อความ`) |
+| 400 | `INVALID_OPERATION` | ค่าไม่ถูกต้อง เช่น สต็อกไม่พอ |
+| 401 | `UNAUTHORIZED` | ยืนยันตัวตนไม่ผ่าน |
+| 403 | `FORBIDDEN` | role ไม่มีสิทธิ์ |
+| 404 | `RESOURCE_NOT_FOUND` | ไม่พบข้อมูล |
+| 409 | `DUPLICATE_RESOURCE` | ข้อมูลที่ต้องไม่ซ้ำ (SKU, ชื่อ, อีเมล, เบอร์) ซ้ำ |
+| 409 | `INVALID_PURCHASE_STATE` | ทำรายการกับใบสั่งซื้อ/รายการสต็อกที่สถานะไม่ถูกต้อง |
+| 409 | `INVALID_SALES_ORDER_STATE` | ทำรายการกับใบสั่งขายที่สถานะไม่ถูกต้อง |
+| 500 | `INTERNAL_SERVER_ERROR` | error อื่นๆ |
 
 ## 3. Endpoints
 
-ลำดับตาราง: Method · Path · คำอธิบาย · Request · Response (สถานะสำเร็จ)
-
-### 3.1 Categories — `/api/v1/categories` (`CategoryController`)
+### 3.1 Categories — `/api/v1/categories`
 
 | Method | Path | คำอธิบาย | Request | Response |
-|--------|------|-----------|---------|----------|
-| POST | `/api/v1/categories` | สร้างหมวดหมู่ | `CategoryRequest` | 201 `CategoryResponse` |
-| GET | `/api/v1/categories` | รายการทั้งหมด | — | 200 `CategoryResponse[]` |
-| GET | `/api/v1/categories/{id}` | ดูรายตัว | — | 200 `CategoryResponse` |
-| PUT | `/api/v1/categories/{id}` | แก้ไข | `CategoryRequest` | 200 `CategoryResponse` |
+|---|---|---|---|---|
+| POST | `/api/v1/categories` | สร้าง | `CategoryRequest` | 201 |
+| GET | `/api/v1/categories` | รายการทั้งหมด | — | 200 |
+| GET | `/api/v1/categories/{id}` | ดูรายตัว | — | 200 |
+| PUT | `/api/v1/categories/{id}` | แก้ไข | `CategoryRequest` | 200 |
 | DELETE | `/api/v1/categories/{id}` | ลบ (soft delete) | — | 204 |
 
-### 3.2 Suppliers — `/api/v1/suppliers` (`SupplierController`)
+### 3.2 Suppliers — `/api/v1/suppliers`
 
 | Method | Path | คำอธิบาย | Request | Response |
-|--------|------|-----------|---------|----------|
-| POST | `/api/v1/suppliers` | สร้าง (ตรวจชื่อ/อีเมล/เบอร์ไม่ซ้ำ) | `SupplierRequest` | 201 `SupplierResponse` |
-| GET | `/api/v1/suppliers` | รายการทั้งหมด | — | 200 `SupplierResponse[]` |
-| GET | `/api/v1/suppliers/{id}` | ดูรายตัว | — | 200 `SupplierResponse` |
-| PUT | `/api/v1/suppliers/{id}` | แก้ไข | `SupplierRequest` | 200 `SupplierResponse` |
+|---|---|---|---|---|
+| POST | `/api/v1/suppliers` | สร้าง | `SupplierRequest` | 201 |
+| GET | `/api/v1/suppliers` | รายการทั้งหมด | — | 200 |
+| GET | `/api/v1/suppliers/{id}` | ดูรายตัว | — | 200 |
+| PUT | `/api/v1/suppliers/{id}` | แก้ไข | `SupplierRequest` | 200 |
 | DELETE | `/api/v1/suppliers/{id}` | ลบ (soft delete) | — | 204 |
 
-### 3.3 Customers — `/api/v1/customers` (`CustomerController`)
+### 3.3 Customers — `/api/v1/customers`
 
 | Method | Path | คำอธิบาย | Request | Response |
-|--------|------|-----------|---------|----------|
-| POST | `/api/v1/customers` | สร้าง (ตรวจเบอร์/อีเมลไม่ซ้ำ) | `CustomerRequest` | 201 `CustomerResponse` |
-| GET | `/api/v1/customers` | รายการทั้งหมด | — | 200 `CustomerResponse[]` |
-| GET | `/api/v1/customers/{id}` | ดูรายตัว | — | 200 `CustomerResponse` |
-| PUT | `/api/v1/customers/{id}` | แก้ไข | `CustomerRequest` | 200 `CustomerResponse` |
+|---|---|---|---|---|
+| POST | `/api/v1/customers` | สร้าง | `CustomerRequest` | 201 |
+| GET | `/api/v1/customers` | รายการทั้งหมด | — | 200 |
+| GET | `/api/v1/customers/search?phone=` | ค้นหาจากเบอร์โทร | — | 200 |
+| GET | `/api/v1/customers/{id}` | ดูรายตัว | — | 200 |
+| PUT | `/api/v1/customers/{id}` | แก้ไข | `CustomerRequest` | 200 |
 | DELETE | `/api/v1/customers/{id}` | ลบ (soft delete) | — | 204 |
 
-### 3.4 Products — `/api/v1/products` (`ProductController`)
-
-| Method | Path | คำอธิบาย | Request | Response | สิทธิ์ที่ประกาศ (`@PreAuthorize`) |
-|--------|------|-----------|---------|----------|-------------------------------------|
-| POST | `/api/v1/products` | สร้างสินค้า | `ProductRequest` | 201 `ProductAdminResponse` | OWNER, STOCK_MANAGER |
-| GET | `/api/v1/products` | ค้นหา/แบ่งหน้า (ไม่มีราคาต้นทุน) | query ด้านล่าง | 200 `Page<ProductResponse>` | ทุกคนที่ login |
-| GET | `/api/v1/products/admin` | ค้นหา/แบ่งหน้า (มี `costPrice`) | query ด้านล่าง | 200 `Page<ProductAdminResponse>` | OWNER, STOCK_MANAGER |
-| GET | `/api/v1/products/{id}` | ดูรายตัว (ไม่มีราคาต้นทุน) | — | 200 `ProductResponse` | ทุกคนที่ login |
-| GET | `/api/v1/products/admin/{id}` | ดูรายตัว (มี `costPrice`) | — | 200 `ProductAdminResponse` | OWNER, STOCK_MANAGER |
-| PUT | `/api/v1/products/{id}` | แก้ไข | `ProductRequest` | 200 `ProductAdminResponse` | OWNER, STOCK_MANAGER |
-| DELETE | `/api/v1/products/{id}` | ลบ (soft delete) | — | 204 | OWNER |
-
-**Query parameters ของรายการสินค้า**
-
-| ชื่อ | ชนิด | ค่าเริ่มต้น | คำอธิบาย |
-|------|------|-------------|-----------|
-| `page` | int | `0` | หน้าที่ (เริ่มที่ 0) |
-| `size` | int | `10` | จำนวนต่อหน้า |
-| `sortBy` | string | `id` | ฟิลด์ที่เรียง (ต้องเป็นชื่อฟิลด์ของ `Product` เช่น `name`, `price`) |
-| `direction` | string | `asc` | `asc` หรือ `desc` |
-| `keyword` | string | — | ค้นหาในชื่อสินค้า (ไม่สนตัวพิมพ์) |
-| `categoryId` | long | — | กรองตามหมวดหมู่ (ใช้ร่วมกับ `keyword` ได้) |
-
-ผลลัพธ์เป็น `Page` ของ Spring Data (`content`, `totalElements`, `totalPages`, `number`, `size`, …)
-
-### 3.5 Inventory — `/api/v1/inventory` (`InventoryController`)
+### 3.4 Products — `/api/v1/products`
 
 | Method | Path | คำอธิบาย | Request | Response |
-|--------|------|-----------|---------|----------|
+|---|---|---|---|---|
+| POST | `/api/v1/products` | สร้าง | `ProductRequest` | 201 `ProductAdminResponse` |
+| GET | `/api/v1/products` | ค้นหา/แบ่งหน้า/เรียงลำดับ (ไม่มีราคาต้นทุน) | query ด้านล่าง | 200 `Page<ProductResponse>` |
+| GET | `/api/v1/products/admin` | เหมือนด้านบน แต่มี `costPrice` และ `minimumStock` | query ด้านล่าง | 200 `Page<ProductAdminResponse>` |
+| GET | `/api/v1/products/{id}` | ดูรายตัว | — | 200 `ProductResponse` |
+| GET | `/api/v1/products/admin/{id}` | ดูรายตัว (มีราคาต้นทุน) | — | 200 `ProductAdminResponse` |
+| PUT | `/api/v1/products/{id}` | แก้ไข | `ProductRequest` | 200 `ProductAdminResponse` |
+| DELETE | `/api/v1/products/{id}` | ลบ (soft delete) | — | 204 |
+
+Query ของรายการสินค้า (Pagination & Sorting)
+
+| ชื่อ | ค่าเริ่มต้น | คำอธิบาย |
+|---|---|---|
+| `page` | `0` | หน้าที่ (เริ่มที่ 0) |
+| `size` | `10` | จำนวนต่อหน้า |
+| `sortBy` | `id` | ฟิลด์ที่ใช้เรียง เช่น `name`, `price` |
+| `direction` | `asc` | `asc` หรือ `desc` |
+| `keyword` | — | ค้นหาในชื่อสินค้า (ไม่สนตัวพิมพ์) |
+| `categoryId` | — | กรองตามหมวดหมู่ (ใช้ร่วมกับ `keyword` ได้) |
+
+### 3.5 Inventory — `/api/v1/inventory`
+
+| Method | Path | คำอธิบาย | Request | Response |
+|---|---|---|---|---|
 | GET | `/api/v1/inventory/products/{productId}` | ดูสต็อกของสินค้า | — | 200 `InventoryStockResponse` |
-| PUT | `/api/v1/inventory/products/{productId}` | ปรับยอดสต็อกเป็นค่าที่กำหนด (สร้าง movement ชนิด `ADJUSTMENT`) | `InventoryStockRequest` | 200 `InventoryStockResponse` |
+| PUT | `/api/v1/inventory/products/{productId}` | ขอปรับยอดสต็อกเป็นค่าที่กำหนด | `InventoryStockRequest` | 200 `InventoryStockResponse` |
 
-### 3.6 Stock Movements — `/api/v1/stock-movements` (`StockMovementController`)
+การปรับยอดสร้างรายการ `ADJUSTMENT` สถานะ `PENDING` ยอดสต็อกจะเปลี่ยนเมื่อ `OWNER` อนุมัติ (ดูหัวข้อ 3.6)
 
-| Method | Path | คำอธิบาย | Request | Response | สิทธิ์ที่ประกาศ |
-|--------|------|-----------|---------|----------|----------------|
-| POST | `/api/v1/stock-movements` | บันทึกการรับเข้า/จ่ายออก/ปรับยอด | `StockMovementRequest` | 201 `StockMovementResponse` | — |
-| GET | `/api/v1/stock-movements` | ประวัติทั้งหมด (ใหม่สุดก่อน) | — | 200 `StockMovementResponse[]` | — |
-| GET | `/api/v1/stock-movements/products/{productId}` | ประวัติของสินค้า (ใหม่สุดก่อน) | — | 200 `StockMovementResponse[]` | — |
-| POST | `/api/v1/stock-movements/{id}/approve` | อนุมัติการเคลื่อนไหวสต็อก | — | 200 `StockMovementResponse` | OWNER |
-| POST | `/api/v1/stock-movements/{id}/reject` | ปฏิเสธการเคลื่อนไหวสต็อก | — | 200 `StockMovementResponse` | OWNER |
-
-หลังบันทึก หากสต็อก `available <= minimumStock` ระบบ log คำเตือน `LOW STOCK` (ไม่กระทบ response)
-
-### 3.7 Purchase Orders — `/api/v1/purchases` (`PurchaseOrderController`)
-
-| Method | Path | คำอธิบาย | Request | Response | สิทธิ์ที่ประกาศ |
-|--------|------|-----------|---------|----------|----------------|
-| POST | `/api/v1/purchases` | สร้างใบสั่งซื้อ (สถานะ `PENDING`, เลข `PO-<UUID>`) | `PurchaseOrderRequest` | 201 `PurchaseOrderResponse` | — |
-| GET | `/api/v1/purchases` | รายการทั้งหมด (ใหม่สุดก่อน) | — | 200 `PurchaseOrderResponse[]` | — |
-| GET | `/api/v1/purchases/{id}` | ดูรายตัว | — | 200 `PurchaseOrderResponse` | — |
-| PUT | `/api/v1/purchases/{id}` | แก้ไข — เฉพาะ `PENDING` | `PurchaseOrderRequest` | 200 `PurchaseOrderResponse` | — |
-| POST | `/api/v1/purchases/{id}/approve` | อนุมัติใบสั่งซื้อ | — | 200 `PurchaseOrderResponse` | OWNER |
-| POST | `/api/v1/purchases/{id}/receive` | รับของ: เพิ่มสต็อก (`IN`) ตามที่ระบุ → เปลี่ยนสถานะ | `ReceivePurchaseRequest` | 200 `PurchaseOrderResponse` | — |
-
-### 3.8 Sales Orders — `/api/v1/orders` (`SalesOrderController`)
+### 3.6 Stock Movements — `/api/v1/stock-movements`
 
 | Method | Path | คำอธิบาย | Request | Response |
-|--------|------|-----------|---------|----------|
-| POST | `/api/v1/orders` | สร้างใบสั่งขาย (สถานะ `PENDING`, เลข `SO-<UUID>`) — ตรวจลูกค้า/สินค้า/สต็อก แล้ว**ตัดสต็อกทันที** | `SalesOrderRequest` | 201 `SalesOrderResponse` |
-| GET | `/api/v1/orders` | รายการทั้งหมด (ใหม่สุดก่อน) | — | 200 `SalesOrderResponse[]` |
-| GET | `/api/v1/orders/{id}` | ดูรายตัว | — | 200 `SalesOrderResponse` |
-| PUT | `/api/v1/orders/{id}` | แก้ไข — เฉพาะ `PENDING` (ปรับสต็อกเฉพาะส่วนต่าง) | `SalesOrderRequest` | 200 `SalesOrderResponse` |
-| POST | `/api/v1/orders/{id}/status` | เปลี่ยนสถานะ | `SalesOrderStatusRequest` | 200 `SalesOrderResponse` |
+|---|---|---|---|---|
+| POST | `/api/v1/stock-movements` | บันทึกรับเข้า/จ่ายออก/ปรับยอด | `StockMovementRequest` | 201 |
+| GET | `/api/v1/stock-movements` | ประวัติทั้งหมด (ใหม่สุดก่อน) | — | 200 |
+| GET | `/api/v1/stock-movements/products/{productId}` | ประวัติของสินค้า | — | 200 |
+| POST | `/api/v1/stock-movements/{id}/approve` | อนุมัติ (เฉพาะ `PENDING`) — `OWNER` | — | 200 |
+| POST | `/api/v1/stock-movements/{id}/reject` | ปฏิเสธ (เฉพาะ `PENDING`) — `OWNER` | — | 200 |
 
-**กฎการเปลี่ยนสถานะ** (`POST /{id}/status`)
+กติกา: `IN`/`OUT` มีผลกับสต็อกทันทีและสถานะเป็น `APPROVED`; `ADJUSTMENT` สถานะเป็น `PENDING` รอ `OWNER` อนุมัติ หลังบันทึก ถ้าสต็อกที่ใช้ได้ ≤ `minimumStock` ระบบส่ง `LowStockEvent`
 
-| จาก → ไป | ผล |
-|----------|-----|
-| `PENDING` → `CONFIRMED` | ✔ |
-| `PENDING` → `CANCELLED` | ✔ คืนสต็อก |
-| `CONFIRMED` → `SHIPPED` | ✔ |
-| `CONFIRMED` → `COMPLETED` | ✔ คิดส่วนลดแล้วเขียนทับ `totalAmount` |
-| `CONFIRMED` → `CANCELLED` | ✔ คืนสต็อก |
-| `SHIPPED` → `COMPLETED` | ✔ |
-| `SHIPPED` → `CANCELLED` | ✘ 409 |
-| `COMPLETED` / `CANCELLED` → อะไรก็ตาม | ✘ 409 |
-| `PENDING` → `SHIPPED` / `COMPLETED` | ✘ 409 |
-| ส่ง `status: "PENDING"` เมื่อไม่ได้เป็น `PENDING` | ✘ 409 |
+### 3.7 Purchase Orders — `/api/v1/purchases`
 
-**ส่วนลด** (คำนวณตอน `COMPLETED`): สมาชิก → ลด 10%; ไม่ใช่สมาชิกแต่ซื้อรวม ≥ 10 ชิ้น → ลด 10%; นอกนั้นราคาเต็ม — รายละเอียดใน `design-patterns.md`
+| Method | Path | คำอธิบาย | Request | Response |
+|---|---|---|---|---|
+| POST | `/api/v1/purchases` | สร้างใบสั่งซื้อ (สถานะ `PENDING`, เลข `PO-<UUID>`) | `PurchaseOrderRequest` | 201 |
+| GET | `/api/v1/purchases` | รายการทั้งหมด (ใหม่สุดก่อน) | — | 200 |
+| GET | `/api/v1/purchases/{id}` | ดูรายตัว | — | 200 |
+| PUT | `/api/v1/purchases/{id}` | แก้ไข (เฉพาะ `PENDING`) | `PurchaseOrderRequest` | 200 |
+| POST | `/api/v1/purchases/{id}/approve` | อนุมัติ (`PENDING` → `APPROVED`) — `OWNER` | — | 200 |
+| POST | `/api/v1/purchases/{id}/receive` | รับของ เพิ่มสต็อกเป็น `IN` ต่อรายการ | `ReceivePurchaseRequest` | 200 |
 
----
+สถานะใบสั่งซื้อ: `PENDING` → (approve) `APPROVED` → (receive) `PARTIAL` ถ้ายังรับไม่ครบ หรือ `COMPLETED` ถ้ารับครบทุกรายการ รับของได้เฉพาะสถานะ `APPROVED` หรือ `PARTIAL`
 
-## 4. สถานะการบังคับสิทธิ์ (ควรรู้ก่อนส่งงาน)
+### 3.8 Sales Orders — `/api/v1/orders`
 
-`ProductController`, `StockMovementController`, และ `PurchaseOrderController` มี `@PreAuthorize` แต่ใน `SecurityConfig` **ไม่มี `@EnableMethodSecurity`** ดังนั้นตอนนี้ annotation เหล่านี้ **ยังไม่ถูกบังคับใช้** — user ที่ login แล้ว role ใดก็เรียก endpoint เหล่านี้ได้
+| Method | Path | คำอธิบาย | Request | Response |
+|---|---|---|---|---|
+| POST | `/api/v1/orders` | สร้างใบสั่งขาย ตรวจลูกค้า/สินค้า/สต็อก คิดส่วนลด และตัดสต็อกทันที | `SalesOrderRequest` | 201 |
+| GET | `/api/v1/orders` | รายการทั้งหมด (ใหม่สุดก่อน) | — | 200 |
+| GET | `/api/v1/orders/{id}` | ดูรายตัว | — | 200 |
+| PUT | `/api/v1/orders/{id}` | แก้ไข (เฉพาะ `PENDING`) | `SalesOrderRequest` | 200 |
+| POST | `/api/v1/orders/{id}/status` | เปลี่ยนสถานะ | `SalesOrderStatusRequest` | 200 |
 
-ถ้าต้องการให้สิทธิ์ทำงานตามที่ประกาศ ต้องเพิ่ม `@EnableMethodSecurity` บน `SecurityConfig` และแก้ `GlobalExceptionHandler` ให้ปล่อย `AccessDeniedException` ผ่าน (ไม่เช่นนั้นจะได้ 500 แทน 403)
+ส่วนลด: ลูกค้าสมาชิกลด 10%; ไม่ใช่สมาชิกแต่ซื้อรวม ≥ 10 ชิ้นลด 10%; นอกนั้นราคาเต็ม ราคาต่อหน่วยใช้ `products.price` ที่เซิร์ฟเวอร์ ไม่รับจาก request
 
----
+กติกาเปลี่ยนสถานะ (กำหนดใน State classes) — ที่ไม่ได้ระบุคือ 409
 
-## 5. Request DTO และกฎ Validation
+| สถานะปัจจุบัน | ไปได้ |
+|---|---|
+| `PENDING` | `CONFIRMED`, `CANCELLED` |
+| `CONFIRMED` | `SHIPPED`, `COMPLETED`, `CANCELLED` |
+| `SHIPPED` | `COMPLETED` |
+| `COMPLETED` / `CANCELLED` | ไม่มี |
 
-ข้อความ error คือ `message` ที่ระบุใน annotation (ภาษาอังกฤษ)
+ขอเปลี่ยนกลับเป็น `PENDING` ไม่ได้ (409) เมื่อ `CANCELLED` ระบบคืนสต็อก
 
-### `CategoryRequest`
-| ฟิลด์ | ชนิด | กฎ |
-|-------|------|-----|
-| `name` | string | จำเป็น (`@NotBlank`), ≤ 100 ตัวอักษร |
-| `description` | string | ≤ 255 |
+### 3.9 Dashboard — `/api/v1/dashboard`
 
-### `SupplierRequest`
-| ฟิลด์ | ชนิด | กฎ |
-|-------|------|-----|
-| `name` | string | จำเป็น, ≤ 100 |
-| `phone` | string | ตัวเลข `+ - ( )` และช่องว่างเท่านั้น, ≤ 20 |
-| `email` | string | รูปแบบอีเมล, ≤ 150 |
-| `address` | string | ≤ 255 |
+| Method | Path | คำอธิบาย | Response |
+|---|---|---|---|
+| GET | `/api/v1/dashboard/summary` | ตัวเลขสรุปสำหรับหน้า Dashboard | 200 `DashboardSummaryResponse` |
 
-### `CustomerRequest`
-| ฟิลด์ | ชนิด | กฎ |
-|-------|------|-----|
-| `name` | string | จำเป็น, ≤ 150 |
-| `phone` | string | จำเป็น, ตัวเลข `+ - ( )` และช่องว่างเท่านั้น, ≤ 20 |
-| `email` | string | รูปแบบอีเมล, ≤ 150 |
-| `address` | string | ≤ 500 |
+`DashboardSummaryResponse`: `products`, `stockUnits`, `lowStock`, `purchases`, `orders`, `suppliers`, `customers`, `recentOrders[]` (ใบสั่งขายล่าสุด 5 รายการ)
 
-> `CustomerRequest` ไม่มีฟิลด์ `member` — การตั้งสถานะสมาชิกยังไม่มี API (ค่าเริ่มต้น `false`, ตั้งผ่าน `data.sql`/DB)
+## 4. Request DTO และกฎ Validation
 
-### `ProductRequest`
-| ฟิลด์ | ชนิด | กฎ |
-|-------|------|-----|
-| `sku` | string | จำเป็น, ≤ 100, ไม่ซ้ำ |
-| `name` | string | จำเป็น, ≤ 150 |
-| `description` | string | ≤ 500 |
-| `unit` | string | จำเป็น, ≤ 50 |
-| `price` | decimal | จำเป็น, > 0 |
-| `costPrice` | decimal | จำเป็น, > 0 |
-| `minimumStock` | integer | จำเป็น, > 0 |
-| `categoryId` | long | จำเป็น |
-| `supplierId` | long | จำเป็น |
-
-### `InventoryStockRequest`
-| ฟิลด์ | ชนิด | กฎ |
-|-------|------|-----|
-| `quantity` | integer | จำเป็น, ≥ 0 (เป็นค่ายอดใหม่ ไม่ใช่ส่วนต่าง) |
-| `reason` | string | ไม่บังคับ (บันทึกเป็น `note`) |
-
-### `StockMovementRequest`
-| ฟิลด์ | ชนิด | กฎ |
-|-------|------|-----|
-| `productId` | long | จำเป็น |
-| `movementType` | enum | จำเป็น: `IN`, `OUT`, `ADJUSTMENT` |
-| `quantity` | integer | จำเป็น, > 0 |
-| `referenceNo` | string | ไม่บังคับ |
-| `note` | string | ไม่บังคับ |
-
-### `PurchaseOrderRequest`
-| ฟิลด์ | ชนิด | กฎ |
-|-------|------|-----|
-| `supplierId` | long | จำเป็น, > 0 |
-| `items` | `PurchaseItemRequest[]` | จำเป็น ห้ามว่าง |
-
-`PurchaseItemRequest`: `productId` (จำเป็น, > 0), `quantity` (จำเป็น, > 0), `unitCost` (จำเป็น, > 0)
-
-### `ReceivePurchaseRequest`
-| ฟิลด์ | ชนิด | กฎ |
-|-------|------|-----|
-| `items` | `ReceiveItemRequest[]` | จำเป็น ห้ามว่าง |
-
-`ReceiveItemRequest`: `productId` (จำเป็น), `receivedQuantity` (จำเป็น, ≥ 0)
-
-### `SalesOrderRequest`
-| ฟิลด์ | ชนิด | กฎ |
-|-------|------|-----|
-| `customerId` | long | ไม่บังคับ (ไม่ส่ง = ลูกค้าทั่วไป) |
-| `shippingAddress` | string | ไม่บังคับ |
-| `paymentMethod` | string | ไม่บังคับ |
-| `items` | `SalesOrderItemRequest[]` | จำเป็น ห้ามว่าง |
-
-`SalesOrderItemRequest`: `productId` (จำเป็น, > 0), `quantity` (จำเป็น, > 0), `unitPrice` (**deprecated — เซิร์ฟเวอร์ไม่ใช้ค่านี้** ใช้ `products.price` แทน)
-
-### `SalesOrderStatusRequest`
-| ฟิลด์ | ชนิด | กฎ |
-|-------|------|-----|
-| `status` | enum | จำเป็น: `PENDING`, `CONFIRMED`, `SHIPPED`, `COMPLETED`, `CANCELLED` |
-
----
-
-## 6. Response DTO
-
-| DTO | ฟิลด์ |
-|-----|-------|
-| `AuthResponse` | `token`, `username`, `role` |
-| `CategoryResponse` | `id`, `name`, `description` |
-| `SupplierResponse` | `id`, `name`, `phone`, `email`, `address` |
-| `CustomerResponse` | `id`, `name`, `phone`, `email`, `address` |
-| `ProductResponse` | `id`, `sku`, `name`, `description`, `unit`, `price`, `categoryId`, `supplierId`, `quantity` |
-| `ProductAdminResponse` | ทุกฟิลด์ของ `ProductResponse` + `costPrice`, `minimumStock` |
-| `InventoryStockResponse` | `id`, `productId`, `productName`, `quantity`, `reservedQuantity`, `availableQuantity` |
-| `StockMovementResponse` | `id`, `productId`, `productName`, `movementType`, `quantity`, `referenceNo`, `note`, `movementAt` |
-| `PurchaseOrderResponse` | `id`, `purchaseNumber`, `supplierId`, `supplierName`, `status`, `totalAmount`, `createdAt`, `items[]` |
-| `PurchaseItemResponse` | `id`, `productId`, `productName`, `quantity`, `unitCost`, `subtotal` |
-| `SalesOrderResponse` | `id`, `orderNumber`, `customerId`, `customerName`, `shippingAddress`, `paymentMethod`, `status`, `totalAmount`, `createdAt`, `items[]` |
-| `SalesOrderItemResponse` | `id`, `productId`, `productName`, `quantity`, `unitPrice`, `subtotal` |
-| `ErrorResponse` | `timestamp`, `status`, `error`, `message`, `path` |
-
----
-
-## 7. ตัวอย่างการใช้งาน (ลำดับทดสอบแนะนำ)
-
-ข้อมูลตั้งต้นใน `data.sql`: สินค้า id 1-3, ลูกค้า id 1 (ทั่วไป) และ 2 (สมาชิก), ซัพพลายเออร์ id 1-2
-
-**1) Login → ได้ token**
-```http
-POST /api/auth/login
-{ "username": "admin", "password": "<รหัสผ่าน>" }
-```
-
-**2) สร้างใบสั่งขายให้ลูกค้าสมาชิก**
-```http
-POST /api/v1/orders
-Authorization: Bearer <token>
-
-{
-  "customerId": 2,
-  "shippingAddress": "789 Nonthaburi",
-  "paymentMethod": "CASH",
-  "items": [ { "productId": 1, "quantity": 2 } ]
-}
-```
-→ 201, `status: "PENDING"`, `totalAmount: 500.00`, สต็อกสินค้า 1 ลดจาก 50 เหลือ 48
-
-**3) ยืนยัน แล้วปิดงาน (คิดส่วนลด)**
-```http
-POST /api/v1/orders/{id}/status    { "status": "CONFIRMED" }
-POST /api/v1/orders/{id}/status    { "status": "COMPLETED" }
-```
-→ `totalAmount` เปลี่ยนเป็น `450.00` (สมาชิกลด 10%)
-
-**4) สั่งซื้อจากซัพพลายเออร์, อนุมัติ, แล้วรับของ**
-```http
-POST /api/v1/purchases
-{ "supplierId": 1, "items": [ { "productId": 1, "quantity": 20, "unitCost": 150.00 } ] }
-
-POST /api/v1/purchases/{id}/approve
-
-POST /api/v1/purchases/{id}/receive
-{ "items": [ { "productId": 1, "receivedQuantity": 20 } ] }
-```
-→ `status: "COMPLETED"`, สต็อกสินค้า 1 เพิ่มขึ้น 20
-
-**5) ทดสอบ error**
-```http
-POST /api/v1/orders  { "items": [ { "productId": 1, "quantity": 99999 } ] }
-```
-→ 400 `INVALID_OPERATION` `Insufficient stock for product id: 1. Available: …`
-
-```http
-POST /api/v1/orders/{id}/status   { "status": "CANCELLED" }   // เมื่อสถานะเป็น COMPLETED
-```
-→ 409 `INVALID_SALES_ORDER_STATE`
-
----
-
-## 9. Dashboard (ภาพรวม)
-
-### GET `/api/v1/dashboard/summary`
-**หน้าที่:** สรุปตัวเลขสถิติต่างๆ ในระบบสำหรับแสดงผลบนหน้า Dashboard เพื่อลดปัญหา N+1 Query จากหน้าเว็บ
-**สิทธิ์:** ผู้ใช้ที่ล็อกอินเข้าระบบ (OWNER, STOCK_MANAGER, CASHIER)
-
-**Response `200 OK` (DashboardSummaryResponse)**
-```json
-{
-  "products": 42,
-  "stockUnits": 1500,
-  "lowStock": 3,
-  "purchases": 12,
-  "orders": 85,
-  "suppliers": 5,
-  "customers": 150,
-  "recentOrders": [
-    {
-      "id": 1,
-      "orderNumber": "SO-20261010-001",
-      "customerName": "John Doe",
-      "totalAmount": 1500.00,
-      "status": "COMPLETED",
-      "createdAt": "2026-10-10T14:30:00"
-    }
-  ]
-}
-```
+| DTO | ฟิลด์และกฎ |
+|---|---|
+| `CategoryRequest` | `name` จำเป็น ≤ 100; `description` ≤ 255 |
+| `SupplierRequest` | `name` จำเป็น ≤ 100; `phone` ตัวเลข `+ - ( )` และช่องว่าง ≤ 20; `email` รูปแบบอีเมล ≤ 150; `address` ≤ 255 |
+| `CustomerRequest` | `name` จำเป็น ≤ 150; `phone` จำเป็น ตัวเลข `+ - ( )` และช่องว่าง ≤ 20; `email` รูปแบบอีเมล ≤ 150; `address` ≤ 500; `member` boolean |
+| `ProductRequest` | `sku` จำเป็น ≤ 100; `name` จำเป็น ≤ 150; `description` ≤ 500; `unit` จำเป็น ≤ 50; `price`, `costPrice`, `minimumStock` จำเป็น > 0; `categoryId`, `supplierId` จำเป็น |
+| `InventoryStockRequest` | `quantity` จำเป็น ≥ 0 (ยอดใหม่ ไม่ใช่ส่วนต่าง); `reason` ไม่บังคับ |
+| `StockMovementRequest` | `productId` จำเป็น; `movementType` จำเป็น (`IN`/`OUT`/`ADJUSTMENT`); `quantity` จำเป็น > 0; `referenceNo`, `note` ไม่บังคับ |
+| `PurchaseOrderRequest` | `supplierId` จำเป็น > 0; `items[]` ห้ามว่าง — แต่ละรายการ `productId` > 0, `quantity` > 0, `unitCost` > 0 |
+| `PurchaseItemRequest` | `productId` จำเป็น > 0; `quantity` จำเป็น > 0; `unitCost` จำเป็น > 0 |
+| `ReceivePurchaseRequest` | `items[]` จำเป็น — แต่ละรายการ `productId` จำเป็น, `receivedQuantity` จำเป็น ≥ 0 |
+| `ReceiveItemRequest` | `productId` จำเป็น; `receivedQuantity` จำเป็น ≥ 0 |
+| `SalesOrderRequest` | `customerId` ไม่บังคับ; `shippingAddress`, `paymentMethod` ไม่บังคับ; `items[]` ห้ามว่าง — แต่ละรายการ `productId` > 0, `quantity` > 0 |
+| `SalesOrderItemRequest` | `productId` จำเป็น > 0; `quantity` จำเป็น > 0; `unitPrice` deprecated — เซิร์ฟเวอร์ไม่ใช้ค่านี้ ใช้ `products.price` แทน |
+| `SalesOrderStatusRequest` | `status` จำเป็น (`PENDING`, `CONFIRMED`, `SHIPPED`, `COMPLETED`, `CANCELLED`) |

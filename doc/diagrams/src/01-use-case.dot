@@ -1,0 +1,34 @@
+digraph UseCase {
+  rankdir=LR; splines=true; nodesep=0.25; ranksep=2.2;
+  fontname="Helvetica"; node [fontname="Helvetica", fontsize=12]; edge [dir=none];
+
+  node [shape=box, style="rounded,bold", width=1.6, height=0.6];
+  Cashier [label="Cashier"]; SM [label="Stock Manager"]; Owner [label="Owner"];
+
+  Owner -> Cashier [style=dashed, dir=forward, arrowhead=empty, label="  inherits all", fontsize=10];
+  Owner -> SM [style=dashed, dir=forward, arrowhead=empty, label="  inherits all", fontsize=10];
+
+  subgraph cluster_sys {
+    label="Hardware Store System"; style=rounded; fontsize=14; color="#555555";
+    node [shape=ellipse, style=solid, width=3.2, height=0.5, fontsize=11];
+    UC1 [label="Login (JWT)"];
+    UC2 [label="View dashboard"];
+    UC3 [label="Search products / view price"];
+    UC4 [label="Manage customers"];
+    UC5 [label="Create / edit sales order"];
+    UC6 [label="Change sales order status"];
+    UC7 [label="Manage products (incl. cost price)"];
+    UC8 [label="Manage categories and suppliers"];
+    UC9 [label="View inventory / record stock movement"];
+    UC10 [label="Request stock adjustment"];
+    UC11 [label="Create / edit purchase order"];
+    UC12 [label="Receive purchase"];
+    UC13 [label="Approve purchase order"];
+    UC14 [label="Approve / reject stock movement"];
+    UC15 [label="Delete product"];
+  }
+
+  Cashier -> UC1; Cashier -> UC2; Cashier -> UC3; Cashier -> UC4; Cashier -> UC5; Cashier -> UC6;
+  SM -> UC1; SM -> UC2; SM -> UC3; SM -> UC7; SM -> UC8; SM -> UC9; SM -> UC10; SM -> UC11; SM -> UC12;
+  Owner -> UC13; Owner -> UC14; Owner -> UC15;
+}

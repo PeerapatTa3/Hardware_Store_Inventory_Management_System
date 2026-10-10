@@ -1,0 +1,39 @@
+classDiagram
+    direction LR
+    class ProductController {
+        <<Controller - MVC>>
+        -ProductService productService
+    }
+    class ProductService {
+        <<interface - Service Layer>>
+    }
+    class ProductServiceImpl {
+        <<Service Layer>>
+        -ProductRepository productRepository
+        -ProductMapper productMapper
+    }
+    class ProductRepository {
+        <<Repository>>
+        +existsBySkuIgnoreCase(sku)
+        +findByNameContainingIgnoreCase(keyword, pageable)
+    }
+    class ProductMapper {
+        <<Mapper - MapStruct>>
+    }
+    class Product {
+        <<Entity - Model>>
+    }
+    class ProductRequest {
+        <<DTO>>
+    }
+    class ProductResponse {
+        <<DTO>>
+    }
+    ProductController --> ProductService : Dependency Injection
+    ProductService <|.. ProductServiceImpl
+    ProductServiceImpl --> ProductRepository : Dependency Injection
+    ProductServiceImpl --> ProductMapper : Dependency Injection
+    ProductRepository ..> Product
+    ProductMapper ..> Product
+    ProductMapper ..> ProductRequest
+    ProductMapper ..> ProductResponse

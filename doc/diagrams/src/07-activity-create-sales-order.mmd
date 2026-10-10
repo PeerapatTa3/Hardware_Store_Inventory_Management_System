@@ -1,0 +1,28 @@
+flowchart TD
+    A([Start]) --> B[Cashier submits sales order]
+    B --> C{Customer ID given?}
+    C -- yes --> D{Customer exists?}
+    D -- no --> E1[404 Not Found]
+    D -- yes --> F
+    C -- no --> F{All products exist?}
+    F -- no --> E2[404 Not Found]
+    F -- yes --> G{"Stock sufficient?<br/>available + previous - requested >= 0"}
+    G -- no --> E3[400 Insufficient stock]
+    G -- yes --> H[Take unit price from product.price]
+    H --> I{Customer is member?}
+    I -- yes --> J[MemberDiscount: 10% off]
+    I -- no --> K{Total quantity >= 10?}
+    K -- yes --> L[BulkDiscount: 10% off]
+    K -- no --> M[NormalDiscount: full price]
+    J --> N[Calculate total and save order<br/>status = COMPLETED]
+    L --> N
+    M --> N
+    N --> O[Record stock movement OUT for each item]
+    O --> P{available <= minimumStock?}
+    P -- yes --> Q[Publish LowStockEvent<br/>listener logs warning]
+    P -- no --> R[Return 201 Created]
+    Q --> R
+    R --> Z([End])
+    E1 --> Z
+    E2 --> Z
+    E3 --> Z
