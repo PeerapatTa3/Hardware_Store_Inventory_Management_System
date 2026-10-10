@@ -5,6 +5,7 @@ import * as categoryApi from '../api/categories';
 import * as customerApi from '../api/customers';
 import * as productApi from '../api/products';
 import * as supplierApi from '../api/suppliers';
+import { useAuth } from '../context/AuthContext';
 
 export const resourceConfig = {
   categories: {
@@ -42,13 +43,12 @@ export const resourceConfig = {
   products: {
     label: 'Products', singular: 'Product',
     api: { 
-      list: localStorage.getItem('role') === 'CASHIER' ? productApi.getProducts : productApi.getProductsAdmin, 
-      get: localStorage.getItem('role') === 'CASHIER' ? productApi.getProduct : productApi.getProductAdmin, 
+      list: productApi.getProductsAdmin,
+      get: productApi.getProductAdmin,
       create: productApi.createProduct, 
       update: productApi.updateProduct, 
       delete: productApi.deleteProduct 
     },
-    readOnly: localStorage.getItem('role') === 'CASHIER',
     paginated: true,
     fields: [
       { name: 'sku', label: 'SKU', required: true, maxLength: 100 },
@@ -105,6 +105,10 @@ function unwrapList(data) {
 
 function ResourceListPage({ configKey }) {
   const config = resourceConfig[configKey];
+  const { user } = useAuth();
+  const role = user?.role || localStorage.getItem('role');
+  const readOnly = configKey === 'products' && role === 'CASHIER';
+  const list = readOnly ? productApi.getProducts : config.api.list;
   const [rows, setRows] = useState([]);
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(0);
@@ -118,7 +122,7 @@ function ResourceListPage({ configKey }) {
     setLoading(true);
     setError('');
     const params = config.paginated ? { page, size: 10, sortBy: 'id', direction: 'desc', keyword: query || undefined } : undefined;
-    config.api.list(params).then(({ data }) => {
+    list(params).then(({ data }) => {
       if (!active) return;
       setRows(unwrapList(data));
       setPageCount(Math.max(1, data?.totalPages || 1));
@@ -126,7 +130,7 @@ function ResourceListPage({ configKey }) {
       if (active) setError(getErrorMessage(requestError));
     }).finally(() => active && setLoading(false));
     return () => { active = false; };
-  }, [config, page, query, refresh]);
+  }, [config, list, page, query, refresh]);
 
   const visibleRows = config.paginated || !query.trim()
     ? rows
@@ -146,7 +150,7 @@ function ResourceListPage({ configKey }) {
   return (
     <>
       <PageHeader eyebrow="Catalog" title={config.label} subtitle={`Manage ${config.label.toLowerCase()} records.`}
-        action={<Link className="btn btn-primary" to={`/${configKey}/new`}>＋ Add {config.singular}</Link>} />
+        action={!readOnly && <Link className="btn btn-primary" to={`/${configKey}/new`}>＋ Add {config.singular}</Link>} />
       <section className="panel">
         <div className="toolbar">
           <input className="form-control search-input" value={query} placeholder={`Search ${config.label.toLowerCase()}`}
@@ -158,11 +162,11 @@ function ResourceListPage({ configKey }) {
           <div className="empty-state"><strong>No {config.label.toLowerCase()} found</strong>{query ? 'Try a different search.' : 'Create a record to get started.'}</div>
         ) : (
           <div className="table-wrap"><table>
-            <thead><tr>{config.columns.map(([, label]) => <th key={label}>{label}</th>)}{!config.readOnly && <th>Actions</th>}</tr></thead>
+            <thead><tr>{config.columns.map(([, label]) => <th key={label}>{label}</th>)}{!readOnly && <th>Actions</th>}</tr></thead>
             <tbody>{visibleRows.map((row) => (
               <tr key={row.id}>
                 {config.columns.map(([key, label, render]) => <td key={label}>{render ? render(row[key], row) : (row[key] ?? '—')}</td>)}
-                {!config.readOnly && <td><div className="row-actions">
+                {!readOnly && <td><div className="row-actions">
                   <Link className="btn btn-secondary btn-small" to={`/${configKey}/${row.id}/edit`} aria-label={`Edit ${row.name || row.sku}`}>Edit</Link>
                   <button className="btn btn-danger btn-small" onClick={() => remove(row)}>Delete</button>
                 </div></td>}
@@ -264,5 +268,3 @@ export function ResourceFormPage({ configKey }) {
 }
 
 export default ResourceListPage;
-
-

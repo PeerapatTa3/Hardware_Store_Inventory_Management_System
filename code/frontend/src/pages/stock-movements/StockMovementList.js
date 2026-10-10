@@ -7,6 +7,7 @@ function StockMovementList() {
   const [movements, setMovements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [warning, setWarning] = useState('');
   const [refresh, setRefresh] = useState(0);
   const role = localStorage.getItem('role');
 
@@ -21,17 +22,24 @@ function StockMovementList() {
   }, [refresh]);
 
   const handleApprove = async (id) => {
+    setError('');
+    setWarning('');
     try { await approveStockMovement(id); toast.success('Approved successfully'); setRefresh(r => r + 1); } 
-    catch (err) { setError(getErrorMessage(err)); }
+    catch (err) {
+      if (err.response?.data?.error === 'STALE_STOCK_ADJUSTMENT') setWarning(getErrorMessage(err));
+      else setError(getErrorMessage(err));
+    }
   };
   const handleReject = async (id) => {
+    setError('');
+    setWarning('');
     try { await rejectStockMovement(id); toast.success('Rejected successfully'); setRefresh(r => r + 1); } 
     catch (err) { setError(getErrorMessage(err)); }
   };
 
   return <>
     <PageHeader title="Stock movements" subtitle="History of all inventory changes" />
-    <section className="panel"><Notice>{error}</Notice>
+    <section className="panel"><Notice>{error}</Notice><Notice type="warning">{warning}</Notice>
       {loading ? <div className="loading">Loading…</div> : <div className="table-wrap">
         <table className="data-table"><thead><tr>
           <th>Date</th><th>Product</th><th>Type</th><th>Quantity</th><th>Reference</th><th>Status</th>
