@@ -1,29 +1,61 @@
 import React, { useEffect, useState } from 'react';
-import { getStockMovements } from '../../api/stockMovements';
+import { toast } from 'react-toastify';
+import { getStockMovements, approveStockMovement, rejectStockMovement } from '../../api/stockMovements';
 import { formatDate, getErrorMessage, Notice, PageHeader } from '../ResourcePage';
 
 function StockMovementList() {
-  const [items, setItems] = useState([]);
+  const [movements, setMovements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [refresh, setRefresh] = useState(0);
+  const role = localStorage.getItem('role');
 
   useEffect(() => {
     let active = true;
-    getStockMovements().then(({ data }) => active && setItems(Array.isArray(data) ? data : []))
-      .catch((requestError) => active && setError(getErrorMessage(requestError)))
-      .finally(() => active && setLoading(false));
+    getStockMovements().then(({ data }) => {
+      if (active) { setMovements(data); setLoading(false); }
+    }).catch(err => {
+      if (active) { setError(getErrorMessage(err)); setLoading(false); }
+    });
     return () => { active = false; };
-  }, []);
+  }, [refresh]);
+
+  const handleApprove = async (id) => {
+    try { await approveStockMovement(id); toast.success('Approved successfully'); setRefresh(r => r + 1); } 
+    catch (err) { setError(getErrorMessage(err)); }
+  };
+  const handleReject = async (id) => {
+    try { await rejectStockMovement(id); toast.success('Rejected successfully'); setRefresh(r => r + 1); } 
+    catch (err) { setError(getErrorMessage(err)); }
+  };
 
   return <>
-    <PageHeader eyebrow="Stockroom" title="Stock movements" subtitle="A ledger of inbound, outbound and adjustment activity." />
+    <PageHeader title="Stock movements" subtitle="History of all inventory changes" />
     <section className="panel"><Notice>{error}</Notice>
-      {loading ? <div className="loading">Loading movements…</div> : items.length === 0 ? <div className="empty-state"><strong>No movements recorded</strong>Receiving purchases and stock adjustments will appear here.</div> : (
-        <div className="table-wrap"><table><thead><tr><th>Date</th><th>Product</th><th>Movement</th><th>Quantity</th><th>Reference</th><th>Note</th></tr></thead>
-          <tbody>{items.map((movement) => <tr key={movement.id}><td>{formatDate(movement.movementAt)}</td><td><strong>{movement.productName || `Product #${movement.productId}`}</strong></td>
-            <td><span className={`badge badge-${String(movement.movementType).toLowerCase()}`}>{movement.movementType}</span></td><td>{movement.quantity}</td><td>{movement.referenceNo || '—'}</td><td>{movement.note || '—'}</td></tr>)}</tbody>
-        </table></div>
-      )}
+      {loading ? <div className="loading">Loading…</div> : <div className="table-wrap">
+        <table className="data-table"><thead><tr>
+          <th>Date</th><th>Product</th><th>Type</th><th>Quantity</th><th>Reference</th><th>Status</th>
+          {role === 'OWNER' && <th>Action</th>}
+        </tr></thead><tbody>
+          {movements.length === 0 ? <tr><td colSpan="7" className="empty-state">No movements</td></tr> :
+            movements.map(m => (
+              <tr key={m.id}>
+                <td>{formatDate(m.movementAt)}</td>
+                <td>{m.productName}</td>
+                <td><span className={`badge badge-${m.movementType.toLowerCase()}`}>{m.movementType}</span></td>
+                <td>{m.movementType === 'OUT' ? '-' : '+'}{m.quantity}</td>
+                <td>{m.referenceNo || '-'}</td>
+                <td><span className={`badge badge-${(m.status || 'APPROVED').toLowerCase()}`}>{m.status || 'APPROVED'}</span></td>
+                {role === 'OWNER' && <td>
+                   {m.status === 'PENDING' && <>
+                      <button className="btn btn-sm btn-primary" style={{marginRight: 8}} onClick={() => handleApprove(m.id)}>Approve</button>
+                      <button className="btn btn-sm btn-secondary" onClick={() => handleReject(m.id)}>Reject</button>
+                   </>}
+                </td>}
+              </tr>
+            ))}
+        </tbody></table>
+      </div>}
     </section>
   </>;
 }

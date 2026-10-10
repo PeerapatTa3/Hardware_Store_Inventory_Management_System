@@ -27,6 +27,7 @@ class SalesOrderStrategyStateTest {
         order.confirm();
         assertEquals(SalesOrderStatus.CONFIRMED, order.getStatus());
 
+        order.applyPricing();
         order.complete();
         assertEquals(SalesOrderStatus.COMPLETED, order.getStatus());
         assertEquals(new BigDecimal("900.00"), order.getTotalAmount().setScale(2));
@@ -44,6 +45,7 @@ class SalesOrderStrategyStateTest {
         order.getItems().add(item);
 
         order.confirm();
+        order.applyPricing();
         order.complete();
 
         assertEquals(new BigDecimal("900.00"), order.getTotalAmount().setScale(2));
@@ -64,6 +66,7 @@ class SalesOrderStrategyStateTest {
         order.getItems().add(item);
 
         order.confirm();
+        order.applyPricing();
         order.complete();
 
         assertEquals(new BigDecimal("180.00"), order.getTotalAmount().setScale(2));

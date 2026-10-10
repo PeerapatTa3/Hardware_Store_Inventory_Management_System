@@ -49,42 +49,29 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public Page<ProductResponse> findAll(int page, int size, String sortBy, String direction, String keyword, Long categoryId) {
-        String effectiveSortBy = (sortBy == null || sortBy.isBlank()) ? "id" : sortBy;
-        Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
-
-        Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, effectiveSortBy));
-
-        Page<Product> productPage;
-        if (keyword != null && !keyword.isBlank() && categoryId != null) {
-            productPage = productRepository.findByNameContainingIgnoreCaseAndCategoryId(keyword, categoryId, pageable);
-        } else if (keyword != null && !keyword.isBlank()) {
-            productPage = productRepository.findByNameContainingIgnoreCase(keyword, pageable);
-        } else if (categoryId != null) {
-            productPage = productRepository.findByCategoryId(categoryId, pageable);
-        } else {
-            productPage = productRepository.findAll(pageable);
-        }
-
-        return productPage.map(productMapper::toResponse);
+        return getProductsPage(page, size, sortBy, direction, keyword, categoryId).map(productMapper::toResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ProductAdminResponse> findAllAdmin(int page, int size, String sortBy, String direction, String keyword, Long categoryId) {
+        return getProductsPage(page, size, sortBy, direction, keyword, categoryId).map(productMapper::toAdminResponse);
+    }
+
+    private Page<Product> getProductsPage(int page, int size, String sortBy, String direction, String keyword, Long categoryId) {
         String effectiveSortBy = (sortBy == null || sortBy.isBlank()) ? "id" : sortBy;
         Sort.Direction sortDirection = "desc".equalsIgnoreCase(direction) ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(sortDirection, effectiveSortBy));
-        Page<Product> productPage;
+
         if (keyword != null && !keyword.isBlank() && categoryId != null) {
-            productPage = productRepository.findByNameContainingIgnoreCaseAndCategoryId(keyword, categoryId, pageable);
+            return productRepository.findByNameContainingIgnoreCaseAndCategoryId(keyword, categoryId, pageable);
         } else if (keyword != null && !keyword.isBlank()) {
-            productPage = productRepository.findByNameContainingIgnoreCase(keyword, pageable);
+            return productRepository.findByNameContainingIgnoreCase(keyword, pageable);
         } else if (categoryId != null) {
-            productPage = productRepository.findByCategoryId(categoryId, pageable);
+            return productRepository.findByCategoryId(categoryId, pageable);
         } else {
-            productPage = productRepository.findAll(pageable);
+            return productRepository.findAll(pageable);
         }
-        return productPage.map(productMapper::toAdminResponse);
     }
 
     @Override

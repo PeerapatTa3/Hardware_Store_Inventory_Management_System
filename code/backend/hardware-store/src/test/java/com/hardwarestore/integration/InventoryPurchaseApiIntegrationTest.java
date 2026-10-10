@@ -54,6 +54,7 @@ class InventoryPurchaseApiIntegrationTest {
     private PurchaseOrderRepository purchaseOrderRepository;
 
     @Test
+    @org.springframework.security.test.context.support.WithMockUser(roles = "OWNER")
     void purchaseReceiveApiShouldPersistOrderStockAndInboundMovement() throws Exception {
         String unique = UUID.randomUUID().toString();
         Category category = new Category();
@@ -99,7 +100,16 @@ class InventoryPurchaseApiIntegrationTest {
         assertTrue(purchaseId > 0);
         assertFalse(purchaseNumber.isBlank());
 
-        mockMvc.perform(post("/api/v1/purchases/{id}/receive", purchaseId))
+        mockMvc.perform(post("/api/v1/purchases/{id}/approve", purchaseId))
+                .andExpect(status().isOk());
+
+        String receiveRequest = """
+                {"items":[{"productId":%d,"receivedQuantity":3}]}
+                """.formatted(product.getId());
+
+        mockMvc.perform(post("/api/v1/purchases/{id}/receive", purchaseId)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(receiveRequest))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("COMPLETED"));
 

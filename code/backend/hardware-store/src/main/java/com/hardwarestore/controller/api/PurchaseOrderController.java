@@ -1,6 +1,8 @@
 package com.hardwarestore.controller.api;
 
 import com.hardwarestore.dto.request.PurchaseOrderRequest;
+import com.hardwarestore.dto.request.ReceivePurchaseRequest;
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.hardwarestore.dto.response.PurchaseOrderResponse;
 import com.hardwarestore.service.PurchaseOrderService;
 import jakarta.validation.Valid;
@@ -39,8 +41,14 @@ public class PurchaseOrderController {
         return purchaseOrderService.update(id, request);
     }
 
+    @PostMapping("/{id}/approve")
+    @PreAuthorize("hasRole('OWNER')")
+    public PurchaseOrderResponse approve(@PathVariable Long id) {
+        return purchaseOrderService.approve(id);
+    }
+
     @PostMapping("/{id}/receive")
-    public PurchaseOrderResponse receive(@PathVariable Long id) {
-        return purchaseOrderService.receive(id);
+    public PurchaseOrderResponse receive(@PathVariable Long id, @Valid @RequestBody ReceivePurchaseRequest request) {
+        return purchaseOrderService.receive(id, request);
     }
 }

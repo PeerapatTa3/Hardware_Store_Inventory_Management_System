@@ -11,4 +11,8 @@ public interface StockMovementService {
     List<StockMovementResponse> findAll();
 
     List<StockMovementResponse> findByProductId(Long productId);
+
+    StockMovementResponse approve(Long id);
+
+    StockMovementResponse reject(Long id);
 }
