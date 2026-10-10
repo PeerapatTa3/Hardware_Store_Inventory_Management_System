@@ -307,7 +307,7 @@ REST API ของ **Hardware Store Inventory Management System** (Spring Boot 4
 | `CategoryResponse` | `id`, `name`, `description` |
 | `SupplierResponse` | `id`, `name`, `phone`, `email`, `address` |
 | `CustomerResponse` | `id`, `name`, `phone`, `email`, `address` |
-| `ProductResponse` | `id`, `sku`, `name`, `description`, `unit`, `price`, `categoryId`, `supplierId` |
+| `ProductResponse` | `id`, `sku`, `name`, `description`, `unit`, `price`, `categoryId`, `supplierId`, `quantity` |
 | `ProductAdminResponse` | ทุกฟิลด์ของ `ProductResponse` + `costPrice`, `minimumStock` |
 | `InventoryStockResponse` | `id`, `productId`, `productName`, `quantity`, `reservedQuantity`, `availableQuantity` |
 | `StockMovementResponse` | `id`, `productId`, `productName`, `movementType`, `quantity`, `referenceNo`, `note`, `movementAt` |

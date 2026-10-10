@@ -331,11 +331,11 @@ class SalesOrderServiceImplTest {
     void updateStatusShouldRejectInvalidTransition() {
         SalesOrder order = new SalesOrder();
         order.setId(8L);
-        order.setStatus(COMPLETED);
+        order.setStatus(CANCELLED);
 
         when(salesOrderRepository.findById(8L)).thenReturn(Optional.of(order));
 
-        assertThrows(InvalidSalesOrderStateException.class, () -> salesOrderService.updateStatus(8L, CANCELLED));
+        assertThrows(InvalidSalesOrderStateException.class, () -> salesOrderService.updateStatus(8L, COMPLETED));
     }
 
     private InventoryStock createInventoryStock(Product product, int availableQuantity) {

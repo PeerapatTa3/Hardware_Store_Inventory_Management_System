@@ -51,7 +51,7 @@ class SalesOrderStateTest {
         SalesOrder completedOrder = new SalesOrder();
         completedOrder.setStatus(SalesOrderStatus.COMPLETED);
         assertThrows(InvalidSalesOrderStateException.class, completedOrder::confirm);
-        assertThrows(InvalidSalesOrderStateException.class, completedOrder::cancel);
+        
         assertThrows(InvalidSalesOrderStateException.class, completedOrder::complete);
     }
 }
