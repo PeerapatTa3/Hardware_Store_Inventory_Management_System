@@ -128,8 +128,8 @@ Database (H2 / PostgreSQL)
 cd code/backend/hardware-store
 .\mvnw.cmd spring-boot:run
 ```
-* Backend รันอยู่ที่พอร์ต: `http://localhost:8080`
-* Swagger UI (API Docs): `http://localhost:8080/swagger-ui.html`
+* Backend (Local) รันอยู่ที่พอร์ต: `http://localhost:8080`
+* Swagger UI (Local) (API Docs): `http://localhost:8080/swagger-ui.html`
 
 ### Frontend
 ```powershell
@@ -159,9 +159,9 @@ Backend จะให้บริการที่ `http://localhost:8080`
 ---
 
 ## API Documentation
-
-* Swagger UI: `http://localhost:8080/swagger-ui.html`
-* OpenAPI JSON: `http://localhost:8080/v3/api-docs`
+* Swagger UI (Production): https://hardwarestoreinventorymanagementsystem-production.up.railway.app/swagger-ui/index.html
+* Swagger UI(Local): `http://localhost:8080/swagger-ui.html`
+* OpenAPI JSON(Local): `http://localhost:8080/v3/api-docs`
 * API endpoint, authentication, validation และ response: [API Documentation](doc/api-documentation.md)
 
 ---
@@ -204,7 +204,8 @@ Maven Surefire สร้างรายงานต่อ test class ไว้�
 
 ## Deployment URL
 
-https://frontendhardwarestore-production.up.railway.app/login
+* Frontend: https://frontendhardwarestore-production.up.railway.app/login
+* Backend API Docs (Swagger): https://hardwarestoreinventorymanagementsystem-production.up.railway.app/swagger-ui/index.html
 
 ---
 
