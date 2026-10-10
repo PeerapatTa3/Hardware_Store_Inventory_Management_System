@@ -1,11 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getCustomers } from '../api/customers';
-import { getInventoryByProduct } from '../api/inventory';
-import { getOrders } from '../api/orders';
-import { getProductsAdmin } from '../api/products';
-import { getPurchases } from '../api/purchases';
-import { getSuppliers } from '../api/suppliers';
+import { getDashboardSummary } from '../api/dashboard';
 import { useAuth } from '../context/AuthContext';
 import { formatDate, formatMoney, PageHeader, Notice } from './ResourcePage';
 
@@ -16,10 +11,6 @@ const shortcuts = [
   ['/inventory', 'IN', 'Review inventory', ['OWNER', 'STOCK_MANAGER']],
 ];
 
-function dataOf(result, fallback = []) {
-  return result.status === 'fulfilled' ? result.value.data : fallback;
-}
-
 function DashboardPage() {
   const { user } = useAuth();
   const role = user?.role;
@@ -28,35 +19,13 @@ function DashboardPage() {
 
   useEffect(() => {
     let active = true;
-    Promise.allSettled([
-      getProductsAdmin({ page: 0, size: 50, sortBy: 'id', direction: 'desc' }),
-      getPurchases(), getOrders(), getSuppliers(), getCustomers(),
-    ]).then(async (results) => {
-      if (!active) return;
-      const productPage = dataOf(results[0], {});
-      const products = productPage.content || [];
-      const stockResults = await Promise.allSettled(products.map((product) => getInventoryByProduct(product.id)));
-      if (!active) return;
-      const stocks = stockResults.filter((item) => item.status === 'fulfilled').map((item) => item.value.data);
-      const purchases = dataOf(results[1]);
-      const orders = dataOf(results[2]);
-      const suppliers = dataOf(results[3]);
-      const customers = dataOf(results[4]);
-      setSummary({
-        products: productPage.totalElements ?? products.length,
-        stockUnits: stocks.reduce((sum, stock) => sum + Number(stock.availableQuantity ?? stock.quantity ?? 0), 0),
-        lowStock: stocks.filter((stock) => {
-          const product = products.find((item) => item.id === stock.productId);
-          return product && Number(stock.quantity) <= Number(product.minimumStock || 0);
-        }).length,
-        purchases: Array.isArray(purchases) ? purchases.length : 0,
-        orders: Array.isArray(orders) ? orders.length : 0,
-        suppliers: Array.isArray(suppliers) ? suppliers.length : 0,
-        customers: Array.isArray(customers) ? customers.length : 0,
-        recentOrders: (Array.isArray(orders) ? orders : []).slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5),
+    getDashboardSummary()
+      .then((res) => {
+        if (active) setSummary(res.data);
+      })
+      .catch((err) => {
+        if (active) setError('Could not load dashboard data. Check that the backend is running and your account has access.');
       });
-      if (results.every((item) => item.status === 'rejected')) setError('Could not load dashboard data. Check that the backend is running and your account has access.');
-    });
     return () => { active = false; };
   }, []);
 
