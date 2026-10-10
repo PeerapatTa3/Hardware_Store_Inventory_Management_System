@@ -60,3 +60,12 @@
 **รายละเอียดการนำไปใช้งาน (Implementation Details):**
 - มีการใช้งาน Spring Stereotypes มาตรฐาน (เช่น `@Service`, `@Repository`, `@RestController`, `@Component`) อย่างแพร่หลาย
 - คลาสฝั่ง Service (เช่น `ProductServiceImpl`, `SalesOrderServiceImpl`) จะขึ้นตรงต่อ Abstractions (เช่น `ProductRepository`, `SalesOrderRepository`) ซึ่งถูกฉีด (Injected) เข้ามาผ่าน Constructor วิธีนี้ช่วยหลีกเลี่ยงการ Hard-code ค่า Dependencies และอำนวยความสะดวกในการทำ Unit Testing ผ่านการใช้ Mock
+
+## 6. Facade Pattern
+**Package:** `com.hardwarestore.service.impl`
+
+**จุดประสงค์:** ซ่อนความซับซ้อนของระบบย่อย (Subsystems) ไว้หลัง Interface เดียวที่ใช้งานง่าย (ในที่นี้คือลดภาระจากหน้าเว็บที่จะต้องเรียก API หลายๆ เส้นเพื่อดึงข้อมูลสรุปยอด)
+
+**รายละเอียดการนำไปใช้งาน (Implementation Details):**
+- **`DashboardServiceImpl`:** ทำหน้าที่เป็น Facade ชั้นดี โดยการฉีด (Inject) Repository หลายๆ ตัวพร้อมกัน ได้แก่ `ProductRepository`, `InventoryStockRepository`, `PurchaseOrderRepository`, `SalesOrderRepository`, `SupplierRepository`, และ `CustomerRepository`
+- **การทำงาน:** หน้าเว็บจะเรียกมาที่เมธอด `getDashboardSummary()` เพียงครั้งเดียว จากนั้นคลาสนี้จะไปทำการดึงข้อมูลและคำนวณสรุปผลจากทุกๆ Repository มารวมเป็น `DashboardSummaryResponse` ก้อนเดียวคืนให้ ทำให้ Client (หน้าเว็บ React) ไม่ต้องรู้รายละเอียดหรือยิง API เพื่อดึงข้อมูลแยกส่วนหลายๆ รอบ (แก้ปัญหา N+1 Query ทางฝั่ง Client ได้อย่างมีประสิทธิภาพ)
